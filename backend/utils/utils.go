@@ -84,25 +84,26 @@ func SendTranscriptionRequest(t *models.Transcription, body *bytes.Buffer, write
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Debug().Err(err).Msg("Error sending request")
+		log.Error().Err(err).Msg("Error sending request")
 		return nil, err
 	}
 	defer resp.Body.Close()
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Debug().Err(err).Msg("Error reading response body")
+		log.Error().Err(err).Msg("Error reading response body")
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		log.Debug().Msgf("Response from %v: %v", url, string(b))
-		log.Debug().Err(err).Msgf("Invalid response status %v:", resp.StatusCode)
+		log.Error().Msgf("Response from %v: %v", url, string(b))
+		log.Error().Err(err).Msgf("Invalid response status %v:", resp.StatusCode)
 		return nil, errors.New("invalid status")
 	}
 
 	var asrResponse *models.WhisperResult
 	if err := json.Unmarshal(b, &asrResponse); err != nil {
-		log.Debug().Err(err).Msg("Error decoding response")
+		log.Error().Err(err).Msg("Error decoding response")
+		log.Error().Msgf("ASR Response: %+v\n", b)
 		return nil, err
 	}
 

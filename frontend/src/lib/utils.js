@@ -3,10 +3,9 @@ import { dev } from '$app/environment';
 import { browser } from '$app/environment';
 import { env } from '$env/dynamic/public';
 
-export let CLIENT_API_HOST = browser ? `${dev ? env.PUBLIC_API_HOST : ""}` : `${env.PUBLIC_INTERNAL_API_HOST}`;
-export let CLIENT_WS_HOST = browser ? `${dev ? env.PUBLIC_API_HOST.replace("http://", "").replace("https://", "") : ""}` :  `${dev ? env.PUBLIC_INTERNAL_API_HOST.replace("http://", "").replace("https://", "") : ""}`;
-
-// URL Validator
+export let CLIENT_API_HOST = `${env.PUBLIC_API_HOST}`;
+const apiHost = env.PUBLIC_API_HOST || "default_api_host_here"; 
+export let CLIENT_WS_HOST = `${apiHost.replace("http://", "").replace("https://", "")}`;// URL Validator
 export const validateURL = function (url) {
     try {
         new URL(url);

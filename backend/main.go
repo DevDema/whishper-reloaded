@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"os"
+	"strconv"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -46,9 +47,12 @@ func main() {
 	if os.Getenv("DB_PASS") == "" {
 		os.Setenv("DB_PASS", *dbPass)
 	}
+	if os.Getenv("DEV_MODE") == "" { 
+    	os.Setenv("DEV_MODE", strconv.FormatBool(*dev))
+	}
 
 	// Configure dev mode
-	if *dev {
+	if os.Getenv("DEV_MODE") == "true" {
 		log.Logger = log.Output(
 			zerolog.ConsoleWriter{
 				Out:        os.Stdout,
