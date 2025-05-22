@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"time"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -109,4 +110,24 @@ func SendTranscriptionRequest(t *models.Transcription, body *bytes.Buffer, write
 
 	return asrResponse, nil
 
+}
+
+func CheckTranscriptionServiceHealth() (ok bool, message string) {
+	url := "http://" + os.Getenv("ASR_ENDPOINT") + "/healthcheck"
+
+	client := &http.Client{
+		Timeout: 2 * time.Second, 
+	}
+	resp, err := client.Get(url)
+	if err != nil {
+		return false, err.Error()
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body) // Just in case, but don't fail on body read
+
+	if resp.StatusCode == http.StatusOK {
+		return true, string(body)
+	}
+	return false, string(body)
 }

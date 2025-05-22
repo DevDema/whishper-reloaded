@@ -11,6 +11,7 @@ import (
 
 	"codeberg.org/pluja/whishper/database"
 	"codeberg.org/pluja/whishper/models"
+	"codeberg.org/pluja/whishper/utils"
 )
 
 type Server struct {
@@ -144,6 +145,21 @@ func (s *Server) RegisterRoutes() {
 			log.Error().Err(err).Msg("Error handling DELETE /api/transcriptions")
 		}
 		return err
+	})
+
+	s.Router.Get("/api/status", func(c *fiber.Ctx) error {
+		healthy, msg := utils.CheckTranscriptionServiceHealth()
+		if healthy {
+			return c.JSON(fiber.Map{
+				"status": "ok",
+				"service_message": msg,
+			})
+		}
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+			"status": "error",
+			"error":  "transcription service unavailable",
+			"service_message": msg,
+		})
 	})
 }
 

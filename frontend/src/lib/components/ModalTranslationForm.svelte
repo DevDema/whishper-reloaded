@@ -1,30 +1,9 @@
 <script>
-    import { onMount } from 'svelte';
     import toast from 'svelte-french-toast';
     import { CLIENT_API_HOST } from '$lib/utils';
-	import { env } from '$env/dynamic/public';
     export let tr;
-
+    export let availableLanguages;
     let targetLanguage = null;
-
-    let availableLanguages = [];
-    const getAvailableLangs = () => {
-        const fetchLanguages = () => {
-            fetch(`${env.PUBLIC_TRANSLATION_API_HOST}/languages`)
-            .then(res => res.json())
-            .then(data => {
-                if (data) {
-                    availableLanguages = data;
-                    // Languages fetched successfully, stop trying
-                    clearInterval(fetchLanguagesInterval);
-                }
-            });
-        };
-
-        // Fetch languages repeatedly until successful
-        const fetchLanguagesInterval = setInterval(fetchLanguages, 5000);
-        fetchLanguages();
-    };
 
     const handleTranslate = (id) => {
         if(targetLanguage) {
@@ -37,11 +16,6 @@
             });
         }
     }
-
-
-    onMount(async () => {
-        await getAvailableLangs();
-    });
 </script>
 
 <dialog id="modalTranslation" class="modal">
