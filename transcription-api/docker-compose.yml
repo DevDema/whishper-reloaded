@@ -5,7 +5,15 @@ services:
     container_name: whisper-api
     build: .
     ports:
-      - "8088:8000"
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
     env_file:
       - .env
-   
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]

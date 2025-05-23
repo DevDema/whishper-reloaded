@@ -26,3 +26,7 @@ export let editorSettings = writable({
 
 // Video player settings
 export const currentVideoPlayerTime = writable(0);
+
+export const currentPage = writable(1)
+
+export const loadingTranscriptions = writable(true)
