@@ -1,3 +1,77 @@
+**Whishper Reloaded** is an open-source, 100% local audio transcription and subtitling suite with a full-featured web UI. It is based on [Pluja's Whishper](https://github.com/pluja/whishper) and further improved.
+
+## What's different?
+
+- [x] Load whishper backend, frontend and whishper-api as separate containers ([DockerHub frontend](https://hub.docker.com/r/thespartan94/whishper-frontend), [DockerHub backend](https://hub.docker.com/r/thespartan94/whishper-backend))
+- [x] Search for specific transcriptions via the search bar!
+- [x] Better page loading experience, solving blocking UI threads making browsers lag.
+- [x] Feedback banners on connections to available services, having a more fail-prone approach to translations and new transcriptions services.
+
+## Docker-Compose file
+
+The following is an example of a docker-compose.yml that puts backend, mongoDB and frontend on the same server, while whishper-api is hosted on a different machine:
+
+    services:
+      whishper-mongo:
+          image: mongo:latest
+          container_name: whishper-mongo
+          env_file:
+            - .backend.env
+          restart: unless-stopped
+          volumes:
+            - ./db_data/db:/data/db
+            - ./db_data/logs/:/var/log/mongodb/
+          environment:
+            MONGO_INITDB_ROOT_USERNAME: ${DB_USER:-whishper}
+            MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS:-whishper}
+          expose:
+            - 27017
+          ports:
+            - 27017:27017
+          command: mongod --logpath var/log/mongodb/mongod.log
+      whishper-frontend:
+        image: thespartan94/whishper-frontend:latest
+        container_name: whishper-frontend
+        ports:
+          - "3000:3000"
+        expose:
+          - 3000
+        env_file:
+          - .frontend.env
+        volumes:
+          - ./whishper-frontend/logs:/var/log/whishper
+
+      whishper-backend:
+        image: thespartan94/whishper-backend:latest
+        container_name: whishper-backend
+        ports:
+          - 8080:8080
+        env_file:
+          - .backend.env
+        volumes:
+          - ./uploads:/uploads
+          - ./whishper-backend/logs:/var/log/whishper
+
+The docker-compose.yml references two different env files, one for backend and another for frontend:
+
+.backend.env:
+
+    UPLOAD_DIR=/uploads
+    ASR_ENDPOINT=<external-ip-address:8000> # assuming default port
+    DB_USER=whishper # if default
+    DB_PASS=whishper # if default
+    DB_ENDPOINT=whishper-mongo:27017 
+    TRANSLATION_ENDPOINT=<external-ip-address:5000> # assuming default port
+
+.frontend.env:
+
+    PUBLIC_API_HOST=<external-public-api-host>
+    PUBLIC_TRANSLATION_API_HOST=<external-public-translation-api-host>
+    PUBLIC_INTERNAL_API_HOST=http://whishper-backend:8080
+    PUBLIC_WHISHPER_PROFILE=gpu # or cpu
+    
+# Original Whishper description
+
 [![whishper banner](misc/banner.png)](https://whishper.net)
 
 [![](https://img.shields.io/badge/website-066da5?style=for-the-badge&logo=icloud&logoColor=white)](https://whishper.net)
@@ -5,9 +79,6 @@
 [![](https://img.shields.io/badge/screenshots-5c1f87?style=for-the-badge&logo=slickpic&logoColor=white)](#screenshots)
 [![](https://img.shields.io/docker/pulls/pluja/whishper?style=for-the-badge&logo=docker&logoColor=white)](https://hub.docker.com/r/pluja/whishper)
 
-## 🚧 I am working on a complete rewrite of the project. Progress on this can be seen at [v4 branch](https://github.com/pluja/whishper/tree/v4). Consequently, this branch will not receive any new releases or updates.
-
-**Whishper** is an open-source, 100% local audio transcription and subtitling suite with a full-featured web UI.
 
 ## Features
 
@@ -27,17 +98,6 @@
 - [x] 👍 **Quick and easy setup**: use the quick start script, or run through a few steps!
 - [x] 🔥 **GPU support**: use your NVIDIA GPU to get even faster transcription times!
 - [x] 🐎 **CPU support**: no GPU? No problem! Whishper can run on CPU too.
-
-### Roadmap
-
-- [ ] Local folder as media input ([#15](https://github.com/pluja/whishper/issues/15)).
-- [ ] Full-text search all transcriptions.
-- [ ] User authentication.
-- [ ] Audio recording from the browser.
-- [ ] Add [insanely-fast-whisper](https://github.com/Vaibhavs10/insanely-fast-whisper) as an optional backend ([#53](https://github.com/pluja/whishper/issues/53)).
-- [x] ~~Support for GPU acceleration.~~
-  - [ ] Non NVIDIA GPU support. Is it possible with faster-whisper?
-- [ ] Can we do something with [seamless_communication](https://github.com/facebookresearch/seamless_communication)?
 
 ## Project structure
 
