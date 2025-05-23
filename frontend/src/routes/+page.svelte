@@ -31,6 +31,46 @@
     $: paginatedTranscriptions = $transcriptions.slice().reverse()
         .slice(($currentPage - 1) * itemsPerPage, $currentPage * itemsPerPage);
 
+		import { tick } from "svelte";
+
+	let searchText = "";
+	let searchTimeout;
+	let searching = false; // active state
+	let filteredTranscriptions = [];
+
+	// --- Debounced search Logic ----
+
+	function onSearchInput(event) {
+		searchText = event.target.value;
+		searching = false;
+
+		if (searchTimeout) clearTimeout(searchTimeout);
+
+		if (searchText.length >= 4) {
+			searchTimeout = setTimeout(async () => {
+				await tick();
+				doSearch();
+			}, 1000);
+		} else {
+			filteredTranscriptions = []; // Clear if <4 chars
+			// Switch back to paginated
+		}
+	}
+
+	function doSearch() {
+		const text = searchText.toLowerCase();
+		filteredTranscriptions = $transcriptions.filter(tr => {
+			return tr.fileName.toLowerCase().includes(text);
+		}).reverse();
+		searching = true;
+	}
+
+	function clearSearch() {
+		searchText = "";
+		filteredTranscriptions = [];
+		searching = false;
+	}
+
     function prevPage() {
         if ($currentPage > 1) currentPage.set($currentPage - 1);
     }
@@ -257,30 +297,80 @@
 			<span class="loading loading-spinner loading-lg"></span>
 		</div>
 	{:else}
+		<div class="max-w-md mx-auto mt-4 mb-8 w-full">
+ 		<div class="relative flex items-center w-full">
+			<input
+			type="text"
+			bind:value={searchText}
+			placeholder="Search transcriptions..."
+			class="input input-bordered w-full pr-12"
+			on:input={onSearchInput}
+			/>
+			{#if searchText.length >= 4 && searching}
+			<button
+				class="absolute right-3 flex items-center justify-center btn btn-sm btn-ghost p-0 min-h-0 h-8 w-8"
+				on:click={clearSearch}
+				title="Clear"
+				tabindex="0"
+				type="button"
+				style="font-size: 1.45rem; line-height:1"
+			>
+				✖
+			</button>
+			{/if}
+		</div>
+		{#if searchText.length >= 4 && searching}
+			<p class="text-xs opacity-60 mt-2 mb-0">{filteredTranscriptions.length} result{filteredTranscriptions.length === 1 ? '' : 's'} found.</p>
+		{:else if searchText.length > 0 && searchText.length < 4}
+			<p class="text-xs text-warning mt-2 mb-0">Type at least 4 characters to search.</p>
+		{/if}
+		</div>
 		<div class="items-center mb-0 text-center card-body">
-			{#if $transcriptions.length > 0}
-				{#each paginatedTranscriptions as tr (tr.id)}
-					{#if tr.status == 2}
-						<SuccessTranscription {tr} on:download={handleDownload} on:translate={handleTranslate} languagesAvailable={languagesAvailable} />
-					{/if}
-					{#if tr.status < 2 && tr.status >= 0}
-						<PendingTranscription {tr} />
-					{/if}
-					{#if tr.status == 3}
-						<PendingTranslation {tr} />
-					{/if}
-					{#if tr.status < 0}
-						<ErrorTranscription {tr} />
-					{/if}
-				{/each}
-
-				<div class="flex justify-center space-x-4 my-4">
-					<button on:click={prevPage} disabled={$currentPage === 1} class="btn btn-sm btn-ghost">Previous</button>
-					<span>Page {$currentPage} of {totalPages}</span>
-					<button on:click={nextPage} disabled={$currentPage === totalPages} class="btn btn-sm btn-ghost">Next</button>
-				</div>
+			{#if searching && searchText.length >= 4}
+				{#if filteredTranscriptions.length > 0}
+					{#each filteredTranscriptions as tr (tr.id)}
+						{#if tr.status == 2}
+							<SuccessTranscription {tr} on:download={handleDownload} on:translate={handleTranslate} languagesAvailable={languagesAvailable} />
+						{/if}
+						{#if tr.status < 2 && tr.status >= 0}
+							<PendingTranscription {tr} />
+						{/if}
+						{#if tr.status == 3}
+							<PendingTranslation {tr} />
+						{/if}
+						{#if tr.status < 0}
+							<ErrorTranscription {tr} />
+						{/if}
+					{/each}
+				{:else}
+					<p class="text-2xl font-bold text-center">🔮 No transcriptions found 🔮</p>
+				{/if}
 			{:else}
-				<p class="text-2xl font-bold text-center">🔮 No transcriptions yet 🔮</p>
+				{#if $transcriptions.length > 0}
+					{#each paginatedTranscriptions as tr (tr.id)}
+						{#if tr.status == 2}
+							<SuccessTranscription {tr} on:download={handleDownload} on:translate={handleTranslate} languagesAvailable={languagesAvailable} />
+						{/if}
+						{#if tr.status < 2 && tr.status >= 0}
+							<PendingTranscription {tr} />
+						{/if}
+						{#if tr.status == 3}
+							<PendingTranslation {tr} />
+						{/if}
+						{#if tr.status < 0}
+							<ErrorTranscription {tr} />
+						{/if}
+					{/each}
+
+					<!-- Pagination only if not searching -->
+					<div class="flex justify-center space-x-4 my-4">
+						<button on:click={prevPage} disabled={$currentPage === 1} class="btn btn-sm btn-ghost">Previous</button>
+						<span>Page {$currentPage} of {totalPages}</span>
+						<button on:click={nextPage} disabled={$currentPage === totalPages} class="btn btn-sm btn-ghost">Next</button>
+					</div>
+				{:else}
+					<p class="text-2xl font-bold text-center">🔮 No transcriptions yet 🔮</p>
+				{/if}
 			{/if}
 		</div>
 	{/if}
