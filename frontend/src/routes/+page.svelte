@@ -1,6 +1,6 @@
 <script>
 	import { Toaster } from 'svelte-french-toast';
-	import { transcriptions, uploadProgress } from '$lib/stores';
+	import { transcriptions, uploadProgress, currentPage, loadingTranscriptions } from '$lib/stores';
 	import { browser, dev } from '$app/environment';
 	import { CLIENT_WS_HOST } from '$lib/utils';
 	import { onMount, onDestroy } from 'svelte';
@@ -17,11 +17,10 @@
     let languagesError = null; 
     let languagesLoading = true;
     let languagesAvailable = false; 
-	let transcriptionServiceAvailable = true;
+	let transcriptionServiceAvailable = false;
 	let transcriptionServiceStatus = '';
 	let transcriptionServiceError = '';
 	let intervalId;
-	let page = 1;
     const itemsPerPage = 10;
 	let updateQueue = [];
 	let updateTimeout = null;
@@ -30,43 +29,37 @@
     $: totalPages = Math.ceil($transcriptions.length / itemsPerPage);
 
     $: paginatedTranscriptions = $transcriptions.slice().reverse()
-        .slice((page - 1) * itemsPerPage, page * itemsPerPage);
+        .slice(($currentPage - 1) * itemsPerPage, $currentPage * itemsPerPage);
 
     function prevPage() {
-        if (page > 1) page -= 1;
+        if ($currentPage > 1) currentPage.set($currentPage - 1);
     }
 
     function nextPage() {
-        if (page < totalPages) page += 1;
+        if ($currentPage < totalPages) currentPage.set($currentPage + 1);
     }
 
-    const getAvailableLangs = () => {
-        const fetchLanguages = () => {
-            fetch(`${env.PUBLIC_TRANSLATION_API_HOST}/languages`)
-            .then(res => res.json())
-            .then(data => {
-                if (data && data.length > 0) {
-                        availableLanguages = data;
-                        languagesAvailable = true;
-                        languagesError = null;
-                        languagesLoading = false;
-                        clearInterval(fetchLanguagesInterval);
-				} else {
-					throw new Error("No languages returned");
-				}
-            })
-			.catch(err => {
-				languagesError = "Could not fetch available languages.";
-				languagesLoading = false;
-			});
-        };
-        fetchLanguages();
+    const getAvailableLangs = async () => {
+		return fetch(`${env.PUBLIC_TRANSLATION_API_HOST}/languages`)
+		.then(res => res.json())
+		.then(data => {
+			if (data && data.length > 0) {
+					availableLanguages = data;
+					languagesAvailable = true;
+					languagesError = null;
+					languagesLoading = false;
+			} else {
+				throw new Error("No languages returned");
+			}
+		})
+		.catch(err => {
+			languagesError = "Could not fetch available languages.";
+			languagesLoading = false;
+		});
     };
 
-
-
-	const checkTranscriptionsAvailability = () => {
-		fetch(`${env.PUBLIC_API_HOST}/api/status`)
+	const checkTranscriptionsAvailability = async () => {
+		return fetch(`${env.PUBLIC_API_HOST}/api/status`)
 			.then(res => {
 				if (!res.ok) throw new Error("Transcription service unavailable");
 				return res.json();
@@ -89,11 +82,37 @@
 			});
 	};
 
+	const fetchData = async () => {
+		loadingTranscriptions.set(true);
+		const endpoint = browser ? `${env.PUBLIC_API_HOST}/api/transcriptions` : `${env.PUBLIC_INTERNAL_API_HOST}/api/transcriptions`;
 
+		return fetch(endpoint).then(response => {
+			return response.json();
+		}).then(ts => {
+			if (ts) {
+				transcriptions.update(_ => ts.length > 0 ? ts : []);
+			} else {
+				transcriptions.update(_ => []);
+			} 
+		}).finally(ts => {
+			loadingTranscriptions.set(false);
+		});
+	}
 
     onMount(async () => {
-        getAvailableLangs();
-		checkTranscriptionsAvailability();
+		if ($transcriptions.length === 0) {
+			await Promise.all([
+				getAvailableLangs(),
+				checkTranscriptionsAvailability(),
+				fetchData()
+			]);
+		} else {
+			await Promise.all([
+				getAvailableLangs(),
+				checkTranscriptionsAvailability()
+			]);
+		}
+
 		intervalId = setInterval(checkTranscriptionsAvailability, 30_000);
 		connect();
     });
@@ -106,7 +125,6 @@
 		}
     });
 	
-	//export let data;
 	let socket;
 	export let data;
 
@@ -138,12 +156,20 @@
 			}, 1000);
 		};
 
+		function scheduleFlush() {
+			if (!updateTimeout) {
+				if ('requestIdleCallback' in window) {
+					updateTimeout = requestIdleCallback(flushUpdates);
+				} else {
+					updateTimeout = setTimeout(flushUpdates, UPDATE_INTERVAL);
+				}
+			}
+		}
+
 		socket.onmessage = (event) => {
 			let update = JSON.parse(event.data);
 			updateQueue.push(update);
-			if (!updateTimeout) {
-				updateTimeout = setTimeout(flushUpdates, UPDATE_INTERVAL);
-			}
+			scheduleFlush();
 		};
 	}
 
@@ -159,35 +185,25 @@
 	};
 
 	function flushUpdates() {
-		transcriptions.update(transcripts => {
-			let updated = [...transcripts];
-			// Take up to 10 items
-			const chunk = updateQueue.splice(0, 10); 
+		transcriptions.update(map => {
+			const chunk = updateQueue.splice(0, 10);
 			for (let update of chunk) {
-				const index = updated.findIndex(tr => tr.id === update.id);
-				if (index >= 0) {
-					console.log("update", index, ":", update);
-					updated[index] = update;
-				} else {
-					console.log("push update:", update);
-					updated.push(update);
-				}
+				map.set(update.id, update);
 			}
-			// If there are more items left, schedule another flush soon
-			if (updateQueue.length > 0 && !updateTimeout) {
-				updateTimeout = setTimeout(flushUpdates, UPDATE_INTERVAL); // e.g., UPDATE_INTERVAL = 100
-			} else {
-				updateTimeout = null;
-			}
-			return updated;
+			return new Map(map);
 		});
 	}
 </script>
 
 <Toaster />
 <ModalDownloadOptions tr={downloadTranscription} />
-<ModalTranslationForm tr={translateTranscription} availableLanguages={availableLanguages} />
-<ModalTranscriptionForm />
+
+{#if !languagesError}
+	<ModalTranslationForm tr={translateTranscription} availableLanguages={availableLanguages} />
+{/if}
+{#if transcriptionServiceAvailable}
+	<ModalTranscriptionForm />
+{/if}
 
 <header>
 	<h1 class="flex items-center justify-center mt-8 space-x-4 text-4xl font-bold">
@@ -213,11 +229,11 @@
 		</div>
 	{/if}
 	{#if languagesError}
-        <div class="flex items-center bg-yellow-200 border-l-4 border-yellow-400 p-4 mb-4 text-yellow-900 font-semibold">
+        <div class="flex items-center justify-between bg-yellow-200 border-l-4 border-yellow-400 p-4 mb-4 text-yellow-900 font-semibold">
             <span>⚠️ Language features are unavailable: {languagesError}</span>
 			<button 
 				on:click={getAvailableLangs}
-				class="ml-4 px-2 py-1 bg-red-400 hover:bg-red-500 text-white text-sm rounded"
+				class="ml-4 px-2 py-1 bg-yellow-400 hover:bg-red-500 text-white text-sm rounded"
 				title="Refresh"
 			>
 				Refresh
@@ -236,30 +252,36 @@
 			disabled={!transcriptionServiceAvailable}>✨ new transcription</button
 		>
 	{/if}
-	<div class="items-center mb-0 text-center card-body">
-		{#if $transcriptions.length > 0}
-			 {#each paginatedTranscriptions as tr (tr.id)}
-				{#if tr.status == 2}
-					<SuccessTranscription {tr} on:download={handleDownload} on:translate={handleTranslate} languagesAvailable={languagesAvailable} />
-				{/if}
-				{#if tr.status < 2 && tr.status >= 0}
-					<PendingTranscription {tr} />
-				{/if}
-				{#if tr.status == 3}
-					<PendingTranslation {tr} />
-				{/if}
-				{#if tr.status < 0}
-					<ErrorTranscription {tr} />
-				{/if}
-			{/each}
+	{#if $loadingTranscriptions}
+		<div class="flex justify-center items-center py-20">
+			<span class="loading loading-spinner loading-lg"></span>
+		</div>
+	{:else}
+		<div class="items-center mb-0 text-center card-body">
+			{#if $transcriptions.length > 0}
+				{#each paginatedTranscriptions as tr (tr.id)}
+					{#if tr.status == 2}
+						<SuccessTranscription {tr} on:download={handleDownload} on:translate={handleTranslate} languagesAvailable={languagesAvailable} />
+					{/if}
+					{#if tr.status < 2 && tr.status >= 0}
+						<PendingTranscription {tr} />
+					{/if}
+					{#if tr.status == 3}
+						<PendingTranslation {tr} />
+					{/if}
+					{#if tr.status < 0}
+						<ErrorTranscription {tr} />
+					{/if}
+				{/each}
 
-			<div class="flex justify-center space-x-4 my-4">
-				<button on:click={prevPage} disabled={page === 1} class="btn btn-sm btn-ghost">Previous</button>
-				<span>Page {page} of {totalPages}</span>
-				<button on:click={nextPage} disabled={page === totalPages} class="btn btn-sm btn-ghost">Next</button>
-			</div>
-		{:else}
-			<p class="text-2xl font-bold text-center">🔮 No transcriptions yet 🔮</p>
-		{/if}
-	</div>
+				<div class="flex justify-center space-x-4 my-4">
+					<button on:click={prevPage} disabled={$currentPage === 1} class="btn btn-sm btn-ghost">Previous</button>
+					<span>Page {$currentPage} of {totalPages}</span>
+					<button on:click={nextPage} disabled={$currentPage === totalPages} class="btn btn-sm btn-ghost">Next</button>
+				</div>
+			{:else}
+				<p class="text-2xl font-bold text-center">🔮 No transcriptions yet 🔮</p>
+			{/if}
+		</div>
+	{/if}
 </main>
