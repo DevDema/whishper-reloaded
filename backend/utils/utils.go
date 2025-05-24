@@ -116,7 +116,7 @@ func CheckTranscriptionServiceHealth() (ok bool, message string) {
 	url := "http://" + os.Getenv("ASR_ENDPOINT") + "/healthcheck"
 
 	client := &http.Client{
-		Timeout: 2 * time.Second, 
+		Timeout: 10 * time.Second, 
 	}
 	resp, err := client.Get(url)
 	if err != nil {

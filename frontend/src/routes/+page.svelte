@@ -22,8 +22,6 @@
 	let transcriptionServiceError = '';
 	let intervalId;
     const itemsPerPage = 10;
-	let updateQueue = [];
-	let updateTimeout = null;
 	const UPDATE_INTERVAL = 1_000; // ms
 
     $: totalPages = Math.ceil($transcriptions.length / itemsPerPage);
@@ -196,21 +194,21 @@
 			}, 1000);
 		};
 
-		function scheduleFlush() {
-			if (!updateTimeout) {
-				if ('requestIdleCallback' in window) {
-					updateTimeout = requestIdleCallback(flushUpdates);
-				} else {
-					updateTimeout = setTimeout(flushUpdates, UPDATE_INTERVAL);
-				}
-			}
-		}
-
 		socket.onmessage = (event) => {
-			let update = JSON.parse(event.data);
-			updateQueue.push(update);
-			scheduleFlush();
-		};
+            let update = JSON.parse(event.data);
+            // use update to update the store
+            transcriptions.update(transcriptions => {
+                let index = transcriptions.findIndex(tr => tr.id === update.id);
+                if (index >= 0) {
+                    // replace the item at index
+                    transcriptions[index] = update;
+                } else {
+                    // add the new item
+                    transcriptions.push(update);
+                }
+                return transcriptions; // return a new object to trigger reactivity
+            });
+        };
 	}
 
 	let downloadTranscription = null;
@@ -223,16 +221,6 @@
 		translateTranscription = event.detail; // this will be the transcription to translate
 		modalTranslation.showModal(); // show the modal
 	};
-
-	function flushUpdates() {
-		transcriptions.update(map => {
-			const chunk = updateQueue.splice(0, 10);
-			for (let update of chunk) {
-				map.set(update.id, update);
-			}
-			return new Map(map);
-		});
-	}
 </script>
 
 <Toaster />
