@@ -1,6 +1,7 @@
 <script>
 	import { editorSettings } from '$lib/stores';
 	import { currentVideoPlayerTime, currentTranscription, editorHistory } from '$lib/stores';
+	import { afterUpdate } from 'svelte';
 	export let index;
 	export let segment;
 	export let translationIndex;
@@ -120,6 +121,33 @@
 		callback();
 	}
 
+	// For custom tab navigation
+	let textInputEl;
+	function handleTab(e) {
+		if (e.key === 'Tab') {
+			e.preventDefault();
+			// Find all segment text input divs
+			const allInputs = Array.from(document.querySelectorAll('[data-segment-text-input]'));
+			const idx = allInputs.indexOf(textInputEl);
+			if (e.shiftKey) {
+				// Shift+Tab: go to previous
+				if (idx > 0) {
+					allInputs[idx - 1].focus();
+				}
+			} else {
+				// Tab: go to next
+				if (idx !== -1 && idx < allInputs.length - 1) {
+					allInputs[idx + 1].focus();
+				}
+			}
+		}
+	}
+	afterUpdate(() => {
+		if (textInputEl) {
+			textInputEl.setAttribute('data-segment-text-input', '');
+		}
+	});
+
 	$: if (segment.start <= $currentVideoPlayerTime && $currentVideoPlayerTime <= segment.end) {
 		isActive = true;
 	} else {
@@ -214,11 +242,14 @@
 	<td>
 		<!-- Text input -->
 		<div
+			bind:this={textInputEl}
 			bind:textContent={segment.text}
 			on:input={handleKeystrokes}
 			class="max-w-md p-3 font-mono font-bold border-2 rounded-lg bg-base-100"
 			class:border-error={getCps(segment) > 16}
 			contenteditable="true"
+			tabindex="0"
+			on:keydown={handleTab}
 		/>
 	</td>
 	<td>
