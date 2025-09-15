@@ -11,6 +11,35 @@
 
 	let language = writable('original');
 
+	// List of audio-only file extensions
+	const audioExtensions = [
+		'mp3', 'm4a', 'wav', 'aac', 'ogg', 'flac', 'aiff', 'wma', 'alac', 'opus', 'amr', 'pcm', 'mka', 'dsd', 'wv', 'ape', 'm3u', 'm3u8', 'pls', 'aif', 'au', 'ra', 'ram', 'ac3', 'dts', 'mid', 'midi', 'mpa', 'mpc', 'oga', 'spx', 'tta', 'voc', 'vox', 'caf', 'snd', 'kar', 'mod', 's3m', 'xm', 'it', 'mtm', 'umx', 'amz', 'mogg', 'wv', '8svx', 'cda', 'gsm', 'ivs', 'mlp', 'mpc', 'msv', 'nmf', 'shn', 'tak', 'tta', 'vqf', 'xa'
+	];
+
+	// Helper to check if file is audio-only
+	function isAudioOnlyFile(fileName) {
+		if (!fileName) return false;
+		const ext = fileName.split('.').pop().toLowerCase();
+		return audioExtensions.includes(ext);
+	}
+
+	// Track if current file is audio-only
+	let isAudioOnly = false;
+
+	// Reactively update audioMode and isAudioOnly when fileName changes
+	$: {
+		if ($currentTranscription && $currentTranscription.fileName) {
+			isAudioOnly = isAudioOnlyFile($currentTranscription.fileName);
+			if (isAudioOnly && !$audioMode) {
+				$audioMode = true;
+			}
+			// If not audio-only and audioMode is true, allow user to switch
+			if (!isAudioOnly && $audioMode) {
+				// Do not force switch, let user control
+			}
+		}
+	}
+
 	// Segments lazy loading
 	let segmentsToShow = 20;
 	function loadMore() {
@@ -237,24 +266,26 @@
 							</svg>
 						</button>
 					</li>
-					<li>
-						<button on:click={() => $audioMode = !$audioMode} class="tooltip" data-tip="Exit Audio Mode">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="h-5 w-5"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 9H6a2 2 0 00-2 2v2a2 2 0 002 2h3l6 6V3L9 9z"
-								/>
-							</svg>
-						</button>
-					</li>
+					   {#if !isAudioOnly}
+					   <li>
+						   <button on:click={() => $audioMode = !$audioMode} class="tooltip" data-tip="Exit Audio Mode">
+							   <svg
+								   xmlns="http://www.w3.org/2000/svg"
+								   class="h-5 w-5"
+								   fill="none"
+								   viewBox="0 0 24 24"
+								   stroke="currentColor"
+							   >
+								   <path
+									   stroke-linecap="round"
+									   stroke-linejoin="round"
+									   stroke-width="2"
+									   d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 9H6a2 2 0 00-2 2v2a2 2 0 002 2h3l6 6V3L9 9z"
+								   />
+							   </svg>
+						   </button>
+					   </li>
+					   {/if}
 				</ul>
 			</div>
 		</div>
