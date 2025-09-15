@@ -1,5 +1,6 @@
 <script>
 	/** @type {import('./$types').PageData} */
+	import { onMount } from 'svelte';
 	import toast, { Toaster } from 'svelte-french-toast';
 	import Editor from '$lib/components/Editor.svelte';
 	import {currentVideoPlayerTime, currentTranscription, audioMode} from '$lib/stores';
@@ -14,6 +15,45 @@
 		// When testing in Chrome, it works, just see https://stackoverflow.com/a/67584611
         video.currentTime = $currentVideoPlayerTime;
     }
+
+	// Keyboard shortcuts for media control
+	onMount(() => {
+		const handleKeyDown = (e) => {
+			// F7: Backward 10s
+			if (e.code === 'F7' || e.key === 'F7') {
+				e.preventDefault();
+				$currentVideoPlayerTime = Math.max(0, $currentVideoPlayerTime - 10);
+			}
+			
+			// F8: Play/Pause toggle
+			if (e.code === 'F8' || e.key === 'F8') {
+				e.preventDefault();
+				if (video) {
+					if (video.paused) {
+						video.play();
+					} else {
+						video.pause();
+					}
+				}
+			}
+			
+			// F9: Forward 10s
+			if (e.code === 'F9' || e.key === 'F9') {
+				e.preventDefault();
+				if (video && video.duration) {
+					$currentVideoPlayerTime = Math.min(video.duration, $currentVideoPlayerTime + 10);
+				} else {
+					$currentVideoPlayerTime = $currentVideoPlayerTime + 10;
+				}
+			}
+		};
+
+		document.addEventListener('keydown', handleKeyDown);
+		
+		return () => {
+			document.removeEventListener('keydown', handleKeyDown);
+		};
+	});
 </script>
 
 <Toaster />

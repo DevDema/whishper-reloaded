@@ -98,6 +98,15 @@
 		editorHistory.set([JSON.parse(JSON.stringify($currentTranscription))]);
 		let isUndoing = false;
 		handleKeyDown = function (e) {
+			// Debug logging for media keys
+			console.log('Key pressed:', {
+				key: e.key,
+				code: e.code,
+				keyCode: e.keyCode,
+				which: e.which,
+				type: e.type
+			});
+
 			// Undo (CTRL+Z)
 			if (e.ctrlKey && e.key === 'z' && !isUndoing) {
 				isUndoing = true;
@@ -126,6 +135,7 @@
 					isSaving = false;
 				}
 			}
+
 		};
 
 		if (!$editorSettings.autoSave) {
@@ -257,7 +267,7 @@
 	
 	<div class="overflow-x-auto px-4">
 		<!-- Segments table -->
-		<table class="table">
+		<table class="table" class:audio-mode={$audioMode}>
 			<thead>
 				<tr>
 					<th />
@@ -391,7 +401,7 @@
 	
 		<div class="overflow-x-auto">
 		<!-- Segments table -->
-		<table class="table px-4">
+		<table class="table px-4" class:audio-mode={$audioMode}>
 			<thead>
 				<tr>
 					<th />
