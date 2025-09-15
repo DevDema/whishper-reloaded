@@ -2,10 +2,11 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { writable } from 'svelte/store';
 	import toast from 'svelte-french-toast';
-	import { editorSettings, currentTranscription, editorHistory, audioMode } from '$lib/stores';
+	import {editorSettings, currentTranscription, editorHistory, audioMode } from '$lib/stores';
 	import EditorSettings from './EditorSettings.svelte';
 	import EditorSegment from './EditorSegment.svelte';
 	import { CLIENT_API_HOST } from '$lib/utils';
+	import GoToSegment from './GoToSegment.svelte';
 
 
 	let language = writable('original');
@@ -98,14 +99,6 @@
 		editorHistory.set([JSON.parse(JSON.stringify($currentTranscription))]);
 		let isUndoing = false;
 		handleKeyDown = function (e) {
-			// Debug logging for media keys
-			console.log('Key pressed:', {
-				key: e.key,
-				code: e.code,
-				keyCode: e.keyCode,
-				which: e.which,
-				type: e.type
-			});
 
 			// Undo (CTRL+Z)
 			if (e.ctrlKey && e.key === 'z' && !isUndoing) {
@@ -201,6 +194,8 @@
 				
 				<!-- Editor Settings -->
 				<EditorSettings />
+				
+				   <GoToSegment language={$language} segmentsToShow={segmentsToShow} setSegmentsToShow={(v) => segmentsToShow = v} />
 				
 				<!-- Menu -->
 				<ul class="menu menu-horizontal bg-base-200 rounded-box">
@@ -396,7 +391,10 @@
 	</div>
 	<div class="mt-4">
 		<!-- Editor configuration -->
-		<EditorSettings />
+		 <div class="flex flex-row items-center justify-center p-3 space-x-4 m-2">
+			<EditorSettings />
+			<GoToSegment language={$language} segmentsToShow={segmentsToShow} setSegmentsToShow={(v) => segmentsToShow = v} />
+		</div>
 		<!-- End Editor configuration -->
 	
 		<div class="overflow-x-auto">
