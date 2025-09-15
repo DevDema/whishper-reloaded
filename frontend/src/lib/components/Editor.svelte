@@ -1,19 +1,47 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
-	import { writable } from 'svelte/store';
 	import toast from 'svelte-french-toast';
-	import { editorSettings, currentTranscription, editorHistory } from '$lib/stores';
+	import {editorSettings, currentTranscription, editorHistory, audioMode } from '$lib/stores';
 	import EditorSettings from './EditorSettings.svelte';
 	import EditorSegment from './EditorSegment.svelte';
 	import { CLIENT_API_HOST } from '$lib/utils';
+	import GoToSegment from './GoToSegment.svelte';
 
+	export let language;
+	export let segmentsToShow;
+	export let setSegmentsToShow;
+	// List of audio-only file extensions
+	const audioExtensions = [
+		'mp3', 'm4a', 'wav', 'aac', 'ogg', 'flac', 'aiff', 'wma', 'alac', 'opus', 'amr', 'pcm', 'mka', 'dsd', 'wv', 'ape', 'm3u', 'm3u8', 'pls', 'aif', 'au', 'ra', 'ram', 'ac3', 'dts', 'mid', 'midi', 'mpa', 'mpc', 'oga', 'spx', 'tta', 'voc', 'vox', 'caf', 'snd', 'kar', 'mod', 's3m', 'xm', 'it', 'mtm', 'umx', 'amz', 'mogg', 'wv', '8svx', 'cda', 'gsm', 'ivs', 'mlp', 'mpc', 'msv', 'nmf', 'shn', 'tak', 'tta', 'vqf', 'xa'
+	];
 
-	let language = writable('original');
+	// Helper to check if file is audio-only
+	function isAudioOnlyFile(fileName) {
+		if (!fileName) return false;
+		const ext = fileName.split('.').pop().toLowerCase();
+		return audioExtensions.includes(ext);
+	}
+
+	// Track if current file is audio-only
+	let isAudioOnly = false;
+
+	// Reactively update audioMode and isAudioOnly when fileName changes
+	$: {
+		if ($currentTranscription && $currentTranscription.fileName) {
+			isAudioOnly = isAudioOnlyFile($currentTranscription.fileName);
+			if (isAudioOnly && !$audioMode) {
+				$audioMode = true;
+			}
+			// If not audio-only and audioMode is true, allow user to switch
+			if (!isAudioOnly && $audioMode) {
+				// Do not force switch, let user control
+			}
+		}
+	}
 
 	// Segments lazy loading
-	let segmentsToShow = 20;
 	function loadMore() {
-		segmentsToShow += 10;
+		setSegmentsToShow(segmentsToShow + 10);
 	}
 	let loadMoreButton;
 
@@ -98,6 +126,7 @@
 		editorHistory.set([JSON.parse(JSON.stringify($currentTranscription))]);
 		let isUndoing = false;
 		handleKeyDown = function (e) {
+
 			// Undo (CTRL+Z)
 			if (e.ctrlKey && e.key === 'z' && !isUndoing) {
 				isUndoing = true;
@@ -126,6 +155,7 @@
 					isSaving = false;
 				}
 			}
+
 		};
 
 		if (!$editorSettings.autoSave) {
@@ -164,79 +194,104 @@
 		<p class="text-center">Waiting for task to finish {$currentTranscription.status == 3 ? "translating" : "transcribing"}...</p>
 	</div>
 {:else}
-<div class="flex flex-col items-center break-words">
-	<h1 class="text-center text-2xl mt-8 break-words">
-		{$currentTranscription.fileName.split('_WHSHPR_')[1]}
-	</h1>
-	<!-- Menu -->
-	<ul class="menu menu-horizontal bg-base-200 rounded-box mt-6">
-		<li>
-			<a href="/" class="tooltip" data-tip="Home">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-					><path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-					/></svg
-				>
-			</a>
-		</li>
-		<li>
-			<button on:click={saveChanges} class="tooltip" data-tip="Save (Ctrl+S)">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="icon icon-tabler icon-tabler-device-floppy"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
-					<path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-					<path d="M14 4l0 4l-6 0l0 -4" />
-				</svg>
-			</button>
-		</li>
-	</ul>
-	<!-- End Menu -->
+{#if $audioMode}
+	<!-- Audio Mode Header -->
+	<div class="sticky top-0 z-10 bg-base-100 border-b p-4">
+		<div class="flex items-center justify-between gap-4">
+			<!-- Title -->
+			<h1 class="text-xl font-semibold truncate flex-shrink min-w-0" title={$currentTranscription.fileName.split('_WHSHPR_')[1]}>
+				{$currentTranscription.fileName.split('_WHSHPR_')[1]}
+			</h1>
+			
+			<!-- Menu and Settings Container -->
+			<div class="flex items-center gap-4 flex-shrink-0">
+				<!-- Language Selector -->
+				{#if $currentTranscription.translations.length > 0}
+					<select
+						bind:value={$language}
+						name="language"
+						class="select select-sm select-bordered uppercase"
+					>
+						<option value="original">✅ {$currentTranscription.result.language}</option>
+						{#each $currentTranscription.translations as translation}
+							<option value={translation.targetLanguage}>🤖 {translation.targetLanguage}</option>
+						{/each}
+					</select>
+				{/if}
+				
+				<!-- Editor Settings -->
+				<EditorSettings />
 
-	{#if $currentTranscription.translations.length > 0}
-		<div class="form-control max-w-xs my-4">
-			<label for="language" class="label">
-				<span class="label-text">Subtitles language</span>
-			</label>
-			<select
-				bind:value={$language}
-				name="language"
-				class="select select-sm select-bordered uppercase"
-			>
-				<option value="original">✅ {$currentTranscription.result.language}</option>
-				{#each $currentTranscription.translations as translation}
-					<option value={translation.targetLanguage}>🤖 {translation.targetLanguage}</option>
-				{/each}
-			</select>
+				   <GoToSegment language={$language} segmentsToShow={segmentsToShow} setSegmentsToShow={setSegmentsToShow} />
+
+				<!-- Menu -->
+				<ul class="menu menu-horizontal bg-base-200 rounded-box">
+					<li>
+						<a href="/" class="tooltip" data-tip="Home">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-5 w-5"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								><path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+								/></svg
+							>
+						</a>
+					</li>
+					<li>
+						<button on:click={saveChanges} class="tooltip" data-tip="Save (Ctrl+S)">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="icon icon-tabler icon-tabler-device-floppy"
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								stroke-width="2"
+								stroke="currentColor"
+								fill="none"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+								<path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
+								<path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+								<path d="M14 4l0 4l-6 0l0 -4" />
+							</svg>
+						</button>
+					</li>
+					   {#if !isAudioOnly}
+					   <li>
+						   <button on:click={() => $audioMode = !$audioMode} class="tooltip" data-tip="Exit Audio Mode">
+							   <svg
+								   xmlns="http://www.w3.org/2000/svg"
+								   class="h-5 w-5"
+								   fill="none"
+								   viewBox="0 0 24 24"
+								   stroke="currentColor"
+							   >
+								   <path
+									   stroke-linecap="round"
+									   stroke-linejoin="round"
+									   stroke-width="2"
+									   d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 9H6a2 2 0 00-2 2v2a2 2 0 002 2h3l6 6V3L9 9z"
+								   />
+							   </svg>
+						   </button>
+					   </li>
+					   {/if}
+				</ul>
+			</div>
 		</div>
-	{/if}
-</div>
-<div class="mt-4">
-	<!-- Editor configuration -->
-	<EditorSettings />
-	<!-- End Editor configuration -->
-
-	<div class="overflow-x-auto">
+	</div>
+	
+	<div class="overflow-x-auto px-4">
 		<!-- Segments table -->
-		<table class="table px-4">
+		<table class="table" class:audio-mode={$audioMode}>
 			<thead>
 				<tr>
 					<th />
@@ -278,5 +333,143 @@
 		</button>
 		<!-- End Segments table -->
 	</div>
-</div>
+{:else}
+	<!-- Normal Mode Header -->
+	<div class="flex flex-col items-center break-words">
+		<h1 class="text-center text-2xl mt-8 break-words">
+			{$currentTranscription.fileName.split('_WHSHPR_')[1]}
+		</h1>
+		<!-- Menu -->
+		<ul class="menu menu-horizontal bg-base-200 rounded-box mt-6">
+			<li>
+				<a href="/" class="tooltip" data-tip="Home">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						><path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+						/></svg
+					>
+				</a>
+			</li>
+			<li>
+				<button on:click={saveChanges} class="tooltip" data-tip="Save (Ctrl+S)">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="icon icon-tabler icon-tabler-device-floppy"
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						stroke="currentColor"
+						fill="none"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+						<path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
+						<path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+						<path d="M14 4l0 4l-6 0l0 -4" />
+					</svg>
+				</button>
+			</li>
+			<li>
+				<button on:click={() => $audioMode = !$audioMode} class="tooltip" data-tip="Audio Mode">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 9H6a2 2 0 00-2 2v2a2 2 0 002 2h3l6 6V3L9 9z"
+						/>
+					</svg>
+				</button>
+			</li>
+		</ul>
+		<!-- End Menu -->
+
+		{#if $currentTranscription.translations.length > 0}
+			<div class="form-control max-w-xs my-4">
+				<label for="language" class="label">
+					<span class="label-text">Subtitles language</span>
+				</label>
+				<select
+					bind:value={$language}
+					name="language"
+					class="select select-sm select-bordered uppercase"
+				>
+					<option value="original">✅ {$currentTranscription.result.language}</option>
+					{#each $currentTranscription.translations as translation}
+						<option value={translation.targetLanguage}>🤖 {translation.targetLanguage}</option>
+					{/each}
+				</select>
+			</div>
+		{/if}
+	</div>
+	<div class="mt-4">
+		<!-- Editor configuration -->
+		 <div class="flex flex-row items-center justify-center p-3 space-x-4 m-2">
+			<EditorSettings />
+			<GoToSegment language={$language} segmentsToShow={segmentsToShow} setSegmentsToShow={(v) => segmentsToShow = v} />
+		</div>
+		<!-- End Editor configuration -->
+	
+		<div class="overflow-x-auto">
+		<!-- Segments table -->
+		<table class="table px-4" class:audio-mode={$audioMode}>
+			<thead>
+				<tr>
+					<th />
+					<th>Start</th>
+					<th>End</th>
+					<th>Text</th>
+					<th>Info</th>
+					<th />
+				</tr>
+			</thead>
+			<tbody>
+				{#if $language == 'original'}
+					{#each $currentTranscription.result.segments.slice(0, segmentsToShow) as segment, index (segment.id)}
+						<EditorSegment {segment} {index} translationIndex={-1} />
+					{/each}
+				{:else}
+					{#each $currentTranscription.translations as translation, translationIndex}
+						{#if translation.targetLanguage == $language}
+							{#each translation.result.segments.slice(0, segmentsToShow) as segment, index (segment.id)}
+								<EditorSegment {segment} {index} {translationIndex} />
+							{/each}
+						{/if}
+					{/each}
+				{/if}
+			</tbody>
+		</table>
+		<button bind:this={loadMoreButton}>
+			{#if $language == 'original'}
+				{#if segmentsToShow >= $currentTranscription.result.segments.length}
+					No more segments to load
+				{:else}
+					Loading more...
+				{/if}
+			{:else if segmentsToShow >= $currentTranscription.translations.filter((translation) => translation.targetLanguage == $language)[0].result.segments.length}
+				No more segments to load
+			{:else}
+				Loading more...
+			{/if}
+		</button>
+		<!-- End Segments table -->
+		</div>
+	</div>
+{/if}
 {/if}

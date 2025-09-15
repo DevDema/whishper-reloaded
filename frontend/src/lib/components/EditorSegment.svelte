@@ -1,6 +1,7 @@
 <script>
 	import { editorSettings } from '$lib/stores';
 	import { currentVideoPlayerTime, currentTranscription, editorHistory } from '$lib/stores';
+	import { afterUpdate } from 'svelte';
 	export let index;
 	export let segment;
 	export let translationIndex;
@@ -120,6 +121,33 @@
 		callback();
 	}
 
+	// For custom tab navigation
+	let textInputEl;
+	function handleTab(e) {
+		if (e.key === 'Tab') {
+			e.preventDefault();
+			// Find all segment text input divs
+			const allInputs = Array.from(document.querySelectorAll('[data-segment-text-input]'));
+			const idx = allInputs.indexOf(textInputEl);
+			if (e.shiftKey) {
+				// Shift+Tab: go to previous
+				if (idx > 0) {
+					allInputs[idx - 1].focus();
+				}
+			} else {
+				// Tab: go to next
+				if (idx !== -1 && idx < allInputs.length - 1) {
+					allInputs[idx + 1].focus();
+				}
+			}
+		}
+	}
+	afterUpdate(() => {
+		if (textInputEl) {
+			textInputEl.setAttribute('data-segment-text-input', '');
+		}
+	});
+
 	$: if (segment.start <= $currentVideoPlayerTime && $currentVideoPlayerTime <= segment.end) {
 		isActive = true;
 	} else {
@@ -127,9 +155,9 @@
 	}
 </script>
 
-<tr class:bg-warning={isActive} class:bg-opacity-30={isActive} data-start={segment.start}>
-	<th>{index}</th>
-	<td class="space-x-2">
+<tr class:bg-warning={isActive} class:bg-opacity-30={isActive} data-start={segment.start} class="align-middle">
+	<th class="whitespace-nowrap">{index}</th>
+	<td class="space-x-2 whitespace-nowrap">
 		<!-- Start input -->
 		<input
 			class="w-20 input input-sm input-bordered"
@@ -170,7 +198,7 @@
 			</button>
 		</span>
 	</td>
-	<td class="space-x-2">
+	<td class="space-x-2 whitespace-nowrap">
 		<!-- End input -->
 		<input
 			class="w-20 input input-sm input-bordered"
@@ -211,16 +239,20 @@
 			</button>
 		</span>
 	</td>
-	<td>
-		<!-- Text input -->
-		<div
-			bind:textContent={segment.text}
-			on:input={handleKeystrokes}
-			class="max-w-md p-3 font-mono font-bold border-2 rounded-lg bg-base-100"
-			class:border-error={getCps(segment) > 16}
-			contenteditable="true"
-		/>
-	</td>
+	   <td class="w-full px-2">
+		   <!-- Text input -->
+		   <div
+			   bind:this={textInputEl}
+			   bind:textContent={segment.text}
+			   on:input={handleKeystrokes}
+			   class="w-full min-w-[200px] p-3 font-mono font-bold border-2 rounded-lg bg-base-100 focus:outline-none focus:ring-2 focus:ring-primary"
+			   class:border-error={getCps(segment) > 16}
+			   contenteditable="true"
+			   tabindex="0"
+			   on:keydown={handleTab}
+			   style="min-height:2.5rem;"
+		   />
+	   </td>
 	<td>
 		<div>
 			<span class="flex flex-col flex-grow text-xs">
