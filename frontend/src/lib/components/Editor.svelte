@@ -1,6 +1,5 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
-	import { writable } from 'svelte/store';
 	import toast from 'svelte-french-toast';
 	import {editorSettings, currentTranscription, editorHistory, audioMode } from '$lib/stores';
 	import EditorSettings from './EditorSettings.svelte';
@@ -8,9 +7,9 @@
 	import { CLIENT_API_HOST } from '$lib/utils';
 	import GoToSegment from './GoToSegment.svelte';
 
-
-	let language = writable('original');
-
+	export let language;
+	export let segmentsToShow;
+	export let setSegmentsToShow;
 	// List of audio-only file extensions
 	const audioExtensions = [
 		'mp3', 'm4a', 'wav', 'aac', 'ogg', 'flac', 'aiff', 'wma', 'alac', 'opus', 'amr', 'pcm', 'mka', 'dsd', 'wv', 'ape', 'm3u', 'm3u8', 'pls', 'aif', 'au', 'ra', 'ram', 'ac3', 'dts', 'mid', 'midi', 'mpa', 'mpc', 'oga', 'spx', 'tta', 'voc', 'vox', 'caf', 'snd', 'kar', 'mod', 's3m', 'xm', 'it', 'mtm', 'umx', 'amz', 'mogg', 'wv', '8svx', 'cda', 'gsm', 'ivs', 'mlp', 'mpc', 'msv', 'nmf', 'shn', 'tak', 'tta', 'vqf', 'xa'
@@ -41,9 +40,8 @@
 	}
 
 	// Segments lazy loading
-	let segmentsToShow = 20;
 	function loadMore() {
-		segmentsToShow += 10;
+		setSegmentsToShow(segmentsToShow + 10);
 	}
 	let loadMoreButton;
 
@@ -223,9 +221,9 @@
 				
 				<!-- Editor Settings -->
 				<EditorSettings />
-				
-				   <GoToSegment language={$language} segmentsToShow={segmentsToShow} setSegmentsToShow={(v) => segmentsToShow = v} />
-				
+
+				   <GoToSegment language={$language} segmentsToShow={segmentsToShow} setSegmentsToShow={setSegmentsToShow} />
+
 				<!-- Menu -->
 				<ul class="menu menu-horizontal bg-base-200 rounded-box">
 					<li>

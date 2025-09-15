@@ -1,27 +1,27 @@
 <script>
 	import { editorSettings, currentTranscription, currentVideoPlayerTime } from '$lib/stores';
-		export let language;
-		export let segmentsToShow;
-		export let setSegmentsToShow;
+    export let language;
+    export let segmentsToShow;
+    export let setSegmentsToShow;
 
     // Segment navigation
 	let segmentIndex = '';
 	
-	   function navigateToSegment() {
-		   const index = parseInt(segmentIndex);
-		   if (index > 0 && index <= getCurrentSegments().length) {
-			   // Check if we need to load more segments to reach the target
-			   if (index > segmentsToShow) {
-				   setSegmentsToShow(index + 10);
-				   setTimeout(() => {
-					   scrollToSegmentRow(index);
-				   }, 200)
-			   } else {
-				   // Target segment should already be loaded
-				   scrollToSegmentRow(index);
-			   }
-		   }
-	   }
+    function navigateToSegment() {
+        const index = parseInt(segmentIndex);
+        if (index > 0 && index <= getCurrentSegments().length) {
+            // Check if we need to load more segments to reach the target
+            if (index > segmentsToShow) {
+                setSegmentsToShow(index + 10);
+                setTimeout(() => {
+                    scrollToSegmentRow(index);
+                }, 200)
+            } else {
+                // Target segment should already be loaded
+                scrollToSegmentRow(index);
+            }
+        }
+    }
 	
 	function scrollToSegmentRow(index) {
 		// Try multiple selectors to find the segment rows

@@ -5,8 +5,10 @@
 	import Editor from '$lib/components/Editor.svelte';
 	import {currentVideoPlayerTime, currentTranscription, audioMode} from '$lib/stores';
 	import { CLIENT_API_HOST } from '$lib/utils';
+	import { writable } from 'svelte/store';
 
-
+	let language = writable('original');
+	let segmentsToShow = writable(20);
 	let video;
 	let tolerance = 0.1; // Tolerance level in seconds
 	let canPlay = false;
@@ -16,6 +18,70 @@
         video.currentTime = $currentVideoPlayerTime;
     }
 
+	// Helper to get current segments (copied from GoToSegment)
+	function getCurrentSegments() {
+		if ($language === 'original') {
+			return $currentTranscription.result.segments;
+		} else {
+			return $currentTranscription.translations
+				.filter(translation => translation.targetLanguage === language)[0]
+				?.result.segments || [];
+		}
+	}
+
+	// Helper to scroll to a segment row (copied from GoToSegment)
+	function scrollToSegmentRow(index) {
+		let allRows = document.querySelectorAll('table.table tbody tr[data-start]');
+		if (allRows.length === 0) {
+			allRows = document.querySelectorAll('tbody tr[data-start]');
+		}
+		if (allRows.length === 0) {
+			allRows = document.querySelectorAll('tr[data-start]');
+		}
+		const targetSegmentRow = allRows[index];
+		if (targetSegmentRow) {
+			targetSegmentRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			targetSegmentRow.classList.add('ring-2', 'ring-primary');
+			setTimeout(() => {
+				targetSegmentRow.classList.remove('ring-2', 'ring-primary');
+			}, 2000);
+		}
+	}
+
+	function navigateToSegment(index) {
+        if (index > 0 && index <= getCurrentSegments().length) {
+            // Check if we need to load more segments to reach the target
+            if (index > $segmentsToShow) {
+                segmentsToShow.set(index + 10);
+                setTimeout(() => {
+                    scrollToSegmentRow(index);
+                }, 200)
+            } else {
+                // Target segment should already be loaded
+                scrollToSegmentRow(index);
+            }
+        }
+    }
+
+	// Find the segment index for the current time and scroll to it
+	function goToCurrentTimeSegment() {
+		const segments = getCurrentSegments();
+		if (!segments.length) return;
+		// Find the last segment whose start is <= current time
+		let idx = segments.findIndex((seg, i) => {
+			const next = segments[i + 1];
+			return $currentVideoPlayerTime >= seg.start && (!next || $currentVideoPlayerTime < next.start);
+		});
+		console.log('Current index:', idx);
+
+		if (idx === -1) {
+			// If before first segment, go to first
+			if ($currentVideoPlayerTime < segments[0].start) idx = 0;
+			// If after last segment, go to last
+			else idx = segments.length - 1;
+		}
+		navigateToSegment(idx);
+	}
 	// Keyboard shortcuts for media control
 	onMount(() => {
 		const handleKeyDown = (e) => {
@@ -61,7 +127,7 @@
 	{#if $audioMode}
 		<div class="h-screen overflow-hidden relative">
 			<div class="h-full overflow-auto bg-content pb-20">
-				<Editor />
+				<Editor language={language} segmentsToShow={$segmentsToShow} setSegmentsToShow={(v) => segmentsToShow.set(v)} />
 			</div>
 			<div class="fixed bottom-0 left-0 right-0 bg-base-200 p-4 border-t">
 				<div class="flex items-center gap-4 max-w-full">
@@ -104,15 +170,26 @@
 						</div>
 					</div>
 					
-					<select class="select select-sm" on:change={(e) => video && (video.playbackRate = e.target.value)}>
-						<option value={0.5}>0.5x</option>
-						<option value={0.75}>0.75x</option>
-						<option value={1} selected>1x</option>
-						<option value={1.25}>1.25x</option>
-						<option value={1.5}>1.5x</option>
-						<option value={2}>2x</option>
-					</select>
-				</div>
+					   <!-- Go to current time segment button -->
+					   <button
+						   class="btn btn-primary btn-xs md:btn-sm btn-square"
+						   title="Go to segment at current time"
+						   on:click={() => goToCurrentTimeSegment()}
+					   >
+						   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+							   <circle cx="6" cy="12" r="2" fill="currentColor" />
+						   </svg>
+					   </button>
+					   <select class="select select-sm" on:change={(e) => video && (video.playbackRate = e.target.value)}>
+						   <option value={0.5}>0.5x</option>
+						   <option value={0.75}>0.75x</option>
+						   <option value={1} selected>1x</option>
+						   <option value={1.25}>1.25x</option>
+						   <option value={1.5}>1.5x</option>
+						   <option value={2}>2x</option>
+					   </select>
+					</div>
 			</div>
 		</div>
 	{:else}
@@ -132,7 +209,7 @@
 				</div>
 			</div>
 			<div class="col-span-2 overflow-auto bg-content">
-				<Editor />
+				<Editor language={language} segmentsToShow={$segmentsToShow} setSegmentsToShow={(v) => segmentsToShow.set(v)} />
 			</div>
 		</div>
 	{/if}
