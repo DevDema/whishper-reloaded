@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"strings"
 
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
@@ -92,6 +93,26 @@ func (s *Server) handlePostTranscription(c *fiber.Ctx) error {
 		log.Warn().Msgf("Device %v not supported, using cpu", transcription.Device)
 		transcription.Device = "cpu"
 	}
+	// Parse new params
+	if c.FormValue("beam_size") != "" {
+		var beamSize int
+		_, err := fmt.Sscanf(c.FormValue("beam_size"), "%d", &beamSize)
+		if err == nil {
+			transcription.BeamSize = beamSize
+		}
+	}
+	transcription.InitialPrompt = c.FormValue("initial_prompt")
+	hotwordsStr := c.FormValue("hotwords")
+	if hotwordsStr != "" {
+		// Split by comma and trim spaces
+		var hotwords []string
+		for _, hw := range SplitAndTrim(hotwordsStr, ",") {
+			if hw != "" {
+				hotwords = append(hotwords, hw)
+			}
+		}
+		transcription.Hotwords = hotwords
+	}
 
 	log.Debug().Msgf("Transcription: %+v", transcription)
 	// Save transcription to database
@@ -116,6 +137,16 @@ func (s *Server) handlePostTranscription(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/json")
 	c.Write(json)
 	return nil
+}
+
+// SplitAndTrim splits a string by sep and trims spaces from each part
+func SplitAndTrim(s, sep string) []string {
+   var out []string
+   for _, part := range strings.Split(s, sep) {
+	   trimmed := strings.TrimSpace(part)
+	   out = append(out, trimmed)
+   }
+   return out
 }
 
 func (s *Server) handleDeleteTranscription(c *fiber.Ctx) error {

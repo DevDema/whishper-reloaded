@@ -46,19 +46,28 @@ class FasterWhisperBackend(Backend):
             download_model(self.model_size, output_dir=local_model_path, local_files_only=False, cache_dir=local_model_cache)
 
     def transcribe(
-        self, input: np.ndarray, silent: bool = False, language: str = None
+        self,
+        input: np.ndarray,
+        silent: bool = False,
+        language: str = None,
+        beam_size: int = 5,
+        initial_prompt: str = None,
+        hotwords: list[str] = None,
     ) -> Transcription:
         """
         Return word level transcription data.
-        World level probabities are calculated by ctranslate2.models.Whisper.align
+        World level probabilities are calculated by ctranslate2.models.Whisper.align
+        Accepts additional parameters: beam_size, initial_prompt, hotwords.
         """
         result: list[Segment] = []
         assert self.model is not None
         segments, info = self.model.transcribe(
             input,
-            beam_size=5,
+            beam_size=beam_size,
             word_timestamps=True,
             language=language,
+            initial_prompt=initial_prompt,
+            hotwords=hotwords,
         )
         # ps = playback seconds
         with tqdm(
@@ -87,7 +96,6 @@ class FasterWhisperBackend(Backend):
                 result.append(segment_extract)
                 if not silent:
                     pbar.update(segment.end - pbar.last_print_n)
-        
         text = " ".join([segment["text"] for segment in result])
         text = ' '.join(text.strip().split())
         transcription: Transcription = {

@@ -18,6 +18,9 @@ type Transcription struct {
 	Device       string             `bson:"device" json:"device"`
 	FileName     string             `bson:"fileName" json:"fileName"`
 	SourceUrl    string             `bson:"sourceUrl" json:"sourceUrl"`
+	BeamSize     int                `bson:"beam_size" json:"beam_size"`
+	InitialPrompt string            `bson:"initial_prompt" json:"initial_prompt"`
+	Hotwords     []string           `bson:"hotwords" json:"hotwords"`
 	Result       WhisperResult      `bson:"result" json:"result"`
 	Translations []Translation      `bson:"translations" json:"translations"`
 }

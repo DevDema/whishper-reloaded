@@ -10,6 +10,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -72,44 +73,62 @@ func DownloadMedia(t *models.Transcription) (string, error) {
 }
 
 func SendTranscriptionRequest(t *models.Transcription, body *bytes.Buffer, writer *multipart.Writer) (*models.WhisperResult, error) {
-	url := fmt.Sprintf("http://%v/transcribe?model_size=%v&task=%v&language=%v&device=%v", os.Getenv("ASR_ENDPOINT"), t.ModelSize, t.Task, t.Language, t.Device)
-	// Send transcription request to transcription service
-	req, err := http.NewRequest("POST", url, body)
-	if err != nil {
-		log.Debug().Err(err).Msg("Error creating request to transcription service")
-		return nil, err
-	}
+   // Build query string with new params if set
+   baseUrl := fmt.Sprintf("http://%v/transcribe?model_size=%v&task=%v&language=%v&device=%v", os.Getenv("ASR_ENDPOINT"), t.ModelSize, t.Task, t.Language, t.Device)
+   params := ""
+   if t.BeamSize > 0 {
+	   params += fmt.Sprintf("&beam_size=%d", t.BeamSize)
+   }
+   if t.InitialPrompt != "" {
+	   params += fmt.Sprintf("&initial_prompt=%s", urlQueryEscape(t.InitialPrompt))
+   }
+   if len(t.Hotwords) > 0 {
+	   for _, hw := range t.Hotwords {
+		   params += fmt.Sprintf("&hotwords=%s", urlQueryEscape(hw))
+	   }
+   }
+   url := baseUrl + params
+   // Send transcription request to transcription service
+   req, err := http.NewRequest("POST", url, body)
+   if err != nil {
+	   log.Debug().Err(err).Msg("Error creating request to transcription service")
+	   return nil, err
+   }
 
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Accept", "application/json")
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Error().Err(err).Msg("Error sending request")
-		return nil, err
-	}
-	defer resp.Body.Close()
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Error().Err(err).Msg("Error reading response body")
-		return nil, err
-	}
+   req.Header.Set("Content-Type", writer.FormDataContentType())
+   req.Header.Set("Accept", "application/json")
+   client := &http.Client{}
+   resp, err := client.Do(req)
+   if err != nil {
+	   log.Error().Err(err).Msg("Error sending request")
+	   return nil, err
+   }
+   defer resp.Body.Close()
+   b, err := io.ReadAll(resp.Body)
+   if err != nil {
+	   log.Error().Err(err).Msg("Error reading response body")
+	   return nil, err
+   }
 
-	if resp.StatusCode != http.StatusOK {
-		log.Error().Msgf("Response from %v: %v", url, string(b))
-		log.Error().Err(err).Msgf("Invalid response status %v:", resp.StatusCode)
-		return nil, errors.New("invalid status")
-	}
+   if resp.StatusCode != http.StatusOK {
+	   log.Error().Msgf("Response from %v: %v", url, string(b))
+	   log.Error().Err(err).Msgf("Invalid response status %v:", resp.StatusCode)
+	   return nil, errors.New("invalid status")
+   }
 
-	var asrResponse *models.WhisperResult
-	if err := json.Unmarshal(b, &asrResponse); err != nil {
-		log.Error().Err(err).Msg("Error decoding response")
-		log.Error().Msgf("ASR Response: %+v\n", b)
-		return nil, err
-	}
+   var asrResponse *models.WhisperResult
+   if err := json.Unmarshal(b, &asrResponse); err != nil {
+	   log.Error().Err(err).Msg("Error decoding response")
+	   log.Error().Msgf("ASR Response: %+v\n", b)
+	   return nil, err
+   }
 
-	return asrResponse, nil
+   return asrResponse, nil
+}
 
+// urlQueryEscape is a helper for query escaping
+func urlQueryEscape(s string) string {
+   return strings.ReplaceAll(strings.ReplaceAll(url.QueryEscape(s), "+", "%20"), "%7E", "~")
 }
 
 func CheckTranscriptionServiceHealth() (ok bool, message string) {
