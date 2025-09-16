@@ -54,6 +54,7 @@ func (s *Server) SetupWebsocket() {
 			_, msg, err := c.ReadMessage()
 			if err != nil {
 				// Check for normal close error (1000) or going away error (1001)
+				log.Debug().Err(err).Msgf("Error received as a warning!")
 				if err.Error() != "websocket: close 1000 (normal)" &&
 					err.Error() != "websocket: close 1001 (going away)" {
 					log.Debug().Err(err).Msgf("Error reading message")

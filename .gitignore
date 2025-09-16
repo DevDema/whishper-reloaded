@@ -13,3 +13,4 @@ whisper_models/
 venv
 transcription-api/backends/parallelization.py
 db_data
+transcription-api/models
