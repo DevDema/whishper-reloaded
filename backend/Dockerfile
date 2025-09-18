@@ -5,9 +5,15 @@ RUN apt update && apt install -y wget tar xz-utils
 RUN wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
 RUN chmod a+rx /usr/local/bin/yt-dlp
 
-RUN wget https://github.com/upx/upx/releases/download/v5.0.0/upx-5.0.0-arm64_linux.tar.xz && \
-    tar -xf upx-5.0.0-arm64_linux.tar.xz && \
-    cp upx-5.0.0-arm64_linux/upx /usr/local/bin/ && \
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+      wget https://github.com/upx/upx/releases/download/v5.0.0/upx-5.0.0-arm64_linux.tar.xz && \
+      tar -xf upx-5.0.0-arm64_linux.tar.xz && \
+      cp upx-5.0.0-arm64_linux/upx /usr/local/bin/; \
+    else \
+      wget https://github.com/upx/upx/releases/download/v5.0.0/upx-5.0.0-amd64_linux.tar.xz && \
+      tar -xf upx-5.0.0-amd64_linux.tar.xz && \
+      cp upx-5.0.0-amd64_linux/upx /usr/local/bin/; \
+    fi && \
     chmod +x /usr/local/bin/upx
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
