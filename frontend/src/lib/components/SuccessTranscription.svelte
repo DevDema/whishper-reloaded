@@ -12,6 +12,9 @@
     let translate = () => {
         dispatch('translate', tr); // emit a custom event with the transcription as detail
     }
+    let rename = () => {
+        dispatch('rename', tr); // emit a custom event with the transcription as detail
+    }
 </script>
 
 <div class="alert alert-success p-3">
@@ -49,6 +52,16 @@
                     <path d="M7 11l5 5l5 -5"></path>
                     <path d="M12 4l0 12"></path>
                  </svg>
+            </span>
+        </button>
+        <button on:click={rename} class="btn btn-xs md:btn-sm">
+            <span class="tooltip flex items-center justify-center" data-tip="Rename">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M8 4h-2c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-14c0-.55-.45-1-1-1z"></path>
+                    <path d="M14 10h-4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1z"></path>
+                    <path d="M20 4h-2c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-14c0-.55-.45-1-1-1z"></path>
+                </svg>
             </span>
         </button>
         {#if languagesAvailable}
