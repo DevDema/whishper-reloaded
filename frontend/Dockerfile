@@ -10,7 +10,10 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --no-froze
 
 FROM base AS build
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --no-frozen-lockfile
+RUN pnpm add -D terser
 ENV BODY_SIZE_LIMIT=0
+ARG BUILD_MODE=production
+ENV BUILD_MODE=${BUILD_MODE}
 RUN pnpm run build
 
 FROM base
