@@ -25,6 +25,31 @@ export const deleteTranscription = async function (id) {
     }
 }
 
+export const renameTranscription = async function (id, newFileName) {
+    const formData = new FormData();
+    formData.append('newFileName', newFileName);
+
+    const response = await fetch(`${CLIENT_API_HOST}/api/rename/${id}`, {
+        method: 'POST',
+        body: formData
+    });
+
+    if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
+    }
+
+    const updatedTranscription = await response.json();
+    transcriptions.update((_transcriptions) => {
+        const index = _transcriptions.findIndex(t => t.id === id);
+        if (index !== -1) {
+            _transcriptions[index] = updatedTranscription;
+        }
+        return _transcriptions;
+    });
+
+    return updatedTranscription;
+}
+
 export const getRandomSentence = function () {
     const sentences = [
         "Audio in, text out. What's your sound about?",

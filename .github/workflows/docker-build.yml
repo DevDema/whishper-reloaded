@@ -1,0 +1,55 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Frontend
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          push: false
+          tags: whishper-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Backend
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          push: false
+          tags: whishper-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Transcription API (GPU)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./transcription-api
+          file: ./transcription-api/Dockerfile.gpu
+          push: false
+          tags: whisper-transcription-api-gpu:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Transcription API (CPU)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./transcription-api
+          file: ./transcription-api/Dockerfile.cpu
+          push: false
+          tags: whisper-transcription-api-cpu:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

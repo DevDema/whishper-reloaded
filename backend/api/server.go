@@ -119,6 +119,16 @@ func (s *Server) RegisterRoutes() {
 		return err
 	})
 
+	// Register HTTP route for renaming files
+	s.Router.Post("/api/rename/:id", func(c *fiber.Ctx) error {
+		log.Debug().Msgf("POST /api/rename/%v", c.Params("id"))
+		err := s.handleRenameFile(c)
+		if err != nil {
+			log.Error().Err(err).Msg("Error handling POST /api/rename/:id")
+		}
+		return err
+	})
+
 	// Register HTTP route for receiving the form data and creating new transcription job.
 	s.Router.Post("/api/transcriptions", func(c *fiber.Ctx) error {
 		log.Debug().Msg("POST /api/transcriptions")

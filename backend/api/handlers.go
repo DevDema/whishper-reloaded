@@ -210,6 +210,56 @@ func (s *Server) handlePatchTranscription(c *fiber.Ctx) error {
 	return nil
 }
 
+func (s *Server) handleRenameFile(c *fiber.Ctx) error {
+	id := c.Params("id")
+	newFileName := c.FormValue("newFileName")
+	
+	if newFileName == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "New file name is required")
+	}
+
+	// Get the transcription from db
+	transcription := s.Db.GetTranscription(id)
+	if transcription == nil {
+		return fiber.NewError(fiber.StatusNotFound, "Transcription not found")
+	}
+
+	// Split current filename to get timeid part
+	parts := strings.Split(transcription.FileName, models.FileNameSeparator)
+	if len(parts) < 2 {
+		return fiber.NewError(fiber.StatusInternalServerError, "Invalid filename format")
+	}
+	timeid := parts[0]
+
+	// Create new filename
+	newFullFileName := timeid + models.FileNameSeparator + newFileName
+	oldPath := fmt.Sprintf("%v/%v", os.Getenv("UPLOAD_DIR"), transcription.FileName)
+	newPath := fmt.Sprintf("%v/%v", os.Getenv("UPLOAD_DIR"), newFullFileName)
+
+	// Rename the file on disk
+	err := os.Rename(oldPath, newPath)
+	if err != nil {
+		log.Error().Err(err).Msgf("Error renaming file from %v to %v", oldPath, newPath)
+		return fiber.NewError(fiber.StatusInternalServerError, "Error renaming file")
+	}
+
+	// Update filename in database
+	transcription.FileName = newFullFileName
+	updatedTranscription, err := s.Db.UpdateTranscription(transcription)
+	if err != nil {
+		// Try to revert the file rename as db update failed
+		os.Rename(newPath, oldPath)
+		log.Error().Err(err).Msg("Error updating filename in database")
+		return fiber.NewError(fiber.StatusInternalServerError, "Error updating database")
+	}
+
+	// Broadcast the change to websocket clients
+	s.BroadcastTranscription(updatedTranscription)
+
+	// Return the updated transcription
+	return c.JSON(updatedTranscription)
+}
+
 func (s *Server) handleTranslate(c *fiber.Ctx) error {
 	id := c.Params("id")
 	targetLang := c.Params("target")
