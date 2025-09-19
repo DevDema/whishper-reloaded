@@ -19,17 +19,26 @@ async def transcribe_endpoint(
     device: str = "cpu",
     beam_size: int = 5,
     initial_prompt: str = None,
-    hotwords: list[str] = None,
+    hotwords: str = None,
 ):
     if device != "cpu" and device != "cuda":
         return {"detail": "Device must be either cpu or cuda"}
     print(f"Transcribing with model {model_size.value} on device {device}...")
+
+    # Convert hotwords from comma-separated string to list[str] if needed
+    hotwords_list = None
+    if hotwords is not None:
+        if isinstance(hotwords, str):
+            hotwords_list = [hw.strip() for hw in hotwords.split(",") if hw.strip()]
+        else:
+            hotwords_list = hotwords
+
     if file is not None:
         # if a file is uploaded, use it
-        return await transcribe_file(file, model_size.value, language.value, device, beam_size, initial_prompt, hotwords)
+        return await transcribe_file(file, model_size.value, language.value, device, beam_size, initial_prompt, hotwords_list)
     elif filename is not None:
         # if a filename is provided, use it
-        return await transcribe_from_filename(filename, model_size.value, language.value, device, beam_size, initial_prompt, hotwords)
+        return await transcribe_from_filename(filename, model_size.value, language.value, device, beam_size, initial_prompt, hotwords_list)
     else:
         return {"detail": "No file uploaded and no filename provided"}
 

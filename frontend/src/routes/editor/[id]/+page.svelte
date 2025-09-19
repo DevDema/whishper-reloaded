@@ -140,8 +140,10 @@
 						<source src="{CLIENT_API_HOST}/api/video/{$currentTranscription.fileName}" type="video/mp4" />
 					</audio>
 					
-					<button class="btn btn-circle btn-primary" on:click={() => video && (video.paused ? video.play() : video.pause())}>
-						{#if video && !video.paused}
+					<button class="btn btn-circle btn-primary" on:click={() => video && (video.paused ? video.play() : video.pause())}> 
+						{#if !canPlay}
+							<span class="loading loading-spinner loading-sm"></span>
+						{:else if video && !video.paused}
 							<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
 								<path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
 							</svg>

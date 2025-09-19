@@ -10,7 +10,6 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -73,21 +72,24 @@ func DownloadMedia(t *models.Transcription) (string, error) {
 }
 
 func SendTranscriptionRequest(t *models.Transcription, body *bytes.Buffer, writer *multipart.Writer) (*models.WhisperResult, error) {
-   // Build query string with new params if set
-   baseUrl := fmt.Sprintf("http://%v/transcribe?model_size=%v&task=%v&language=%v&device=%v", os.Getenv("ASR_ENDPOINT"), t.ModelSize, t.Task, t.Language, t.Device)
-   params := ""
+   // Build the base URL
+   url := fmt.Sprintf("http://%v/transcribe", os.Getenv("ASR_ENDPOINT"))
+
+   // Create form fields
+   _ = writer.WriteField("model_size", t.ModelSize)
+   _ = writer.WriteField("task", t.Task)
+   _ = writer.WriteField("language", t.Language)
+   _ = writer.WriteField("device", t.Device)
+   
    if t.BeamSize > 0 {
-	   params += fmt.Sprintf("&beam_size=%d", t.BeamSize)
+       _ = writer.WriteField("beam_size", fmt.Sprintf("%d", t.BeamSize))
    }
    if t.InitialPrompt != "" {
-	   params += fmt.Sprintf("&initial_prompt=%s", urlQueryEscape(t.InitialPrompt))
+       _ = writer.WriteField("initial_prompt", t.InitialPrompt)
    }
    if len(t.Hotwords) > 0 {
-	   for _, hw := range t.Hotwords {
-		   params += fmt.Sprintf("&hotwords=%s", urlQueryEscape(hw))
-	   }
+       _ = writer.WriteField("hotwords", strings.Join(t.Hotwords, ","))
    }
-   url := baseUrl + params
    // Send transcription request to transcription service
    req, err := http.NewRequest("POST", url, body)
    if err != nil {
@@ -124,11 +126,6 @@ func SendTranscriptionRequest(t *models.Transcription, body *bytes.Buffer, write
    }
 
    return asrResponse, nil
-}
-
-// urlQueryEscape is a helper for query escaping
-func urlQueryEscape(s string) string {
-   return strings.ReplaceAll(strings.ReplaceAll(url.QueryEscape(s), "+", "%20"), "%7E", "~")
 }
 
 func CheckTranscriptionServiceHealth() (ok bool, message string) {
