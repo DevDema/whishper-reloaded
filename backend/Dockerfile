@@ -1,25 +1,21 @@
 FROM --platform=$BUILDPLATFORM golang:bookworm AS ytdlp_cache
 ARG TARGETOS
 ARG TARGETARCH
+ARG BUILDPLATFORM
 RUN apt update && apt install -y wget tar xz-utils
 RUN wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
 RUN chmod a+rx /usr/local/bin/yt-dlp
 
-RUN if [ "$TARGETARCH" = "arm64" ]; then \
-      wget https://github.com/upx/upx/releases/download/v5.0.0/upx-5.0.0-arm64_linux.tar.xz && \
-      tar -xf upx-5.0.0-arm64_linux.tar.xz && \
-      cp upx-5.0.0-arm64_linux/upx /usr/local/bin/; \
-    else \
-      wget https://github.com/upx/upx/releases/download/v5.0.0/upx-5.0.0-amd64_linux.tar.xz && \
-      tar -xf upx-5.0.0-amd64_linux.tar.xz && \
-      cp upx-5.0.0-amd64_linux/upx /usr/local/bin/; \
-    fi && \
+RUN BUILDARCH=$(echo "$BUILDPLATFORM" | cut -d'/' -f2); \
+    wget https://github.com/upx/upx/releases/download/v5.0.0/upx-5.0.0-${BUILDARCH}_linux.tar.xz && \
+    tar -xf upx-5.0.0-${BUILDARCH}_linux.tar.xz && \
+    cp upx-5.0.0-${BUILDARCH}_linux/upx /usr/local/bin/ && \
     chmod +x /usr/local/bin/upx
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 COPY . .
 RUN go mod tidy
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o whishper . && \
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -installsuffix cgo -o whishper . && \
     upx whishper
 
 RUN chmod a+rx whishper
