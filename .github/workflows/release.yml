@@ -29,6 +29,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Update version in frontend package.json
+        run: |
+          VERSION_WITHOUT_V=$(echo "${{ github.event.inputs.version }}" | sed 's/^v//')
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION_WITHOUT_V\"/" frontend/package.json
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add frontend/package.json
+          git commit -m "Update frontend version to $VERSION_WITHOUT_V" || echo "No changes to commit"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
