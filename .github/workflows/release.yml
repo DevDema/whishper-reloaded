@@ -19,8 +19,8 @@ jobs:
       
       - name: Create and push tag
         run: |
-          git tag ${{ github.event.inputs.version }}
-          git push origin ${{ github.event.inputs.version }}
+          git tag ${{ github.event.inputs.version }} || true
+          git push origin ${{ github.event.inputs.version }} || true
 
   build-and-push:
     needs: create-tag
