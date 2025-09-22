@@ -15,3 +15,5 @@ transcription-api/backends/parallelization.py
 db_data
 transcription-api/models
 .claude
+package-lock.json
+package.json
