@@ -370,3 +370,12 @@
 		</div>
 	{/if}
 </main>
+
+<footer class="text-center py-4 text-sm opacity-70">
+	<p>Whishper version: {data.version}</p>
+	<p>
+		<a href="https://github.com/DevDema/whishper" class="link">Whishper-Reloaded</a> is a fork of
+		<a href="https://github.com/pluja/whishper" class="link">Whishper</a>.
+		Praise the idea of the original creator.
+	</p>
+</footer>
