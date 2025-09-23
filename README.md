@@ -1,3 +1,5 @@
+[![whishper banner](misc/banner.png)](https://whishper.net)
+
 **Whishper Reloaded** is an open-source, 100% local audio transcription and subtitling suite with a full-featured web UI. It is based on [Pluja's Whishper](https://github.com/pluja/whishper) and further improved.
 
 ## What's different?
@@ -79,8 +81,6 @@ The docker-compose.yml references two different env files, one for backend and a
     
 # Original Whishper description
 
-[![whishper banner](misc/banner.png)](https://whishper.net)
-
 [![](https://img.shields.io/badge/website-066da5?style=for-the-badge&logo=icloud&logoColor=white)](https://whishper.net)
 [![](https://img.shields.io/badge/self%20host%20guide-066da5?style=for-the-badge&logo=googledocs&logoColor=white)](https://whishper.net/guides/install)
 [![](https://img.shields.io/badge/screenshots-5c1f87?style=for-the-badge&logo=slickpic&logoColor=white)](#screenshots)
@@ -148,6 +148,7 @@ These screenshots are available on [the official website](https://whishper.net/u
 
 - [Faster Whisper](https://github.com/guillaumekln/faster-whisper)
 - [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
+
 
 
 
