@@ -142,16 +142,17 @@ These screenshots are available on [the official website](https://whishper.net/u
 
 ## Star History
 
-<a href="https://star-history.com/#pluja/whishper&Date">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=pluja/whishper&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=pluja/whishper&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=pluja/whishper&type=Date" />
-  </picture>
+<a href="https://www.star-history.com/#devdema/whishper&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=devdema/whishper&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=devdema/whishper&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=devdema/whishper&type=Date" />
+ </picture>
 </a>
 
 ## Credits
 
 - [Faster Whisper](https://github.com/guillaumekln/faster-whisper)
 - [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
+
 
