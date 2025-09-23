@@ -2,10 +2,17 @@
 
 ## What's different?
 
-- [x] Load whishper backend, frontend and whishper-api as separate containers ([DockerHub frontend](https://hub.docker.com/r/thespartan94/whishper-frontend), [DockerHub backend](https://hub.docker.com/r/thespartan94/whishper-backend))
+- [x] Load whishper backend, frontend and whishper-api as separate containers ([DockerHub frontend](https://hub.docker.com/r/thespartan94/whishper-frontend), [DockerHub backend](https://hub.docker.com/r/thespartan94/whishper-backend)). Useful if your powerful transcriptive is not always on and you need the service at all times!
 - [x] Search for specific transcriptions via the search bar!
-- [x] Better page loading experience, solving blocking UI threads making browsers lag.
+- [x] Better page loading experience using pagination, solving blocking UI threads making browsers lag.
 - [x] Feedback banners on connections to available services, having a more fail-prone approach to translations and new transcriptions services.
+- [x] Rename your transcriptions after a successful transcription.
+- [x] Upload your whole transcription through JSON file for external pre-processing before real-time editing! Download the current transcription in JSON format, edit it externally, and reupload.  
+- [x] Real-time editing improvements:
+    - [x] Audio-only mode for the Whishper editor
+    - [x] Use shortcut to control the playback [F7, F8, F9]
+    - [x] Navigate through segments using TAB on your keyboard
+    - [x] Go to current segment / Navigate to segment number  
 
 ## Docker-Compose file
 
@@ -147,3 +154,4 @@ These screenshots are available on [the official website](https://whishper.net/u
 
 - [Faster Whisper](https://github.com/guillaumekln/faster-whisper)
 - [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
+
