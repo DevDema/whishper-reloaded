@@ -6,6 +6,11 @@ labels: release
 assignees: ''
 ---
 
+[link to Whishper-backend]
+[link to Whishper-frontend]
+[link to Whishper-transcription-api-cpu]
+[link to Whishper-transcription-api-gpu]
+
 ## 🚀 New Features
 -
 

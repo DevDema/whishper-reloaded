@@ -50,6 +50,44 @@ export const renameTranscription = async function (id, newFileName) {
     return updatedTranscription;
 }
 
+export const uploadJSON = async function (id, jsonData) {
+    const response = await fetch(`${CLIENT_API_HOST}/api/upload`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            transcriptionId: id,
+            result: jsonData
+        })
+    });
+
+    if (response.status === 304) {
+        // Handle "no changes" case specifically
+        const result = { noChanges: true };
+        result.status = response.status;
+        return result;
+    }
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        const error = new Error(errorData.error || 'Upload failed');
+        error.status = response.status;
+        throw error;
+    }
+
+    const updatedTranscription = await response.json();
+    transcriptions.update((_transcriptions) => {
+        const index = _transcriptions.findIndex(t => t.id === id);
+        if (index !== -1) {
+            _transcriptions[index] = updatedTranscription;
+        }
+        return _transcriptions;
+    });
+
+    return updatedTranscription;
+}
+
 export const getRandomSentence = function () {
     const sentences = [
         "Audio in, text out. What's your sound about?",

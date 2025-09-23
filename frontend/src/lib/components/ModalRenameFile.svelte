@@ -61,7 +61,7 @@
             const fullNewFileName = newFileName + fileExtension;
             await renameTranscription(tr.id, fullNewFileName);
             toast.success('File renamed successfully!');
-            document.getElementById('modalRename').close();
+            closeModal();
         } catch (error) {
             console.error('Error renaming file:', error);
             toast.error('Failed to rename file. Please try again.');
