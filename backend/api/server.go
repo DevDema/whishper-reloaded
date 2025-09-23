@@ -158,6 +158,16 @@ func (s *Server) RegisterRoutes() {
 		return err
 	})
 
+	// Register HTTP route for uploading JSON to replace transcription result
+	s.Router.Post("/api/upload", func(c *fiber.Ctx) error {
+		log.Debug().Msg("POST /api/upload")
+		err := s.handleUploadJSON(c)
+		if err != nil {
+			log.Error().Err(err).Msg("Error handling POST /api/upload")
+		}
+		return err
+	})
+
 	s.Router.Get("/api/status", func(c *fiber.Ctx) error {
 		healthy, msg := utils.CheckTranscriptionServiceHealth()
 		if healthy {
