@@ -148,7 +148,7 @@ These screenshots are available on [the official website](https://whishper.net/u
 
 - [Faster Whisper](https://github.com/guillaumekln/faster-whisper)
 - [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
-
+- This project is a fork of [Whishper]. Support also the original idea of the creator: [Whishper](https://github.com/pluja/whishper)
 
 
 
