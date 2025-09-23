@@ -134,12 +134,6 @@ These screenshots are available on [the official website](https://whishper.net/u
 - [A transcription download](https://whishper.net/usage/download/)
 - [The subtitle editor](https://whishper.net/usage/editor/)
 
-## Support
-
-- [Monero](https://www.getmonero.org/): `82x6cn628oTUXV63DxBd6MJB8d997FhaSaGFvoWMgwihVmgiXYQPAwm2BCH31AovA9Qnnv1qQRrJk83TaJ8DaSZU2zkbWfM`
-- [Bitcoin](https://bitcoin.org/en/): `bc1qfph44jl4cy03stwfkk7g0qlwx2grldr9xpk086`
-- [Lightning Network (kycnotme)](https://getalby.com/p/kycnotme)
-
 ## Star History
 
 <a href="https://www.star-history.com/#devdema/whishper&Date">
@@ -154,5 +148,6 @@ These screenshots are available on [the official website](https://whishper.net/u
 
 - [Faster Whisper](https://github.com/guillaumekln/faster-whisper)
 - [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate)
+
 
 
