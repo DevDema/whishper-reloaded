@@ -283,3 +283,78 @@ func (s *Server) handleTranslate(c *fiber.Ctx) error {
 	s.BroadcastTranscription(transcription)
 	return nil
 }
+
+func (s *Server) handleUploadJSON(c *fiber.Ctx) error {
+	var request struct {
+		TranscriptionId string      `json:"transcriptionId"`
+		Result         interface{} `json:"result"`
+	}
+
+	// Parse the JSON body
+	err := json.Unmarshal(c.Body(), &request)
+	if err != nil {
+		log.Error().Err(err).Msg("Error parsing JSON body")
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid JSON format")
+	}
+
+	// Validate required fields
+	if request.TranscriptionId == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "transcriptionId is required")
+	}
+
+	if request.Result == nil {
+		return fiber.NewError(fiber.StatusBadRequest, "result is required")
+	}
+
+	// Get the transcription from the database
+	transcription := s.Db.GetTranscription(request.TranscriptionId)
+	if transcription == nil {
+		return fiber.NewError(fiber.StatusNotFound, "Transcription not found")
+	}
+
+	// Validate the JSON structure
+	resultJSON, err := json.Marshal(request.Result)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid result format")
+	}
+
+	// Try to unmarshal into WhisperResult to validate structure
+	var whisperResult models.WhisperResult
+	err = json.Unmarshal(resultJSON, &whisperResult)
+	if err != nil {
+		log.Error().Err(err).Msg("Error validating JSON structure")
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid transcription result format")
+	}
+
+	// Basic validation - ensure required fields exist
+	if whisperResult.Language == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Missing required field: language")
+	}
+
+	if whisperResult.Text == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Missing required field: text")
+	}
+
+	if len(whisperResult.Segments) == 0 {
+		return fiber.NewError(fiber.StatusBadRequest, "Missing required field: segments")
+	}
+
+	// Update the transcription with the new result
+	transcription.Result = whisperResult
+	updatedTranscription, err := s.Db.UpdateTranscription(transcription)
+	if err != nil {
+		if err.Error() == "no documents were modified" {
+			return c.Status(fiber.StatusNotModified).JSON(fiber.Map{
+				"message": "No changes were made",
+			})
+		}
+		log.Error().Err(err).Msg("Error updating transcription in database")
+		return fiber.NewError(fiber.StatusInternalServerError, "Error updating transcription")
+	}
+
+	// Broadcast the updated transcription to websocket clients
+	s.BroadcastTranscription(updatedTranscription)
+
+	// Return the updated transcription
+	return c.JSON(updatedTranscription)
+}
