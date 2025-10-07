@@ -5,6 +5,7 @@
 
     let subtitleFormat = "srt";
     let language = "original";
+    let includeWords = false;
 
     function downloadSubtitle() {
         console.log("download subtitle");
@@ -38,7 +39,7 @@
         } else if (subtitleFormat == "vtt") {
             downloadVTT(segments, title);
         } else if (subtitleFormat == "json") {
-            downloadJSON(tr.result, title);
+            downloadJSON(tr.result, title, includeWords);
         } else if (subtitleFormat == "txt") {
             downloadTXT(text, title);
         }
@@ -95,7 +96,7 @@
                     <option value="txt">TXT</option>
                 </select>
             </div>
-    
+
             <div class="form-control">
                 <label for="language" class="label">
                     <span class="label-text font-bold">Text Language</span>
@@ -108,6 +109,15 @@
                 </select>
             </div>
         </div>
+
+        {#if subtitleFormat === "json"}
+        <div class="form-control mt-4">
+            <label class="label cursor-pointer space-x-2">
+                <span class="label-text">Include word-level timestamps</span>
+                <input type="checkbox" bind:checked={includeWords} class="checkbox" />
+            </label>
+        </div>
+        {/if}
 
         <div class="space-x-2 mt-8">
             <span class="tooltip" data-tip="Download {subtitleFormat} file in {language}.">
