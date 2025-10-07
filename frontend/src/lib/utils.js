@@ -148,8 +148,26 @@ export const downloadTXT = function (text, title) {
 }
 
 // Downloads received JSON data as a JSON file
-export const downloadJSON = function (jsonData, title) {
-    let srtBlob = new Blob([JSON.stringify(jsonData)], {type: 'text/plain'});
+export const downloadJSON = function (jsonData, title, includeWords = false) {
+    // Remove "words" arrays from the data if includeWords is false
+    const cleanData = includeWords
+        ? jsonData
+        : Array.isArray(jsonData)
+            ? jsonData.map(item => {
+                const { words, ...rest } = item;
+                return rest;
+            })
+            : jsonData.segments
+                ? {
+                    ...jsonData,
+                    segments: jsonData.segments.map(segment => {
+                        const { words, ...rest } = segment;
+                        return rest;
+                    })
+                }
+                : jsonData;
+
+    let srtBlob = new Blob([JSON.stringify(cleanData)], {type: 'text/plain'});
     let url = URL.createObjectURL(srtBlob);
     let link = document.createElement('a');
     link.href = url;
