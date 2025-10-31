@@ -176,6 +176,20 @@ func (s *Server) RegisterRoutes() {
 				"service_message": msg,
 			})
 		}
+
+		// If the health check failed, it may be because the transcription-api is busy
+		// processing a running transcription and not responding. Check the DB for
+		// running transcriptions and fall back to reporting a likely running state.
+		running := s.Db.GetRunningTranscription()
+		if running != nil && len(running) > 0 {
+			log.Debug().Msgf("Transcription service healthcheck failed but %d running transcriptions found", len(running))
+			return c.JSON(fiber.Map{
+				"status": "ok",
+				"service_message": "transcription service unreachable but there are running transcriptions",
+			})
+		}
+
+		// No running transcriptions -> real outage
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
 			"status": "error",
 			"error":  "transcription service unavailable",

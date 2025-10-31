@@ -157,6 +157,31 @@ func (s *MongoDb) GetPendingTranscriptions() []*models.Transcription {
 	return transcriptions
 }
 
+func (s *MongoDb) GetRunningTranscription() []*models.Transcription {
+	collection := s.client.Database("whishper").Collection("transcriptions")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.D{primitive.E{Key: "status", Value: models.TranscriptionStatusRunning}}
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		log.Printf("Error getting transcriptions: %v", err)
+		return nil
+	}
+	defer cursor.Close(ctx)
+	var transcriptions []*models.Transcription
+	for cursor.Next(ctx) {
+		var result models.Transcription
+		err := cursor.Decode(&result)
+		if err != nil {
+			log.Printf("Error decoding transcription: %v", err)
+			return nil
+		}
+		transcriptions = append(transcriptions, &result)
+	}
+	return transcriptions
+}
+
 func (m *MongoDb) UpdateTranscription(t *models.Transcription) (*models.Transcription, error) {
 	collection := m.client.Database("whishper").Collection("transcriptions")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
