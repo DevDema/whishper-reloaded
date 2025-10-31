@@ -1,14 +1,33 @@
-version: '3.9'
+version: "3"
 
-services:      
-  translate-cpu:
-    ports:
-      - 5000:5000
-  
-  translate-gpu:
-    ports:
-      - 5000:5000
+services:
+  whisper-frontend:
+    extends:
+      file: frontend/docker-compose.yml
+      service: whisper-frontend
+    env_file:
+      - frontend/.env
 
-  mongo:
-    ports:
-      - 27017:27017
+  whisper-backend:
+    extends:
+      file: backend/docker-compose.yml
+      service: whisper-backend
+    env_file:
+      - backend/.env
+    depends_on:
+      - whishper-mongo
+      - whisper-api
+
+  whishper-mongo:
+    extends:
+      file: backend/docker-compose.yml
+      service: whishper-mongo
+    env_file:
+      - backend/.env
+
+  whisper-api:
+    extends:
+      file: transcription-api/docker-compose.yml
+      service: whisper-api
+    env_file:
+      - transcription-api/.env

@@ -3,17 +3,12 @@ version: "3"
 services:
   whisper-api:
     container_name: whisper-api
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
     ports:
       - "8000:8000"
     volumes:
       - ./models:/app/models
     env_file:
       - .env
-    deploy:
-      resources:
-        reservations:
-          devices:
-          - driver: nvidia
-            count: all
-            capabilities: [gpu]
