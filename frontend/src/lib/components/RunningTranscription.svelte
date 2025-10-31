@@ -3,13 +3,11 @@
     import {deleteTranscription} from "$lib/utils.js";
 </script>
 
-<div class="alert alert-warning p-3">
+<div class="alert alert-info p-3">
     <span class="loading loading-ring loading-md"></span>
     <span>
-        <p class="font-bold text-warning-content text-md">{tr.fileName != "" ? tr.fileName.split("_WHSHPR_")[1] : tr.id}</p>
-        <p class="font-mono text-warning-content text-sm opacity-60">
-            Pending transcription... Language: {tr.language || 'auto'}
-        </p>
+        <p class="font-bold text-info-content text-md">{tr.fileName != "" ? tr.fileName.split("_WHSHPR_")[1] : tr.id}</p>
+        <p class="font-mono text-info-content text-sm opacity-60">Waiting for transcription...</p>
     </span>
     <button on:click={deleteTranscription(tr.id)} class="btn btn-xs md:btn-sm btn-error">
         <span class="tooltip flex items-center justify-center" data-tip="Delete">

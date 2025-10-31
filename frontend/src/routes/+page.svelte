@@ -10,6 +10,7 @@
 	import ModalRenameFile from '$lib/components/ModalRenameFile.svelte';
 	import ModalUploadJSON from '$lib/components/ModalUploadJSON.svelte';
 	import SuccessTranscription from '$lib/components/SuccessTranscription.svelte';
+	import RunningTranscription from '$lib/components/RunningTranscription.svelte';
 	import PendingTranscription from '$lib/components/PendingTranscription.svelte';
 	import PendingTranslation from '$lib/components/PendingTranslation.svelte';
 	import ErrorTranscription from '$lib/components/ErrorTranscription.svelte';
@@ -334,9 +335,12 @@
 						{#if tr.status == 2}
 							<SuccessTranscription {tr} on:rename={handleRename} on:download={handleDownload} on:translate={handleTranslate} on:upload={handleUpload} languagesAvailable={languagesAvailable} />
 						{/if}
-						{#if tr.status < 2 && tr.status >= 0}
-							<PendingTranscription {tr} />
-						{/if}
+					{#if tr.status == 1}
+						<RunningTranscription {tr} />
+					{/if}
+					{#if tr.status == 0}
+						<PendingTranscription {tr} />
+					{/if}
 						{#if tr.status == 3}
 							<PendingTranslation {tr} />
 						{/if}
@@ -353,9 +357,12 @@
 						{#if tr.status == 2}
 							<SuccessTranscription {tr} on:rename={handleRename} on:download={handleDownload} on:translate={handleTranslate} on:upload={handleUpload} languagesAvailable={languagesAvailable} />
 						{/if}
-						{#if tr.status < 2 && tr.status >= 0}
-							<PendingTranscription {tr} />
-						{/if}
+					{#if tr.status == 1}
+						<RunningTranscription {tr} />
+					{/if}
+					{#if tr.status == 0}
+						<PendingTranscription {tr} />
+					{/if}
 						{#if tr.status == 3}
 							<PendingTranslation {tr} />
 						{/if}

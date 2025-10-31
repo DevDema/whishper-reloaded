@@ -11,4 +11,5 @@ type Db interface {
 	GetTranscription(string) *models.Transcription
 	GetAllTranscriptions() []*models.Transcription
 	GetPendingTranscriptions() []*models.Transcription
+	GetRunningTranscription() []*models.Transcription
 }
