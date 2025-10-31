@@ -10,10 +10,6 @@ services:
       - "8082:3000"
     env_file:
       - .env
-    environment:
-      - PUBLIC_API_HOST=$PUBLIC_API_HOST
-      - PUBLIC_TRANSLATION_API_HOST=$PUBLIC_TRANSLATION_API_HOST
-      - PUBLIC_INTERNAL_API_HOST=$PUBLIC_INTERNAL_API_HOST
     volumes:
       - ../uploads:/app/uploads
    
