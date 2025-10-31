@@ -16,7 +16,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      
+      - name: Prune Docker
+        run: docker image prune -a -f
       - name: Create and push tag
         run: |
           git tag ${{ github.event.inputs.version }} || true
@@ -59,6 +60,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Free up disk space
+        run: |
+          docker buildx prune -a -f
+          docker image prune -a -f
+
       - name: Build and push Backend
         uses: docker/build-push-action@v4
         with:
@@ -70,6 +76,11 @@ jobs:
             thespartan94/whishper-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Free up disk space
+        run: |
+          docker buildx prune -a -f
+          docker image prune -a -f
 
       - name: Build and push Transcription API (GPU)
         uses: docker/build-push-action@v4
@@ -83,6 +94,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Free up disk space
+        run: |
+          docker buildx prune -a -f
+          docker image prune -a -f
+
       - name: Build and push Transcription API (CPU)
         uses: docker/build-push-action@v4
         with:
@@ -95,3 +111,7 @@ jobs:
             thespartan94/whisper-transcription-api-cpu:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Free up disk space
+        run: |
+          docker buildx prune -a -f
+          docker image prune -a -f
