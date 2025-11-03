@@ -1,7 +1,6 @@
 <!-- SuccessTranscription.svelte -->
 <script>
     import {createEventDispatcher} from 'svelte';
-    import {deleteTranscription} from "$lib/utils.js";
     export let tr;
     export let languagesAvailable;
 
@@ -17,6 +16,9 @@
     }
     let upload = () => {
         dispatch('upload', tr); // emit a custom event with the transcription as detail
+    }
+    let requestDelete = () => {
+        dispatch('delete', tr);
     }
 </script>
 
@@ -93,7 +95,7 @@
                 </span>
             </button>
         {/if}
-        <button on:click={deleteTranscription(tr.id)} class="btn btn-xs md:btn-sm btn-error">
+        <button on:click={requestDelete} class="btn btn-xs md:btn-sm btn-error">
             <span class="tooltip flex items-center justify-center" data-tip="Delete">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>

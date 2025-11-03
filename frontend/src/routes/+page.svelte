@@ -9,6 +9,7 @@
 	import ModalTranslationForm from '$lib/components/ModalTranslationForm.svelte';
 	import ModalRenameFile from '$lib/components/ModalRenameFile.svelte';
 	import ModalUploadJSON from '$lib/components/ModalUploadJSON.svelte';
+	import ModalConfirmDelete from '$lib/components/ModalConfirmDelete.svelte';
 	import SuccessTranscription from '$lib/components/SuccessTranscription.svelte';
 	import RunningTranscription from '$lib/components/RunningTranscription.svelte';
 	import PendingTranscription from '$lib/components/PendingTranscription.svelte';
@@ -234,12 +235,18 @@
 		uploadTranscription = event.detail; // this will be the transcription to upload JSON for
 		modalUploadJSON.showModal(); // show the modal
 	};
+	let transcriptionToDelete = null;
+	let handleDelete = (event) => {
+		transcriptionToDelete = event.detail;
+		modalConfirmDelete.showModal();
+	};
 </script>
 
 <Toaster />
 <ModalDownloadOptions tr={downloadTranscription} />
 <ModalRenameFile tr={renameTranscription} />
 <ModalUploadJSON tr={uploadTranscription} />
+<ModalConfirmDelete tr={transcriptionToDelete} />
 
 {#if !languagesError}
 	<ModalTranslationForm tr={translateTranscription} availableLanguages={availableLanguages} />
@@ -333,7 +340,7 @@
 				{#if filteredTranscriptions.length > 0}
 					{#each filteredTranscriptions as tr (tr.id)}
 						{#if tr.status == 2}
-							<SuccessTranscription {tr} on:rename={handleRename} on:download={handleDownload} on:translate={handleTranslate} on:upload={handleUpload} languagesAvailable={languagesAvailable} />
+							<SuccessTranscription {tr} on:rename={handleRename} on:download={handleDownload} on:translate={handleTranslate} on:upload={handleUpload} on:delete={handleDelete} languagesAvailable={languagesAvailable} />
 						{/if}
 					{#if tr.status == 1}
 						<RunningTranscription {tr} />
@@ -355,7 +362,7 @@
 				{#if $transcriptions.length > 0}
 					{#each paginatedTranscriptions as tr (tr.id)}
 						{#if tr.status == 2}
-							<SuccessTranscription {tr} on:rename={handleRename} on:download={handleDownload} on:translate={handleTranslate} on:upload={handleUpload} languagesAvailable={languagesAvailable} />
+							<SuccessTranscription {tr} on:rename={handleRename} on:download={handleDownload} on:translate={handleTranslate} on:upload={handleUpload} on:delete={handleDelete} languagesAvailable={languagesAvailable} />
 						{/if}
 					{#if tr.status == 1}
 						<RunningTranscription {tr} />
