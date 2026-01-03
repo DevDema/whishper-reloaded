@@ -1,5 +1,5 @@
 fastapi==0.100.1
-faster-whisper @ https://github.com/SYSTRAN/faster-whisper/archive/refs/tags/v1.2.0.tar.gz
+faster-whisper @ https://github.com/SYSTRAN/faster-whisper/archive/refs/tags/v1.2.1.tar.gz
 pydantic==2.1.1
 python-dotenv==1.0.0
 uvicorn==0.23.2
