@@ -1,4 +1,4 @@
-name: Docker Build
+name: Docker Build (Parallel Jobs)
 
 on:
   push:
@@ -7,7 +7,9 @@ on:
     branches: [ "main", "develop" ]
 
 jobs:
-  build:
+  # Job 1: Build the Frontend Image
+  build-frontend:
+    name: Build Frontend Image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -16,36 +18,45 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build Frontend
+      - name: Build and cache Frontend image
         uses: docker/build-push-action@v4
         with:
           context: ./frontend
-          push: false
-          load: false
+          push: false  # Do not push to a registry
+          load: false   # Keep the image in the buildx cache, do not load to docker
           tags: whishper-frontend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      - name: Free up disk space
-        run: |
-          docker buildx prune -a -f
-          docker image prune -a -f
 
-      - name: Build Backend
+  # Job 2: Build the Backend Image
+  build-backend:
+    name: Build Backend Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and cache Backend image
         uses: docker/build-push-action@v4
         with:
           context: ./backend
           push: false
           load: false
           tags: whishper-backend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
-      - name: Free up disk space
-        run: |
-          docker buildx prune -a -f
-          docker image prune -a -f
+  # Job 3: Build the Transcription API (GPU) Image
+  build-transcription-gpu:
+    name: Build Transcription API (GPU)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      - name: Build Transcription API (GPU)
+      - name: Build and cache Transcription API (GPU) image
         uses: docker/build-push-action@v4
         with:
           context: ./transcription-api
@@ -53,15 +64,19 @@ jobs:
           push: false
           load: false
           tags: whisper-transcription-api-gpu:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
-      - name: Free up disk space
-        run: |
-          docker buildx prune -a -f
-          docker image prune -a -f
+  # Job 4: Build the Transcription API (CPU) Image
+  build-transcription-cpu:
+    name: Build Transcription API (CPU)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      - name: Build Transcription API (CPU)
+      - name: Build and cache Transcription API (CPU) image
         uses: docker/build-push-action@v4
         with:
           context: ./transcription-api
@@ -69,10 +84,3 @@ jobs:
           push: false
           load: false
           tags: whisper-transcription-api-cpu:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          
-      - name: Free up disk space
-        run: |
-          docker buildx prune -a -f
-          docker image prune -a -f
