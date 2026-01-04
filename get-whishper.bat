@@ -1,4 +1,9 @@
 @echo off
+rem WARNING: This script initializes the entire Whishper infrastructure on the same machine, as per the legacy way of configuring the tool.
+rem If you wish to host frontend, backend and transcription-api on separate servers, the configuration needs to be done separately on each machine.
+rem Do you really wish to continue? (Y/n)
+set /p confirm=
+if /i "%confirm%"=="N" goto :EOF
 rem Script by @johnwayne087, see: https://github.com/pluja/whishper/issues/18#issuecomment-1724095055
 
 rem Check if Docker is installed
@@ -23,7 +28,7 @@ if /i "%answer%"=="Y" (
 
 rem Get docker-compose.yml
 echo Getting the docker-compose.yml file from Github
-curl -o docker-compose.yml https://raw.githubusercontent.com/pluja/whishper/main/docker-compose.yml
+curl -o docker-compose.yml https://raw.githubusercontent.com/DevDema/whishper-reloaded/refs/heads/main/docker-compose.yml
 
 rem Get .env file
 if exist .env (
@@ -32,13 +37,13 @@ if exist .env (
   set /p answer=
   if /i "%answer%"=="Y" (
     echo Overwriting .env file
-    curl -o .env https://raw.githubusercontent.com/pluja/whishper/main/example.env
+    curl -o .env https://raw.githubusercontent.com/DevDema/whishper-reloaded/refs/heads/main/example.env
   ) else (
     echo Keeping the existing .env file
   )
 ) else (
   echo Getting the default .env file from Github
-  curl -o .env https://raw.githubusercontent.com/pluja/whishper/main/example.env
+  curl -o .env https://raw.githubusercontent.com/DevDema/whishper-reloaded/refs/heads/main/example.env
 )
 
 rem Create directories
