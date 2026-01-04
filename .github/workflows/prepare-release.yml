@@ -26,7 +26,7 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(release): Update frontend version to ${{ github.event.inputs.version }}"
+          commit-message: "chore(release): Update all versions to ${{ github.event.inputs.version }}"
           title: "Release ${{ github.event.inputs.version }}"
           body: "This PR prepares the repository for the ${{ github.event.inputs.version }} release by updating the version in `package.json`."
           branch: "release/${{ github.event.inputs.version }}"
