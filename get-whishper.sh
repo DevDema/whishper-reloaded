@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
 
+# WARNING: This script initializes the entire Whishper infrastructure on the same machine, as per the legacy way of configuring the tool.
+# If you wish to host frontend, backend and transcription-api on separate servers, the configuration needs to be done separately on each machine.
+# Do you really wish to continue? (Y/n)
+read -r -p "Do you really wish to continue? (Y/n) " confirm
+if [[ "$confirm" =~ ^[Nn]$ ]]; then
+    echo -e "${RED}❌ Aborting installation${NC}"
+    exit 1
+fi
+
 # Color codes
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
@@ -61,9 +70,9 @@ fi
 echo ""
 echo -e "ℹ️  Getting the docker-compose.yml file from Github"
 if [ "$gpu" = true ] ;then
-    curl -o docker-compose.yml https://raw.githubusercontent.com/pluja/whishper/main/docker-compose.gpu.yml > /dev/null 2>&1
+    curl -o docker-compose.yml https://raw.githubusercontent.com/DevDema/whishper-reloaded/refs/heads/main/docker-compose.gpu.yml > /dev/null 2>&1
 else
-    curl -o docker-compose.yml https://raw.githubusercontent.com/pluja/whishper/main/docker-compose.yml > /dev/null 2>&1
+    curl -o docker-compose.yml https://raw.githubusercontent.com/DevDema/whishper-reloaded/refs/heads/main/docker-compose.yml > /dev/null 2>&1
 fi
 sleep 1
 
@@ -76,13 +85,13 @@ if [ -f .env ]; then
     if [ "$answer" != "${answer#[Yy]}" ] ;then
         echo -e "ℹ️  Copying env.example to .env"
         cp .env .env.backup
-        curl -o .env https://raw.githubusercontent.com/pluja/whishper/main/example.env > /dev/null 2>&1
+        curl -o .env https://raw.githubusercontent.com/DevDema/whishper-reloaded/refs/heads/main/example.env > /dev/null 2>&1
         sleep 1
     fi
     echo ""
 else
     echo -e "ℹ️  Getting the default .env file from Github"
-    curl -o .env https://raw.githubusercontent.com/pluja/whishper/main/example.env > /dev/null 2>&1
+    curl -o .env https://raw.githubusercontent.com/DevDema/whishper-reloaded/refs/heads/main/example.env > /dev/null 2>&1
     sleep 1
 fi
 
