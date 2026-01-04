@@ -1,30 +1,48 @@
-# .github/workflows/release.yml
 name: Release
 
 on:
-  # This workflow now runs when you push a tag like "v1.2.3"
+  # Trigger 1: Automatically on pushing a tag like 'v1.2.3'
   push:
     tags:
       - 'v*'
+  # Trigger 2: Manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The existing tag to re-run the release for (e.g., v4.1.3)'
+        required: true
+        type: string
 
 jobs:
-  # All your build jobs now run in parallel, triggered by the tag
   build-and-push-frontend:
     name: Build and Push Frontend
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code at the tag
+      - name: Determine Tag
+        id: get_tag
+        run: |
+          # This sets the 'tag' output. It uses the manual input if the workflow
+          # was dispatched, otherwise it uses the tag from the push event.
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout code at the specific tag
         uses: actions/checkout@v3
         with:
-          # This ensures we check out the exact code the tag is pointing to
-          ref: ${{ github.ref }} 
+          ref: ${{ steps.get_tag.outputs.tag }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Build and push Frontend
         uses: docker/build-push-action@v4
         with:
@@ -32,10 +50,125 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            thespartan94/whishper-frontend:${{ github.ref_name }}
+            thespartan94/whishper-frontend:${{ steps.get_tag.outputs.tag }}
             thespartan94/whishper-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ... create parallel jobs for backend, gpu, and cpu builds just like the one above ...
-  # (Remember to check out the code at ${{ github.ref }} in each job)
+  build-and-push-backend:
+    name: Build and Push Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine Tag
+        id: get_tag
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout code at the specific tag
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.get_tag.outputs.tag }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Backend
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            thespartan94/whishper-backend:${{ steps.get_tag.outputs.tag }}
+            thespartan94/whishper-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-and-push-transcription-gpu:
+    name: Build and Push Transcription API (GPU)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine Tag
+        id: get_tag
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout code at the specific tag
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.get_tag.outputs.tag }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Transcription API (GPU)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./transcription-api
+          file: ./transcription-api/Dockerfile.gpu
+          push: true
+          tags: |
+            thespartan94/whisper-transcription-api-gpu:${{ steps.get_tag.outputs.tag }}
+            thespartan94/whisper-transcription-api-gpu:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-and-push-transcription-cpu:
+    name: Build and Push Transcription API (CPU)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine Tag
+        id: get_tag
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout code at the specific tag
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.get_tag.outputs.tag }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Transcription API (CPU)
+        uses: docker/build-push-action@v4
+        with:
+          context: ./transcription-api
+          file: ./transcription-api/Dockerfile.cpu
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            thespartan94/whisper-transcription-api-cpu:${{ steps.get_tag.outputs.tag }}
+            thespartan94/whisper-transcription-api-cpu:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
