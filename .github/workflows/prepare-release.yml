@@ -1,0 +1,34 @@
+# .github/workflows/prepare-release.yml
+name: Prepare Release PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  create-release-pr:
+    name: Create Release PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Update version in frontend package.json
+        run: |
+          VERSION_WITHOUT_V=$(echo "${{ github.event.inputs.version }}" | sed 's/^v//')
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION_WITHOUT_V\"/" frontend/package.json
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(release): Update frontend version to ${{ github.event.inputs.version }}"
+          title: "Release ${{ github.event.inputs.version }}"
+          body: "This PR prepares the repository for the ${{ github.event.inputs.version }} release by updating the version in `package.json`."
+          branch: "release/${{ github.event.inputs.version }}"
+          base: "main"
+          labels: "release"
