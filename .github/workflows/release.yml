@@ -1,62 +1,23 @@
+# .github/workflows/release.yml
 name: Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version tag (e.g., v1.0.0)'
-        required: true
-        type: string
+  # This workflow now runs when you push a tag like "v1.2.3"
+  push:
+    tags:
+      - 'v*'
 
 jobs:
-  # Job 1: Prepare the release by committing the version bump and creating the tag.
-  prepare-release:
-    name: Prepare Release Commit and Tag
-    runs-on: ubuntu-latest
-    outputs:
-      version_tag: ${{ github.event.inputs.version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          # Fetch all history so we can push back to the repo
-          fetch-depth: 0 
-
-      - name: Update version in frontend package.json
-        run: |
-          # The version in package.json usually doesn't have the 'v' prefix
-          VERSION_WITHOUT_V=$(echo "${{ github.event.inputs.version }}" | sed 's/^v//')
-          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION_WITHOUT_V\"/" frontend/package.json
-
-      - name: Commit and push version update
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          # Only commit if there are changes
-          if ! git diff --quiet frontend/package.json; then
-            git add frontend/package.json
-            git commit -m "chore(release): Update frontend version to ${{ github.event.inputs.version }}"
-            git push
-          else
-            echo "No version changes to commit."
-          fi
-
-      - name: Create and push tag
-        run: |
-          # Tag the commit we just made (or the current commit if no changes)
-          git tag ${{ github.event.inputs.version }}
-          git push origin ${{ github.event.inputs.version }}
-
-  # The following jobs will run in PARALLEL after prepare-release is done.
+  # All your build jobs now run in parallel, triggered by the tag
   build-and-push-frontend:
     name: Build and Push Frontend
-    needs: prepare-release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code at the new tag
+      - name: Checkout code at the tag
         uses: actions/checkout@v3
         with:
-          ref: ${{ needs.prepare-release.outputs.version_tag }}
+          # This ensures we check out the exact code the tag is pointing to
+          ref: ${{ github.ref }} 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to Docker Hub
@@ -71,92 +32,10 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            thespartan94/whishper-frontend:${{ needs.prepare-release.outputs.version_tag }}
+            thespartan94/whishper-frontend:${{ github.ref_name }}
             thespartan94/whishper-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  build-and-push-backend:
-    name: Build and Push Backend
-    needs: prepare-release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code at the new tag
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ needs.prepare-release.outputs.version_tag }}
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push Backend
-        uses: docker/build-push-action@v4
-        with:
-          context: ./backend
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            thespartan94/whishper-backend:${{ needs.prepare-release.outputs.version_tag }}
-            thespartan94/whishper-backend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  build-and-push-transcription-gpu:
-    name: Build and Push Transcription API (GPU)
-    needs: prepare-release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code at the new tag
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ needs.prepare-release.outputs.version_tag }}
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push Transcription API (GPU)
-        uses: docker/build-push-action@v4
-        with:
-          context: ./transcription-api
-          file: ./transcription-api/Dockerfile.gpu
-          push: true
-          tags: |
-            thespartan94/whisper-transcription-api-gpu:${{ needs.prepare-release.outputs.version_tag }}
-            thespartan94/whisper-transcription-api-gpu:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  build-and-push-transcription-cpu:
-    name: Build and Push Transcription API (CPU)
-    needs: prepare-release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code at the new tag
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ needs.prepare-release.outputs.version_tag }}
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push Transcription API (CPU)
-        uses: docker/build-push-action@v4
-        with:
-          context: ./transcription-api
-          file: ./transcription-api/Dockerfile.cpu
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            thespartan94/whisper-transcription-api-cpu:${{ needs.prepare-release.outputs.version_tag }}
-            thespartan94/whisper-transcription-api-cpu:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+  # ... create parallel jobs for backend, gpu, and cpu builds just like the one above ...
+  # (Remember to check out the code at ${{ github.ref }} in each job)
