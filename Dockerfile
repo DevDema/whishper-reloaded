@@ -1,11 +1,3 @@
-# YT-DLP Download and setup
-FROM --platform=$BUILDPLATFORM golang:bookworm AS ytdlp_cache
-ARG TARGETOS
-ARG TARGETARCH
-RUN apt update && apt install -y wget
-RUN wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
-RUN chmod a+rx /usr/local/bin/yt-dlp
-
 # Backend setup
 FROM devopsworks/golang-upx:latest as backend-builder
 
@@ -47,6 +39,8 @@ COPY ./transcription-api /app/transcription
 WORKDIR /app/transcription
 RUN pip3 install -r requirements.txt
 RUN pip3 install python-multipart
+RUN pip3 install yt-dlp && ln -s /usr/local/bin/yt-dlp /bin/yt-dlp
+RUN python -m pip install -U --pre "yt-dlp[default]"
 
 # Node.js service setup
 ENV BODY_SIZE_LIMIT=0
@@ -57,7 +51,6 @@ COPY --from=frontend-prod-deps /app/node_modules /app/frontend/node_modules
 # Golang service setup
 COPY --from=backend-builder /app/whishper /bin/whishper 
 RUN chmod a+rx /bin/whishper
-COPY --from=ytdlp_cache /usr/local/bin/yt-dlp /bin/yt-dlp
 
 # Nginx setup
 COPY ./nginx.conf /etc/nginx/nginx.conf

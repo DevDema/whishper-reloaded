@@ -3,8 +3,6 @@ ARG TARGETOS
 ARG TARGETARCH
 ARG BUILDPLATFORM
 RUN apt update && apt install -y wget tar xz-utils
-RUN wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
-RUN chmod a+rx /usr/local/bin/yt-dlp
 
 RUN BUILDARCH=$(echo "$BUILDPLATFORM" | cut -d'/' -f2); \
     wget https://github.com/upx/upx/releases/download/v5.0.0/upx-5.0.0-${BUILDARCH}_linux.tar.xz && \
@@ -27,7 +25,8 @@ ARG TARGETARCH
 WORKDIR /app
 COPY --from=ytdlp_cache /app/whishper ./whishper 
 RUN chmod a+rx ./whishper
-COPY --from=ytdlp_cache /usr/local/bin/yt-dlp /bin/yt-dlp
+RUN pip install yt-dlp && ln -s /usr/local/bin/yt-dlp /bin/yt-dlp
+RUN python -m pip install -U --pre "yt-dlp[default]"
 
 RUN mkdir /app/uploads
 
