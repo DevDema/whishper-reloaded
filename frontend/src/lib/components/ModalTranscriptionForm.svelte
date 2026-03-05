@@ -65,6 +65,12 @@
 	let initialPrompt = '';
 	let hotwords = '';
 
+	// VAD settings
+	let enableVad = false;
+	let vadThreshold = '';
+	let vadMinSpeech = '';
+	let vadMinSilence = '';
+
 	// Function that sends the data as a form to the backend
 	async function sendForm() {
 	   if (sourceUrl && !validateURL(sourceUrl)) {
@@ -97,6 +103,13 @@
 	   if (hotwords && hotwords.trim() !== '') {
 		   // Send as comma-separated string
 		   formData.append('hotwords', hotwords);
+	   }
+	   // VAD params
+	   if (enableVad) {
+		   formData.append('vad_filter', 'true');
+		   if (vadThreshold !== '') formData.append('vad_threshold', vadThreshold);
+		   if (vadMinSpeech !== '') formData.append('vad_min_speech_duration_ms', vadMinSpeech);
+		   if (vadMinSilence !== '') formData.append('vad_min_silence_duration_ms', vadMinSilence);
 	   }
 
 	   return new Promise((resolve, reject) => {
@@ -312,6 +325,61 @@
 					/>
 				</div>
 			</div>
+
+		<div class="mb-0 divider w-full" />
+
+		<!-- VAD options -->
+		<div class="form-control mb-2">
+			<label class="label cursor-pointer">
+				<input type="checkbox" bind:checked={enableVad} class="checkbox checkbox-sm" />
+				<span class="label-text ml-2">Enable VAD (voice activity detection)</span>
+			</label>
+		</div>
+		{#if enableVad}
+			<div class="flex flex-row flex-wrap gap-4 w-full">
+				<div class="w-full form-control">
+					<label for="vadThreshold" class="label">
+						<span class="label-text">VAD threshold</span>
+					</label>
+					<input
+						name="vadThreshold"
+						type="number"
+						min="0"
+						max="1"
+						step="0.01"
+						bind:value={vadThreshold}
+						class="w-full input input-sm input-bordered input-primary"
+						placeholder="0.5 (default)"
+					/>
+				</div>
+				<div class="w-full form-control">
+					<label for="vadMinSpeech" class="label">
+						<span class="label-text">Min speech duration (ms)</span>
+					</label>
+					<input
+						name="vadMinSpeech"
+						type="number"
+						min="0"
+						bind:value={vadMinSpeech}
+						class="w-full input input-sm input-bordered input-primary"
+						placeholder="250 (default)"
+					/>
+				</div>
+				<div class="w-full form-control">
+					<label for="vadMinSilence" class="label">
+						<span class="label-text">Min silence duration (ms)</span>
+					</label>
+					<input
+						name="vadMinSilence"
+						type="number"
+						min="0"
+						bind:value={vadMinSilence}
+						class="w-full input input-sm input-bordered input-primary"
+						placeholder="500 (default)"
+					/>
+				</div>
+			</div>
+		{/if}
 
 		<div class="mb-0 divider w-full" />
 		<!--Actions-->

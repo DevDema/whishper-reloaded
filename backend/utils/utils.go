@@ -92,6 +92,19 @@ func SendTranscriptionRequest(t *models.Transcription, body *bytes.Buffer, write
 	if len(t.Hotwords) > 0 {
 		params.Add("hotwords", strings.Join(t.Hotwords, ","))
 	}
+	// VAD parameters
+	if t.VadFilter {
+		params.Add("vad_filter", "true")
+		if t.VadThreshold != nil {
+			params.Add("vad_threshold", fmt.Sprintf("%f", *t.VadThreshold))
+		}
+		if t.VadMinSpeechDurationMS != nil {
+			params.Add("vad_min_speech_duration_ms", fmt.Sprintf("%d", *t.VadMinSpeechDurationMS))
+		}
+		if t.VadMinSilenceDurationMS != nil {
+			params.Add("vad_min_silence_duration_ms", fmt.Sprintf("%d", *t.VadMinSilenceDurationMS))
+		}
+	}
 
 	// Attach parameters to URL
 	fullUrl := fmt.Sprintf("%s?%s", baseUrl, params.Encode())
