@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"time"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -10,10 +9,12 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/wader/goutubedl"
@@ -72,67 +73,83 @@ func DownloadMedia(t *models.Transcription) (string, error) {
 }
 
 func SendTranscriptionRequest(t *models.Transcription, body *bytes.Buffer, writer *multipart.Writer) (*models.WhisperResult, error) {
-   // Build the base URL
-   url := fmt.Sprintf("http://%v/transcribe", os.Getenv("ASR_ENDPOINT"))
+	// 1. PREPARE URL PARAMETERS (Query String)
+	// We use Query Params because FastAPI expects them there by default.
+	baseUrl := fmt.Sprintf("http://%v/transcribe/", os.Getenv("ASR_ENDPOINT"))
 
-   // Create form fields
-   _ = writer.WriteField("model_size", t.ModelSize)
-   _ = writer.WriteField("task", t.Task)
-   _ = writer.WriteField("language", t.Language)
-   _ = writer.WriteField("device", t.Device)
-   
-   if t.BeamSize > 0 {
-       _ = writer.WriteField("beam_size", fmt.Sprintf("%d", t.BeamSize))
-   }
-   if t.InitialPrompt != "" {
-       _ = writer.WriteField("initial_prompt", t.InitialPrompt)
-   }
-   if len(t.Hotwords) > 0 {
-       _ = writer.WriteField("hotwords", strings.Join(t.Hotwords, ","))
-   }
-   // Send transcription request to transcription service
-   req, err := http.NewRequest("POST", url, body)
-   if err != nil {
-	   log.Debug().Err(err).Msg("Error creating request to transcription service")
-	   return nil, err
-   }
+	params := url.Values{}
+	params.Add("model_size", t.ModelSize)
+	params.Add("task", t.Task)
+	params.Add("language", t.Language)
+	params.Add("device", t.Device) // This ensures 'cuda' is passed cleanly
 
-   req.Header.Set("Content-Type", writer.FormDataContentType())
-   req.Header.Set("Accept", "application/json")
-   client := &http.Client{}
-   resp, err := client.Do(req)
-   if err != nil {
-	   log.Error().Err(err).Msg("Error sending request")
-	   return nil, err
-   }
-   defer resp.Body.Close()
-   b, err := io.ReadAll(resp.Body)
-   if err != nil {
-	   log.Error().Err(err).Msg("Error reading response body")
-	   return nil, err
-   }
+	if t.BeamSize > 0 {
+		params.Add("beam_size", fmt.Sprintf("%d", t.BeamSize))
+	}
+	if t.InitialPrompt != "" {
+		params.Add("initial_prompt", t.InitialPrompt)
+	}
+	if len(t.Hotwords) > 0 {
+		params.Add("hotwords", strings.Join(t.Hotwords, ","))
+	}
 
-   if resp.StatusCode != http.StatusOK {
-	   log.Error().Msgf("Response from %v: %v", url, string(b))
-	   log.Error().Err(err).Msgf("Invalid response status %v:", resp.StatusCode)
-	   return nil, errors.New("invalid status")
-   }
+	// Attach parameters to URL
+	fullUrl := fmt.Sprintf("%s?%s", baseUrl, params.Encode())
 
-   var asrResponse *models.WhisperResult
-   if err := json.Unmarshal(b, &asrResponse); err != nil {
-	   log.Error().Err(err).Msg("Error decoding response")
-	   log.Error().Msgf("ASR Response: %+v\n", b)
-	   return nil, err
-   }
+	// 2. CRITICAL: CLOSE THE WRITER
+	// This writes the final boundary to the 'body' buffer.
+	// If you don't do this, the server gets a corrupted body and returns EOF.
+	err := writer.Close()
+	if err != nil {
+		log.Debug().Err(err).Msg("Error closing multipart writer")
+		return nil, err
+	}
 
-   return asrResponse, nil
+	// 3. SEND REQUEST
+	req, err := http.NewRequest("POST", fullUrl, body)
+	if err != nil {
+		log.Debug().Err(err).Msg("Error creating request to transcription service")
+		return nil, err
+	}
+
+	// Set the Content-Type with the boundary
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error().Err(err).Msg("Error sending request")
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Error().Err(err).Msg("Error reading response body")
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Error().Msgf("Response from %v: %v", fullUrl, string(b))
+		log.Error().Err(err).Msgf("Invalid response status %v:", resp.StatusCode)
+		return nil, errors.New("invalid status")
+	}
+
+	var asrResponse *models.WhisperResult
+	if err := json.Unmarshal(b, &asrResponse); err != nil {
+		log.Error().Err(err).Msg("Error decoding response")
+		log.Error().Msgf("ASR Response: %+v\n", b)
+		return nil, err
+	}
+
+	return asrResponse, nil
 }
-
 func CheckTranscriptionServiceHealth() (ok bool, message string) {
 	url := "http://" + os.Getenv("ASR_ENDPOINT") + "/healthcheck"
 
 	client := &http.Client{
-		Timeout: 10 * time.Second, 
+		Timeout: 10 * time.Second,
 	}
 	resp, err := client.Get(url)
 	if err != nil {
