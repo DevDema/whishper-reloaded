@@ -61,13 +61,21 @@ class FasterWhisperBackend(Backend):
         """
         result: list[Segment] = []
         assert self.model is not None
+
+        hotwords_str = None
+        if hotwords:
+            if isinstance(hotwords, list):
+                hotwords_str = " ".join(hotwords)
+            else:
+                hotwords_str = str(hotwords)
+                
         segments, info = self.model.transcribe(
             input,
             beam_size=beam_size,
             word_timestamps=True,
             language=language,
             initial_prompt=initial_prompt,
-            hotwords=hotwords,
+            hotwords=hotwords_str,
         )
         # ps = playback seconds
         with tqdm(
