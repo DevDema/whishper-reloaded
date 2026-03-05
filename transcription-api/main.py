@@ -20,6 +20,10 @@ async def transcribe_endpoint(
     beam_size: int = 5,
     initial_prompt: str = None,
     hotwords: str = None,
+    vad_filter: bool = False,
+    vad_threshold: float = None,
+    vad_min_speech_duration_ms: int = None,
+    vad_min_silence_duration_ms: int = None,
 ):
     if device != "cpu" and device != "cuda":
         return {"detail": "Device must be either cpu or cuda"}
@@ -35,10 +39,34 @@ async def transcribe_endpoint(
 
     if file is not None:
         # if a file is uploaded, use it
-        return await transcribe_file(file, model_size.value, language.value, device, beam_size, initial_prompt, hotwords_list)
+        return await transcribe_file(
+            file, 
+            model_size.value, 
+            language.value, 
+            device, 
+            beam_size, 
+            initial_prompt, 
+            hotwords_list,
+            vad_filter,
+            vad_threshold,
+            vad_min_speech_duration_ms,
+            vad_min_silence_duration_ms,
+        )
     elif filename is not None:
         # if a filename is provided, use it
-        return await transcribe_from_filename(filename, model_size.value, language.value, device, beam_size, initial_prompt, hotwords_list)
+        return await transcribe_from_filename(
+            filename, 
+            model_size.value, 
+            language.value, 
+            device, 
+            beam_size, 
+            initial_prompt, 
+            hotwords_list,
+            vad_filter,
+            vad_threshold,
+            vad_min_speech_duration_ms,
+            vad_min_silence_duration_ms,
+        )
     else:
         return {"detail": "No file uploaded and no filename provided"}
 

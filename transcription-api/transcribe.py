@@ -18,12 +18,16 @@ async def transcribe_from_filename(
     beam_size: int = 5,
     initial_prompt: str = None,
     hotwords: list[str] = None,
+    vad_filter: bool = False,
+    vad_threshold: Optional[float] = None,
+    vad_min_speech_duration_ms: Optional[int] = None,
+    vad_min_silence_duration_ms: Optional[int] = None,
 ) -> Transcription:
     filepath = os.path.join(os.environ["UPLOAD_DIR"], filename)
     if not os.path.exists(filepath):
         raise RuntimeError(f"file not found in {filepath}")
     audio = convert_audio(filepath)
-    return await transcribe_audio(audio, model_size, language, device, beam_size, initial_prompt, hotwords)
+    return await transcribe_audio(audio, model_size, language, device, beam_size, initial_prompt, hotwords, vad_filter, vad_threshold, vad_min_speech_duration_ms, vad_min_silence_duration_ms)
 
 async def transcribe_file(
     file: io.BytesIO,
@@ -33,6 +37,10 @@ async def transcribe_file(
     beam_size: int = 5,
     initial_prompt: str = None,
     hotwords: list[str] = None,
+    vad_filter: bool = False,
+    vad_threshold: Optional[float] = None,
+    vad_min_speech_duration_ms: Optional[int] = None,
+    vad_min_silence_duration_ms: Optional[int] = None,
 ) -> Transcription:
     contents = await file.read()  # async read
     if len(contents) < 150 * 1024 * 1024:  # file is smaller than 150MB
@@ -47,7 +55,7 @@ async def transcribe_file(
         # Corrected to use the function in this file
         audio = convert_audio(file.filename)
         os.remove(file.filename)
-    return await transcribe_audio(audio, model_size, language, device, beam_size, initial_prompt, hotwords)
+    return await transcribe_audio(audio, model_size, language, device, beam_size, initial_prompt, hotwords, vad_filter, vad_threshold, vad_min_speech_duration_ms, vad_min_silence_duration_ms)
 
 async def transcribe_audio(
     audio: np.ndarray,
@@ -57,6 +65,10 @@ async def transcribe_audio(
     beam_size: int = 5,
     initial_prompt: str = None,
     hotwords: list[str] = None,
+    vad_filter: bool = False,
+    vad_threshold: Optional[float] = None,
+    vad_min_speech_duration_ms: Optional[int] = None,
+    vad_min_silence_duration_ms: Optional[int] = None,
 ) -> Transcription:
     if language == "auto":
         language = None
@@ -72,4 +84,8 @@ async def transcribe_audio(
         beam_size=beam_size,
         initial_prompt=initial_prompt,
         hotwords=hotwords,
+        vad_filter=vad_filter,
+        vad_threshold=vad_threshold,
+        vad_min_speech_duration_ms=vad_min_speech_duration_ms,
+        vad_min_silence_duration_ms=vad_min_silence_duration_ms,
     )
