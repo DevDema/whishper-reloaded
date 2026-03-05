@@ -1,7 +1,10 @@
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+# We can now use CUDA 12.4 because you updated your Host Driver!
+# This image ALREADY includes cuDNN 9, which faster-whisper 1.2.1 needs.
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
 
 ENV PYTHON_VERSION=3.10
 
+# Install Python
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get -qq update \
     && apt-get -qq install --no-install-recommends \
@@ -19,7 +22,8 @@ RUN ln -s -f /usr/bin/python${PYTHON_VERSION} /usr/bin/python3 && \
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt \
     && pip3 install python-multipart \
-    && pip3 install torch --index-url https://download.pytorch.org/whl/cu118
+    && pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 \
+    && pip3 install faster-whisper
 
 WORKDIR /app
 
