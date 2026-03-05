@@ -3,8 +3,8 @@ package api
 import (
 	"fmt"
 	"os"
-	"time"
 	"strings"
+	"time"
 
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
@@ -113,6 +113,31 @@ func (s *Server) handlePostTranscription(c *fiber.Ctx) error {
 		}
 		transcription.Hotwords = hotwords
 	}
+	// VAD parameters
+	if c.FormValue("vad_filter") == "true" {
+		transcription.VadFilter = true
+	}
+	if c.FormValue("vad_threshold") != "" {
+		var v float64
+		_, err := fmt.Sscanf(c.FormValue("vad_threshold"), "%f", &v)
+		if err == nil {
+			transcription.VadThreshold = &v
+		}
+	}
+	if c.FormValue("vad_min_speech_duration_ms") != "" {
+		var v int
+		_, err := fmt.Sscanf(c.FormValue("vad_min_speech_duration_ms"), "%d", &v)
+		if err == nil {
+			transcription.VadMinSpeechDurationMS = &v
+		}
+	}
+	if c.FormValue("vad_min_silence_duration_ms") != "" {
+		var v int
+		_, err := fmt.Sscanf(c.FormValue("vad_min_silence_duration_ms"), "%d", &v)
+		if err == nil {
+			transcription.VadMinSilenceDurationMS = &v
+		}
+	}
 
 	log.Debug().Msgf("Transcription: %+v", transcription)
 	// Save transcription to database
@@ -125,7 +150,7 @@ func (s *Server) handlePostTranscription(c *fiber.Ctx) error {
 	// Broadcast transcription to websocket clients
 	s.BroadcastTranscription(res)
 	s.NewTranscriptionCh <- true
-	
+
 	// Convert the transcription to JSON.
 	json, err := json.Marshal(res)
 	if err != nil {
@@ -141,12 +166,12 @@ func (s *Server) handlePostTranscription(c *fiber.Ctx) error {
 
 // SplitAndTrim splits a string by sep and trims spaces from each part
 func SplitAndTrim(s, sep string) []string {
-   var out []string
-   for _, part := range strings.Split(s, sep) {
-	   trimmed := strings.TrimSpace(part)
-	   out = append(out, trimmed)
-   }
-   return out
+	var out []string
+	for _, part := range strings.Split(s, sep) {
+		trimmed := strings.TrimSpace(part)
+		out = append(out, trimmed)
+	}
+	return out
 }
 
 func (s *Server) handleDeleteTranscription(c *fiber.Ctx) error {
@@ -213,7 +238,7 @@ func (s *Server) handlePatchTranscription(c *fiber.Ctx) error {
 func (s *Server) handleRenameFile(c *fiber.Ctx) error {
 	id := c.Params("id")
 	newFileName := c.FormValue("newFileName")
-	
+
 	if newFileName == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "New file name is required")
 	}
@@ -287,7 +312,7 @@ func (s *Server) handleTranslate(c *fiber.Ctx) error {
 func (s *Server) handleUploadJSON(c *fiber.Ctx) error {
 	var request struct {
 		TranscriptionId string      `json:"transcriptionId"`
-		Result         interface{} `json:"result"`
+		Result          interface{} `json:"result"`
 	}
 
 	// Parse the JSON body

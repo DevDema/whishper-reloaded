@@ -53,11 +53,15 @@ class FasterWhisperBackend(Backend):
         beam_size: int = 5,
         initial_prompt: str = None,
         hotwords: list[str] = None,
+        vad_filter: bool = False,
+        vad_threshold: float = None,
+        vad_min_speech_duration_ms: int = None,
+        vad_min_silence_duration_ms: int = None,
     ) -> Transcription:
         """
         Return word level transcription data.
         World level probabilities are calculated by ctranslate2.models.Whisper.align
-        Accepts additional parameters: beam_size, initial_prompt, hotwords.
+        Accepts additional parameters: beam_size, initial_prompt, hotwords, and VAD options.
         """
         result: list[Segment] = []
         assert self.model is not None
@@ -68,6 +72,33 @@ class FasterWhisperBackend(Backend):
                 hotwords_str = " ".join(hotwords)
             else:
                 hotwords_str = str(hotwords)
+
+        # Build VAD parameters dictionary if VAD is enabled
+        vad_parameters = None
+        if vad_filter:
+            vad_parameters = {}
+            if vad_threshold is not None:
+                vad_parameters["threshold"] = vad_threshold
+            if vad_min_speech_duration_ms is not None:
+                vad_parameters["min_speech_duration_ms"] = vad_min_speech_duration_ms
+            if vad_min_silence_duration_ms is not None:
+                vad_parameters["min_silence_duration_ms"] = vad_min_silence_duration_ms
+        
+        # log parameters
+        try:
+            import json as _json
+            params = {
+                "beam_size": beam_size,
+                "word_timestamps": True,
+                "language": language,
+                "initial_prompt": initial_prompt,
+                "hotwords": hotwords_str,
+                "vad_filter": vad_filter,
+                "vad_parameters": vad_parameters,
+            }
+            print("transcribe parameters:", _json.dumps(params, indent=2))
+        except Exception:
+            pass
                 
         segments, info = self.model.transcribe(
             input,
@@ -76,6 +107,8 @@ class FasterWhisperBackend(Backend):
             language=language,
             initial_prompt=initial_prompt,
             hotwords=hotwords_str,
+            vad_filter=vad_filter,
+            vad_parameters=vad_parameters if vad_filter else None,
         )
         # ps = playback seconds
         with tqdm(

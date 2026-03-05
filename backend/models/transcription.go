@@ -10,19 +10,23 @@ import (
 )
 
 type Transcription struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Status       int                `bson:"status" json:"status"`
-	Language     string             `bson:"language" json:"language"`
-	ModelSize    string             `bson:"modelSize" json:"modelSize"`
-	Task         string             `bson:"task" json:"task"`
-	Device       string             `bson:"device" json:"device"`
-	FileName     string             `bson:"fileName" json:"fileName"`
-	SourceUrl    string             `bson:"sourceUrl" json:"sourceUrl"`
-	BeamSize     int                `bson:"beam_size" json:"beam_size"`
-	InitialPrompt string            `bson:"initial_prompt" json:"initial_prompt"`
-	Hotwords     []string           `bson:"hotwords" json:"hotwords"`
-	Result       WhisperResult      `bson:"result" json:"result"`
-	Translations []Translation      `bson:"translations" json:"translations"`
+	ID                      primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Status                  int                `bson:"status" json:"status"`
+	Language                string             `bson:"language" json:"language"`
+	ModelSize               string             `bson:"modelSize" json:"modelSize"`
+	Task                    string             `bson:"task" json:"task"`
+	Device                  string             `bson:"device" json:"device"`
+	FileName                string             `bson:"fileName" json:"fileName"`
+	SourceUrl               string             `bson:"sourceUrl" json:"sourceUrl"`
+	BeamSize                int                `bson:"beam_size" json:"beam_size"`
+	InitialPrompt           string             `bson:"initial_prompt" json:"initial_prompt"`
+	Hotwords                []string           `bson:"hotwords" json:"hotwords"`
+	VadFilter               bool               `bson:"vad_filter" json:"vad_filter"`
+	VadThreshold            *float64           `bson:"vad_threshold,omitempty" json:"vad_threshold,omitempty"`
+	VadMinSpeechDurationMS  *int               `bson:"vad_min_speech_duration_ms,omitempty" json:"vad_min_speech_duration_ms,omitempty"`
+	VadMinSilenceDurationMS *int               `bson:"vad_min_silence_duration_ms,omitempty" json:"vad_min_silence_duration_ms,omitempty"`
+	Result                  WhisperResult      `bson:"result" json:"result"`
+	Translations            []Translation      `bson:"translations" json:"translations"`
 }
 
 func (t *Transcription) Translate(target string) error {

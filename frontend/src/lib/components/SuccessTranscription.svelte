@@ -34,6 +34,11 @@
             <span class="space-x-1">
                 <span class="font-bold text-xs">{tr.result.text.split(" ").length} words</span>
             </span>
+            {#if tr.vad_filter}
+            <span class="space-x-1">
+                <span class="badge badge-primary text-xs tooltip opacity-100" data-tip={`VAD Threshold: ${tr.vad_threshold ?? 0.5} Min Speech: ${tr.vad_min_speech_duration_ms ?? 250}ms Min Silence: ${tr.vad_min_silence_duration_ms ?? 500}ms`}>VAD</span>
+            </span>
+            {/if}
         </p>
     </span>
     <div class="flex items-center justify-center flex-wrap space-x-2">
