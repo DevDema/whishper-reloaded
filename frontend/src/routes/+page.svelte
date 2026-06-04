@@ -125,7 +125,7 @@
 
 	const fetchData = async () => {
 		loadingTranscriptions.set(true);
-		const endpoint = browser ? `${env.PUBLIC_API_HOST}/api/transcriptions` : `${env.PUBLIC_INTERNAL_API_HOST}/api/transcriptions`;
+		const endpoint = browser ? `${env.PUBLIC_API_HOST}/api/list-transcriptions` : `${env.PUBLIC_INTERNAL_API_HOST}/api/list-transcriptions`;
 
 		return fetch(endpoint).then(response => {
 			return response.json();

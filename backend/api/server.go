@@ -94,7 +94,16 @@ func (s *Server) RegisterRoutes() {
 	s.Router.Get("/api/transcriptions", func(c *fiber.Ctx) error {
 		err := s.handleGetAllTranscriptions(c)
 		if err != nil {
-			log.Error().Err(err).Msg("Error handling POST /api/transcriptions")
+			log.Error().Err(err).Msg("Error handling GET /api/transcriptions")
+		}
+		return err
+	})
+
+	// Register HTTP route for getting a lightweight list (no WhisperResult segments).
+	s.Router.Get("/api/list-transcriptions", func(c *fiber.Ctx) error {
+		err := s.handleListTranscriptions(c)
+		if err != nil {
+			log.Error().Err(err).Msg("Error handling GET /api/list-transcriptions")
 		}
 		return err
 	})

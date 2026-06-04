@@ -27,6 +27,34 @@ type Transcription struct {
 	VadMinSilenceDurationMS *int               `bson:"vad_min_silence_duration_ms,omitempty" json:"vad_min_silence_duration_ms,omitempty"`
 	Result                  WhisperResult      `bson:"result" json:"result"`
 	Translations            []Translation      `bson:"translations" json:"translations"`
+	WordsCount              int                `bson:"words_count,omitempty" json:"words_count,omitempty"`
+}
+
+type TranscriptionListItem struct {
+	ID                      string                `json:"id"`
+	Status                  int                   `json:"status"`
+	Language                string                `json:"language"`
+	ModelSize               string                `json:"modelSize"`
+	Task                    string                `json:"task"`
+	Device                  string                `json:"device"`
+	FileName                string                `json:"fileName"`
+	SourceUrl               string                `json:"sourceUrl"`
+	BeamSize                int                   `json:"beam_size"`
+	InitialPrompt           string                `json:"initial_prompt"`
+	Hotwords                []string              `json:"hotwords"`
+	VadFilter               bool                  `json:"vad_filter"`
+	VadThreshold            *float64              `json:"vad_threshold,omitempty"`
+	VadMinSpeechDurationMS  *int                  `json:"vad_min_speech_duration_ms,omitempty"`
+	VadMinSilenceDurationMS *int                  `json:"vad_min_silence_duration_ms,omitempty"`
+	Duration                float64               `json:"duration"`
+	WordsCount              int                   `json:"words_count"`
+	Translations            []TranslationListItem `json:"translations"`
+}
+
+type TranslationListItem struct {
+	SourceLanguage string `json:"sourceLanguage"`
+	TargetLanguage string `json:"targetLanguage"`
+	Status         int    `json:"translationStatus"`
 }
 
 func (t *Transcription) Translate(target string) error {

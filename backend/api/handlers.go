@@ -29,12 +29,77 @@ func (s *Server) handleGetAllTranscriptions(c *fiber.Ctx) error {
 	return nil
 }
 
+func (s *Server) handleListTranscriptions(c *fiber.Ctx) error {
+	transcriptions := s.Db.GetAllTranscriptions()
+
+	log.Debug().Msgf("Found %v transcriptions in the database", len(transcriptions))
+	// Convert the transcriptions to a lightweight view and marshal.
+	items := make([]models.TranscriptionListItem, 0, len(transcriptions))
+	for _, t := range transcriptions {
+		if t.WordsCount == 0 && t.Result.Text != "" {
+			count := len(strings.Fields(t.Result.Text))
+			t.WordsCount = count
+			if _, err := s.Db.UpdateTranscription(t); err != nil {
+				log.Error().Err(err).Msgf("Error updating words_count for transcription %v", t.ID.Hex())
+			}
+		}
+
+		item := models.TranscriptionListItem{
+			ID:                      t.ID.Hex(),
+			Status:                  t.Status,
+			Language:                t.Language,
+			ModelSize:               t.ModelSize,
+			Task:                    t.Task,
+			Device:                  t.Device,
+			FileName:                t.FileName,
+			SourceUrl:               t.SourceUrl,
+			BeamSize:                t.BeamSize,
+			InitialPrompt:           t.InitialPrompt,
+			Hotwords:                t.Hotwords,
+			VadFilter:               t.VadFilter,
+			VadThreshold:            t.VadThreshold,
+			VadMinSpeechDurationMS:  t.VadMinSpeechDurationMS,
+			VadMinSilenceDurationMS: t.VadMinSilenceDurationMS,
+			Duration:                t.Result.Duration,
+			WordsCount:              t.WordsCount,
+			Translations:            make([]models.TranslationListItem, 0, len(t.Translations)),
+		}
+		for _, tr := range t.Translations {
+			item.Translations = append(item.Translations, models.TranslationListItem{
+				SourceLanguage: tr.SourceLanguage,
+				TargetLanguage: tr.TargetLanguage,
+				Status:         tr.Status,
+			})
+		}
+		items = append(items, item)
+	}
+
+	json, err := json.Marshal(items)
+	if err != nil {
+		// 503 On vacation!
+		return fiber.NewError(fiber.StatusServiceUnavailable, "On vacation!")
+	}
+
+	// Write the JSON to the response body.
+	c.Set("Content-Type", "application/json")
+	c.Write(json)
+	return nil
+}
+
 func (s *Server) handleGetTranscriptionById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	t := s.Db.GetTranscription(id)
 	if t == nil {
 		log.Warn().Msgf("Transcription with id %v not found", id)
 		return fiber.NewError(fiber.StatusNotFound, "Not found")
+	}
+
+	if t.WordsCount == 0 && t.Result.Text != "" {
+		calculated := len(strings.Fields(t.Result.Text))
+		t.WordsCount = calculated
+		if _, err := s.Db.UpdateTranscription(t); err != nil {
+			log.Error().Err(err).Msgf("Error updating words_count for transcription %v", t.ID.Hex())
+		}
 	}
 
 	// Convert the transcription to JSON.
@@ -366,6 +431,7 @@ func (s *Server) handleUploadJSON(c *fiber.Ctx) error {
 
 	// Update the transcription with the new result
 	transcription.Result = whisperResult
+	transcription.WordsCount = len(strings.Fields(whisperResult.Text))
 	updatedTranscription, err := s.Db.UpdateTranscription(transcription)
 	if err != nil {
 		if err.Error() == "no documents were modified" {
