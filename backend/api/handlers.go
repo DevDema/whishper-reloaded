@@ -62,6 +62,7 @@ func (s *Server) handleListTranscriptions(c *fiber.Ctx) error {
 			VadMinSilenceDurationMS: t.VadMinSilenceDurationMS,
 			Duration:                t.Result.Duration,
 			WordsCount:              t.WordsCount,
+			Progress:                t.Progress,
 			Translations:            make([]models.TranslationListItem, 0, len(t.Translations)),
 		}
 		for _, tr := range t.Translations {

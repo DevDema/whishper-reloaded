@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -157,6 +158,113 @@ func SendTranscriptionRequest(t *models.Transcription, body *bytes.Buffer, write
 	}
 
 	return asrResponse, nil
+}
+
+// SendTranscriptionRequestStream sends the transcription request to the
+// streaming endpoint and consumes the NDJSON event stream. For every progress
+// event it invokes onProgress with a value between 0.0 and 1.0. It returns the
+// final WhisperResult once the stream is complete.
+func SendTranscriptionRequestStream(t *models.Transcription, body *bytes.Buffer, writer *multipart.Writer, onProgress func(progress float64)) (*models.WhisperResult, error) {
+	baseUrl := fmt.Sprintf("http://%v/transcribe-stream/", os.Getenv("ASR_ENDPOINT"))
+
+	params := url.Values{}
+	params.Add("model_size", t.ModelSize)
+	params.Add("task", t.Task)
+	params.Add("language", t.Language)
+	params.Add("device", t.Device)
+
+	if t.BeamSize > 0 {
+		params.Add("beam_size", fmt.Sprintf("%d", t.BeamSize))
+	}
+	if t.InitialPrompt != "" {
+		params.Add("initial_prompt", t.InitialPrompt)
+	}
+	if len(t.Hotwords) > 0 {
+		params.Add("hotwords", strings.Join(t.Hotwords, ","))
+	}
+	if t.VadFilter {
+		params.Add("vad_filter", "true")
+		if t.VadThreshold != nil {
+			params.Add("vad_threshold", fmt.Sprintf("%f", *t.VadThreshold))
+		}
+		if t.VadMinSpeechDurationMS != nil {
+			params.Add("vad_min_speech_duration_ms", fmt.Sprintf("%d", *t.VadMinSpeechDurationMS))
+		}
+		if t.VadMinSilenceDurationMS != nil {
+			params.Add("vad_min_silence_duration_ms", fmt.Sprintf("%d", *t.VadMinSilenceDurationMS))
+		}
+	}
+
+	fullUrl := fmt.Sprintf("%s?%s", baseUrl, params.Encode())
+
+	if err := writer.Close(); err != nil {
+		log.Debug().Err(err).Msg("Error closing multipart writer")
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", fullUrl, body)
+	if err != nil {
+		log.Debug().Err(err).Msg("Error creating request to transcription service")
+		return nil, err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Accept", "application/x-ndjson")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error().Err(err).Msg("Error sending request")
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
+		log.Error().Msgf("Response from %v: %v", fullUrl, string(b))
+		return nil, errors.New("invalid status")
+	}
+
+	// streamEvent matches the NDJSON lines emitted by the transcription API.
+	type streamEvent struct {
+		Type     string                `json:"type"`
+		Progress float64               `json:"progress"`
+		Result   *models.WhisperResult `json:"result"`
+		Error    string                `json:"error"`
+	}
+
+	var finalResult *models.WhisperResult
+	scanner := bufio.NewScanner(resp.Body)
+	// Allow long NDJSON lines (the final result line can be large).
+	scanner.Buffer(make([]byte, 1024*1024), 64*1024*1024)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		var ev streamEvent
+		if err := json.Unmarshal([]byte(line), &ev); err != nil {
+			log.Error().Err(err).Msgf("Error decoding stream event: %v", line)
+			continue
+		}
+		switch ev.Type {
+		case "progress":
+			if onProgress != nil {
+				onProgress(ev.Progress)
+			}
+		case "result":
+			finalResult = ev.Result
+		case "error":
+			return nil, errors.New(ev.Error)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.Error().Err(err).Msg("Error reading stream")
+		return nil, err
+	}
+	if finalResult == nil {
+		return nil, errors.New("no result received from transcription stream")
+	}
+	return finalResult, nil
 }
 func CheckTranscriptionServiceHealth() (ok bool, message string) {
 	url := "http://" + os.Getenv("ASR_ENDPOINT") + "/healthcheck"

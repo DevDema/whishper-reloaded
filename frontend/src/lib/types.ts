@@ -4,6 +4,7 @@ export type Transcription = {
     segments: Segment[];
     id: string;
     translations: Translation[];
+    progress?: number;
     vad_filter?: boolean;
     vad_threshold?: number;
     vad_min_speech_duration_ms?: number;
