@@ -1,7 +1,13 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import StreamingResponse
 from models import ModelSize, Languages, DeviceType
-from transcribe import transcribe_file, transcribe_from_filename
+from transcribe import (
+    transcribe_file,
+    transcribe_from_filename,
+    transcribe_file_stream,
+    transcribe_from_filename_stream,
+)
 import uvicorn
 import os
 from enum import Enum
@@ -69,6 +75,70 @@ async def transcribe_endpoint(
         )
     else:
         return {"detail": "No file uploaded and no filename provided"}
+
+
+@app.post("/transcribe-stream/")
+async def transcribe_stream_endpoint(
+    file: UploadFile = File(None),
+    filename: str = None,
+    model_size: ModelSize = ModelSize.small,
+    language: Languages = Languages.auto,
+    device: str = "cpu",
+    beam_size: int = 5,
+    initial_prompt: str = None,
+    hotwords: str = None,
+    vad_filter: bool = False,
+    vad_threshold: float = None,
+    vad_min_speech_duration_ms: int = None,
+    vad_min_silence_duration_ms: int = None,
+):
+    """
+    Same as /transcribe/ but streams NDJSON progress events while the
+    transcription is running, followed by a final result line.
+    """
+    if device != "cpu" and device != "cuda":
+        return {"detail": "Device must be either cpu or cuda"}
+    print(f"Streaming transcription with model {model_size.value} on device {device}...")
+
+    hotwords_list = None
+    if hotwords is not None and isinstance(hotwords, str):
+        hotwords_list = [hw.strip() for hw in hotwords.split(",") if hw.strip()]
+
+    if file is not None:
+        contents = await file.read()
+        generator = transcribe_file_stream(
+            contents,
+            file.filename,
+            model_size.value,
+            language.value,
+            device,
+            beam_size,
+            initial_prompt,
+            hotwords_list,
+            vad_filter,
+            vad_threshold,
+            vad_min_speech_duration_ms,
+            vad_min_silence_duration_ms,
+        )
+    elif filename is not None:
+        generator = transcribe_from_filename_stream(
+            filename,
+            model_size.value,
+            language.value,
+            device,
+            beam_size,
+            initial_prompt,
+            hotwords_list,
+            vad_filter,
+            vad_threshold,
+            vad_min_speech_duration_ms,
+            vad_min_silence_duration_ms,
+        )
+    else:
+        return {"detail": "No file uploaded and no filename provided"}
+
+    return StreamingResponse(generator, media_type="application/x-ndjson")
+
 
 @app.get("/healthcheck/")
 async def healthcheck():

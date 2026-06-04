@@ -57,6 +57,7 @@ class FasterWhisperBackend(Backend):
         vad_threshold: float = None,
         vad_min_speech_duration_ms: int = None,
         vad_min_silence_duration_ms: int = None,
+        progress_callback=None,
     ) -> Transcription:
         """
         Return word level transcription data.
@@ -137,6 +138,10 @@ class FasterWhisperBackend(Backend):
                 result.append(segment_extract)
                 if not silent:
                     pbar.update(segment.end - pbar.last_print_n)
+                # Report progress as a fraction (0.0 - 1.0) of audio processed.
+                if progress_callback is not None and info.duration:
+                    progress = min(max(segment.end / info.duration, 0.0), 1.0)
+                    progress_callback(progress, segment_extract)
         text = " ".join([segment["text"] for segment in result])
         text = ' '.join(text.strip().split())
         transcription: Transcription = {

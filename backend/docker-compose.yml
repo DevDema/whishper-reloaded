@@ -16,15 +16,16 @@ services:
     restart: unless-stopped
     volumes:
       - ../db_data/db:/data/db
-      - ../db_data/logs/:/var/log/mongodb/
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${DB_USER:-whishper}
       MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS:-whishper}
+      PUID: 1000
+      GUID: 1000
     expose:
       - 27017
     ports:
       - 27017:27017
-    command: mongod --logpath var/log/mongodb/mongod.log
+    command: mongod --logpath /var/log/mongodb/mongod.log
 
 
    

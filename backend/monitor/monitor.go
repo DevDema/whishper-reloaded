@@ -72,8 +72,22 @@ func transcribe(s *api.Server, t *models.Transcription) error {
 		return err
 	}
 
-	// Send transcription request to transcription service
-	res, err := utils.SendTranscriptionRequest(t, body, writer)
+	// Send transcription request to transcription service. We use the
+	// streaming endpoint so we can report progress while it runs.
+	var lastBroadcast float64
+	res, err := utils.SendTranscriptionRequestStream(t, body, writer, func(progress float64) {
+		// Throttle: only persist/broadcast on meaningful changes (>= 1%).
+		if progress-lastBroadcast < 0.01 && progress < 1.0 {
+			return
+		}
+		lastBroadcast = progress
+		t.Progress = progress
+		if _, uerr := s.Db.UpdateTranscription(t); uerr != nil {
+			log.Error().Err(uerr).Msg("Error updating transcription progress")
+			return
+		}
+		s.BroadcastTranscription(t)
+	})
 	if err != nil {
 		log.Error().Err(err).Msg("Error sending transcription request")
 		return err
@@ -82,6 +96,7 @@ func transcribe(s *api.Server, t *models.Transcription) error {
 	t.Result = *res
 	t.Translations = []models.Translation{}
 	t.Status = models.TranscriptionStatusDone
+	t.Progress = 1.0
 	_, err = s.Db.UpdateTranscription(t)
 	if err != nil {
 		log.Error().Err(err).Msg("Error updating transcription")
