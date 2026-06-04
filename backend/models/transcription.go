@@ -29,6 +29,7 @@ type Transcription struct {
 	Translations            []Translation      `bson:"translations" json:"translations"`
 	WordsCount              int                `bson:"words_count,omitempty" json:"words_count,omitempty"`
 	Progress                float64            `bson:"progress,omitempty" json:"progress,omitempty"`
+	DownloadingModel        bool               `bson:"downloading_model,omitempty" json:"downloadingModel,omitempty"`
 }
 
 type TranscriptionListItem struct {
@@ -50,6 +51,7 @@ type TranscriptionListItem struct {
 	Duration                float64               `json:"duration"`
 	WordsCount              int                   `json:"words_count"`
 	Progress                float64               `json:"progress,omitempty"`
+	DownloadingModel        bool                  `json:"downloadingModel,omitempty"`
 	Translations            []TranslationListItem `json:"translations"`
 }
 

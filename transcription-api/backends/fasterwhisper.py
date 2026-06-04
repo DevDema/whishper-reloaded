@@ -24,6 +24,13 @@ class FasterWhisperBackend(Backend):
             return local_model_path
         else:
             raise RuntimeError(f"model not found in {local_model_path}")
+
+    def is_model_cached(self) -> bool:
+        """Return True if the model weights are already present locally."""
+        local_model_path = os.path.join(
+            os.environ["WHISPER_MODELS_DIR"], f"faster-whisper-{self.model_size}"
+        )
+        return os.path.exists(os.path.join(local_model_path, "model.bin"))
         
     def load(self) -> None:
         # Get CPU threads env variable or default to 4
