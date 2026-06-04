@@ -6,6 +6,9 @@ from typing import Optional
 import numpy as np
 import io
 import os
+import json
+import queue
+import threading
 
 def convert_audio(file) -> np.ndarray:
         return decode_audio(file, split_stereo=False, sampling_rate=16000)
@@ -89,3 +92,123 @@ async def transcribe_audio(
         vad_min_speech_duration_ms=vad_min_speech_duration_ms,
         vad_min_silence_duration_ms=vad_min_silence_duration_ms,
     )
+
+
+def transcribe_from_filename_stream(
+    filename: str,
+    model_size: int,
+    language: Optional[str] = None,
+    device: DeviceType = DeviceType.cpu,
+    beam_size: int = 5,
+    initial_prompt: str = None,
+    hotwords: list[str] = None,
+    vad_filter: bool = False,
+    vad_threshold: Optional[float] = None,
+    vad_min_speech_duration_ms: Optional[int] = None,
+    vad_min_silence_duration_ms: Optional[int] = None,
+):
+    filepath = os.path.join(os.environ["UPLOAD_DIR"], filename)
+    if not os.path.exists(filepath):
+        raise RuntimeError(f"file not found in {filepath}")
+    audio = convert_audio(filepath)
+    return transcribe_audio_stream(
+        audio, model_size, language, device, beam_size, initial_prompt, hotwords,
+        vad_filter, vad_threshold, vad_min_speech_duration_ms, vad_min_silence_duration_ms,
+    )
+
+
+def transcribe_file_stream(
+    contents: bytes,
+    filename: str,
+    model_size: int,
+    language: Optional[str] = None,
+    device: DeviceType = DeviceType.cpu,
+    beam_size: int = 5,
+    initial_prompt: str = None,
+    hotwords: list[str] = None,
+    vad_filter: bool = False,
+    vad_threshold: Optional[float] = None,
+    vad_min_speech_duration_ms: Optional[int] = None,
+    vad_min_silence_duration_ms: Optional[int] = None,
+):
+    if len(contents) < 150 * 1024 * 1024:  # file is smaller than 150MB
+        audio = convert_audio(io.BytesIO(contents))
+    else:
+        with open(filename, 'wb') as f:
+            f.write(contents)
+        if not os.path.exists(filename):
+            raise RuntimeError(f"file not found in {filename}")
+        audio = convert_audio(filename)
+        os.remove(filename)
+    return transcribe_audio_stream(
+        audio, model_size, language, device, beam_size, initial_prompt, hotwords,
+        vad_filter, vad_threshold, vad_min_speech_duration_ms, vad_min_silence_duration_ms,
+    )
+
+
+def transcribe_audio_stream(
+    audio: np.ndarray,
+    model_size: int,
+    language: Optional[str] = None,
+    device: DeviceType = DeviceType.cpu,
+    beam_size: int = 5,
+    initial_prompt: str = None,
+    hotwords: list[str] = None,
+    vad_filter: bool = False,
+    vad_threshold: Optional[float] = None,
+    vad_min_speech_duration_ms: Optional[int] = None,
+    vad_min_silence_duration_ms: Optional[int] = None,
+):
+    """
+    Run the transcription in a background thread and yield NDJSON lines.
+
+    Each progress line:  {"type": "progress", "progress": 0.42}
+    Final result line:   {"type": "result", "result": {<Transcription>}}
+    On error:            {"type": "error", "error": "<message>"}
+    """
+    if language == "auto":
+        language = None
+
+    model = FasterWhisperBackend(model_size=model_size, device=device)
+    model.get_model()
+    model.load()
+
+    # Thread-safe queue used to forward progress events from the worker
+    # thread (where the blocking transcribe loop runs) to this generator.
+    events: "queue.Queue" = queue.Queue()
+    SENTINEL = object()
+
+    def on_progress(progress: float, _segment):
+        events.put({"type": "progress", "progress": round(progress, 4)})
+
+    def worker():
+        try:
+            result = model.transcribe(
+                audio,
+                silent=True,
+                language=language,
+                beam_size=beam_size,
+                initial_prompt=initial_prompt,
+                hotwords=hotwords,
+                vad_filter=vad_filter,
+                vad_threshold=vad_threshold,
+                vad_min_speech_duration_ms=vad_min_speech_duration_ms,
+                vad_min_silence_duration_ms=vad_min_silence_duration_ms,
+                progress_callback=on_progress,
+            )
+            events.put({"type": "result", "result": result})
+        except Exception as e:  # noqa: BLE001
+            events.put({"type": "error", "error": str(e)})
+        finally:
+            events.put(SENTINEL)
+
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
+
+    while True:
+        event = events.get()
+        if event is SENTINEL:
+            break
+        yield json.dumps(event) + "\n"
+
+    thread.join()

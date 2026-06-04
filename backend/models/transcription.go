@@ -28,6 +28,7 @@ type Transcription struct {
 	Result                  WhisperResult      `bson:"result" json:"result"`
 	Translations            []Translation      `bson:"translations" json:"translations"`
 	WordsCount              int                `bson:"words_count,omitempty" json:"words_count,omitempty"`
+	Progress                float64            `bson:"progress,omitempty" json:"progress,omitempty"`
 }
 
 type TranscriptionListItem struct {
@@ -48,6 +49,7 @@ type TranscriptionListItem struct {
 	VadMinSilenceDurationMS *int                  `json:"vad_min_silence_duration_ms,omitempty"`
 	Duration                float64               `json:"duration"`
 	WordsCount              int                   `json:"words_count"`
+	Progress                float64               `json:"progress,omitempty"`
 	Translations            []TranslationListItem `json:"translations"`
 }
 
