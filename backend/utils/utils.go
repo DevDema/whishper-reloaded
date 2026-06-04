@@ -162,9 +162,11 @@ func SendTranscriptionRequest(t *models.Transcription, body *bytes.Buffer, write
 
 // SendTranscriptionRequestStream sends the transcription request to the
 // streaming endpoint and consumes the NDJSON event stream. For every progress
-// event it invokes onProgress with a value between 0.0 and 1.0. It returns the
-// final WhisperResult once the stream is complete.
-func SendTranscriptionRequestStream(t *models.Transcription, body *bytes.Buffer, writer *multipart.Writer, onProgress func(progress float64)) (*models.WhisperResult, error) {
+// event it invokes onProgress with a value between 0.0 and 1.0. When the
+// transcription service needs to download the model first, it invokes
+// onModelDownload with the model name. It returns the final WhisperResult once
+// the stream is complete.
+func SendTranscriptionRequestStream(t *models.Transcription, body *bytes.Buffer, writer *multipart.Writer, onProgress func(progress float64), onModelDownload func(model string)) (*models.WhisperResult, error) {
 	baseUrl := fmt.Sprintf("http://%v/transcribe-stream/", os.Getenv("ASR_ENDPOINT"))
 
 	params := url.Values{}
@@ -228,6 +230,7 @@ func SendTranscriptionRequestStream(t *models.Transcription, body *bytes.Buffer,
 	type streamEvent struct {
 		Type     string                `json:"type"`
 		Progress float64               `json:"progress"`
+		Model    string                `json:"model"`
 		Result   *models.WhisperResult `json:"result"`
 		Error    string                `json:"error"`
 	}
@@ -247,6 +250,10 @@ func SendTranscriptionRequestStream(t *models.Transcription, body *bytes.Buffer,
 			continue
 		}
 		switch ev.Type {
+		case "model_download":
+			if onModelDownload != nil {
+				onModelDownload(ev.Model)
+			}
 		case "progress":
 			if onProgress != nil {
 				onProgress(ev.Progress)

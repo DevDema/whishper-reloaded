@@ -6,6 +6,7 @@
     $: progress = tr.progress ?? 0;
     $: percent = Math.round(progress * 100);
     $: hasProgress = progress > 0;
+    $: downloadingModel = tr.downloadingModel ?? false;
 </script>
 
 <div class="alert alert-info p-3 flex flex-col items-stretch gap-2">
@@ -13,7 +14,9 @@
         <span class="loading loading-ring loading-md"></span>
         <span class="flex-1">
             <p class="font-bold text-info-content text-md">{tr.fileName != "" ? tr.fileName.split("_WHSHPR_")[1] : tr.id}</p>
-            {#if hasProgress}
+            {#if downloadingModel}
+                <p class="font-mono text-info-content text-sm opacity-60">Downloading model "{tr.modelSize}"...</p>
+            {:else if hasProgress}
                 <p class="font-mono text-info-content text-sm opacity-60">Transcribing... {percent}%</p>
             {:else}
                 <p class="font-mono text-info-content text-sm opacity-60">Waiting for transcription...</p>

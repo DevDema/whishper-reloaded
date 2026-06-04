@@ -63,6 +63,7 @@ func (s *Server) handleListTranscriptions(c *fiber.Ctx) error {
 			Duration:                t.Result.Duration,
 			WordsCount:              t.WordsCount,
 			Progress:                t.Progress,
+			DownloadingModel:        t.DownloadingModel,
 			Translations:            make([]models.TranslationListItem, 0, len(t.Translations)),
 		}
 		for _, tr := range t.Translations {

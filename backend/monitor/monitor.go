@@ -30,6 +30,7 @@ func StartMonitor(s *api.Server) {
 					if err != nil {
 						log.Error().Err(err).Msg("Error transcribing")
 						pt.Status = models.TranscriptionStatusError
+						pt.DownloadingModel = false
 						ut, err := s.Db.UpdateTranscription(pt)
 						if err != nil {
 							log.Error().Err(err).Msg("Error updating transcription")
@@ -76,14 +77,28 @@ func transcribe(s *api.Server, t *models.Transcription) error {
 	// streaming endpoint so we can report progress while it runs.
 	var lastBroadcast float64
 	res, err := utils.SendTranscriptionRequestStream(t, body, writer, func(progress float64) {
+		// Once real progress arrives the model is loaded, so clear the
+		// downloading flag (force a broadcast on this transition).
+		downloadingCleared := t.DownloadingModel
 		// Throttle: only persist/broadcast on meaningful changes (>= 1%).
-		if progress-lastBroadcast < 0.01 && progress < 1.0 {
+		if progress-lastBroadcast < 0.01 && progress < 1.0 && !downloadingCleared {
 			return
 		}
 		lastBroadcast = progress
 		t.Progress = progress
+		t.DownloadingModel = false
 		if _, uerr := s.Db.UpdateTranscription(t); uerr != nil {
 			log.Error().Err(uerr).Msg("Error updating transcription progress")
+			return
+		}
+		s.BroadcastTranscription(t)
+	}, func(model string) {
+		// The transcription service is downloading the model weights.
+		log.Info().Msgf("Downloading model %v for transcription %v", model, t.ID.Hex())
+		t.DownloadingModel = true
+		t.Progress = 0
+		if _, uerr := s.Db.UpdateTranscription(t); uerr != nil {
+			log.Error().Err(uerr).Msg("Error updating transcription download state")
 			return
 		}
 		s.BroadcastTranscription(t)
@@ -97,6 +112,7 @@ func transcribe(s *api.Server, t *models.Transcription) error {
 	t.Translations = []models.Translation{}
 	t.Status = models.TranscriptionStatusDone
 	t.Progress = 1.0
+	t.DownloadingModel = false
 	_, err = s.Db.UpdateTranscription(t)
 	if err != nil {
 		log.Error().Err(err).Msg("Error updating transcription")

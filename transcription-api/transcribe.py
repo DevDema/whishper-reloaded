@@ -162,6 +162,7 @@ def transcribe_audio_stream(
     """
     Run the transcription in a background thread and yield NDJSON lines.
 
+    Model download line: {"type": "model_download", "model": "large-v2"}
     Each progress line:  {"type": "progress", "progress": 0.42}
     Final result line:   {"type": "result", "result": {<Transcription>}}
     On error:            {"type": "error", "error": "<message>"}
@@ -170,6 +171,12 @@ def transcribe_audio_stream(
         language = None
 
     model = FasterWhisperBackend(model_size=model_size, device=device)
+
+    # If the model weights are not cached yet, let the consumer know that we
+    # are about to download them (this can take a while for large models).
+    if not model.is_model_cached():
+        yield json.dumps({"type": "model_download", "model": model_size}) + "\n"
+
     model.get_model()
     model.load()
 
