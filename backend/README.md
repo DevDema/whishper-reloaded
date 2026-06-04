@@ -12,7 +12,11 @@ It exposes a `/ws/transcriptions` websocket endpoint where JSON events will be r
 
 #### GET: `/api/transcriptions`
 
-This endpoint will return all the transcriptions in the database.
+This endpoint returns the full transcription objects from the database. It is used when a client needs the complete transcription details for a single record, for example when opening the editor view for `/api/transcriptions/{id}`.
+
+#### GET: `/api/list-transcriptions`
+
+This endpoint returns a lightweight list of transcriptions without the full Whisper result payload. It is used for fast loading of the transcription list in the UI.
 
 #### POST: `/api/transcriptions`
 
