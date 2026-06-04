@@ -5,6 +5,8 @@ export type Transcription = {
     id: string;
     translations: Translation[];
     progress?: number;
+    downloadingModel?: boolean;
+    modelSize?: string;
     vad_filter?: boolean;
     vad_threshold?: number;
     vad_min_speech_duration_ms?: number;
