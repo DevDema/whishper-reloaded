@@ -1,23 +1,36 @@
 <!-- SuccessTranscription.svelte -->
 <script>
     import {createEventDispatcher} from 'svelte';
-    import {deleteTranscription} from "$lib/utils.js";
+    import {deleteTranscription, getFullTranscription} from "$lib/utils.js";
+    import toast from 'svelte-french-toast';
     export let tr;
     export let languagesAvailable;
 
     const dispatch = createEventDispatcher();
-    let download = () => {
-        dispatch('download', tr); // emit a custom event with the transcription as detail
-    }
-    let translate = () => {
-        dispatch('translate', tr); // emit a custom event with the transcription as detail
-    }
-    let rename = () => {
-        dispatch('rename', tr); // emit a custom event with the transcription as detail
-    }
-    let upload = () => {
-        dispatch('upload', tr); // emit a custom event with the transcription as detail
-    }
+
+    // Tracks which action is currently loading the full transcription, so we can show a
+    // spinner and disable the buttons. The list view only holds a lightweight transcription
+    // (no result/segments), so the full record must be fetched before opening any modal.
+    let loadingAction = null;
+
+    const runAction = async (action) => {
+        if (loadingAction) return;
+        loadingAction = action;
+        try {
+            const full = await getFullTranscription(tr.id);
+            dispatch(action, full); // parent opens the modal once the full data is ready
+        } catch (error) {
+            console.error(error);
+            toast.error('Could not load transcription. Please try again.');
+        } finally {
+            loadingAction = null;
+        }
+    };
+
+    let download = () => runAction('download');
+    let translate = () => runAction('translate');
+    let rename = () => runAction('rename');
+    let upload = () => runAction('upload');
 </script>
 
 <div class="alert alert-success p-3">
@@ -52,49 +65,66 @@
                  </svg>
             </span>
         </a>
-        <button  on:click={download} onclick="modalDownloadOptions.showModal()" class="btn btn-xs md:btn-sm">
+        <button on:click={download} disabled={!!loadingAction} class="btn btn-xs md:btn-sm">
             <span class="tooltip flex items-center justify-center" data-tip="Download">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
-                    <path d="M7 11l5 5l5 -5"></path>
-                    <path d="M12 4l0 12"></path>
-                 </svg>
+                {#if loadingAction === 'download'}
+                    <span class="loading loading-spinner loading-xs"></span>
+                {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
+                        <path d="M7 11l5 5l5 -5"></path>
+                        <path d="M12 4l0 12"></path>
+                     </svg>
+                {/if}
             </span>
         </button>
-        <button on:click={rename} class="btn btn-xs md:btn-sm">
+        <button on:click={rename} disabled={!!loadingAction} class="btn btn-xs md:btn-sm">
             <span class="tooltip flex items-center justify-center" data-tip="Rename">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M8 4h-2c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-14c0-.55-.45-1-1-1z"></path>
-                    <path d="M14 10h-4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1z"></path>
-                    <path d="M20 4h-2c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-14c0-.55-.45-1-1-1z"></path>
-                </svg>
+                {#if loadingAction === 'rename'}
+                    <span class="loading loading-spinner loading-xs"></span>
+                {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M8 4h-2c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-14c0-.55-.45-1-1-1z"></path>
+                        <path d="M14 10h-4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1z"></path>
+                        <path d="M20 4h-2c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-14c0-.55-.45-1-1-1z"></path>
+                    </svg>
+                {/if}
             </span>
         </button>
-        <button on:click={upload} class="btn btn-xs md:btn-sm">
+        <button on:click={upload} disabled={!!loadingAction} class="btn btn-xs md:btn-sm">
             <span class="tooltip flex items-center justify-center" data-tip="Upload JSON">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
-                    <path d="M7 9l5 -5l5 5"></path>
-                    <path d="M12 4l0 12"></path>
-                </svg>
+                {#if loadingAction === 'upload'}
+                    <span class="loading loading-spinner loading-xs"></span>
+                {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
+                        <path d="M7 9l5 -5l5 5"></path>
+                        <path d="M12 4l0 12"></path>
+                    </svg>
+                {/if}
             </span>
         </button>
         {#if languagesAvailable}
             <button 
             on:click={translate}
+            disabled={!!loadingAction}
             class="btn btn-xs md:btn-sm btn-primary">
                 <span class="tooltip flex items-center justify-center" data-tip="Translate">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                        <path d="M4 5h7"></path>
-                        <path d="M7 4c0 4.846 0 7 .5 8"></path>
-                        <path d="M10 8.5c0 2.286 -2 4.5 -3.5 4.5s-2.5 -1.135 -2.5 -2c0 -2 1 -3 3 -3s5 .57 5 2.857c0 1.524 -.667 2.571 -2 3.143"></path>
-                        <path d="M12 20l4 -9l4 9"></path>
-                        <path d="M19.1 18h-6.2"></path>
-                    </svg>
+                    {#if loadingAction === 'translate'}
+                        <span class="loading loading-spinner loading-xs"></span>
+                    {:else}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                            <path d="M4 5h7"></path>
+                            <path d="M7 4c0 4.846 0 7 .5 8"></path>
+                            <path d="M10 8.5c0 2.286 -2 4.5 -3.5 4.5s-2.5 -1.135 -2.5 -2c0 -2 1 -3 3 -3s5 .57 5 2.857c0 1.524 -.667 2.571 -2 3.143"></path>
+                            <path d="M12 20l4 -9l4 9"></path>
+                            <path d="M19.1 18h-6.2"></path>
+                        </svg>
+                    {/if}
                 </span>
             </button>
         {/if}

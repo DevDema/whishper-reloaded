@@ -4,6 +4,18 @@ import { browser } from '$app/environment';
 import { env } from '$env/dynamic/public';
 
 export let CLIENT_API_HOST = `${env.PUBLIC_API_HOST}`;
+
+// Fetches the full transcription (including the heavy WhisperResult payload) on demand.
+// The list endpoint only returns a lightweight object, so actions that need segments,
+// text or translations must load the complete record first.
+export const getFullTranscription = async function (id) {
+    const res = await fetch(`${CLIENT_API_HOST}/api/transcriptions/${id}`);
+    if (!res.ok) {
+        throw new Error(`Failed to load transcription ${id}: ${res.status}`);
+    }
+    return res.json();
+};
+
 const apiHost = env.PUBLIC_API_HOST || "default_api_host_here"; 
 export let CLIENT_WS_HOST = `${apiHost.replace("http://", "").replace("https://", "")}`;// URL Validator
 export const validateURL = function (url) {
