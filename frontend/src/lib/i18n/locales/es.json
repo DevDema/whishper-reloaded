@@ -1,0 +1,224 @@
+{
+	"common": {
+		"refresh": "Actualizar",
+		"close": "cerrar",
+		"delete": "Eliminar",
+		"cancel": "Cancelar",
+		"loading": "Cargando...",
+		"uploading": "Subiendo..."
+	},
+	"language": {
+		"switcher": "Idioma"
+	},
+	"header": {
+		"title": "Whishper Reloaded",
+		"logoAlt": "Logo: una nube susurrando"
+	},
+	"footer": {
+		"version": "Versión de Whishper: {version}",
+		"forkOf": "es un fork de",
+		"praise": "Honremos la idea del creador original."
+	},
+	"taglines": [
+		"Entra audio, sale texto. ¿De qué trata tu sonido?",
+		"¡Marca el ritmo, yo pongo el texto!",
+		"¡Todos saben que el pájaro es la palabra!",
+		"¡De la prueba de sonido a la corrección ortográfica!",
+		"¡Tengo 99 problemas, pero transcribir no es uno!",
+		"¡Soy todo oídos!",
+		"¡Yo transcribo, tú dictas!",
+		"¿Te faltan las palabras?",
+		"Prueba de sonido 1, 2, 3...",
+		"¡Sube el volumen! ¿Cuál es tu guion?",
+		"¡Transcribe, transcribe, transcribe!",
+		"¿Qué transcribes hoy?",
+		"¿Qué cuentas, palabrero mañanero?",
+		"Las palabras no salen fáciles, pero puedo ayudarte a encontrarlas.",
+		"Tú hablas, yo escribo. ¡No es magia, es IA!",
+		"¿No entiendes ese idioma? ¡Yo puedo traducir!",
+		"¡Cumplo cada palabra que digo!"
+	],
+	"home": {
+		"newTranscription": "✨ nueva transcripción",
+		"serviceUnavailable": "🛑 El servicio de transcripción no está disponible: {error}",
+		"languagesUnavailable": "⚠️ Las funciones de idioma no están disponibles: {error}",
+		"search": {
+			"placeholder": "Buscar transcripciones...",
+			"clear": "Limpiar",
+			"results": "{count, plural, one {# resultado encontrado.} other {# resultados encontrados.}}",
+			"minChars": "Escribe al menos 4 caracteres para buscar."
+		},
+		"pagination": {
+			"previous": "Anterior",
+			"next": "Siguiente",
+			"page": "Página {current} de {total}"
+		},
+		"empty": {
+			"noResults": "🔮 No se encontraron transcripciones 🔮",
+			"none": "🔮 Aún no hay transcripciones 🔮"
+		}
+	},
+	"transcription": {
+		"meta": {
+			"duration": "{duration} de duración",
+			"translations": "{count} traducciones",
+			"words": "{count} palabras",
+			"vadTooltip": "Umbral VAD: {threshold} Habla mín.: {minSpeech}ms Silencio mín.: {minSilence}ms"
+		},
+		"status": {
+			"downloadingModel": "Descargando el modelo \"{model}\"...",
+			"transcribing": "Transcribiendo... {percent}%",
+			"waitingTranscription": "Esperando la transcripción...",
+			"pending": "Transcripción pendiente... Idioma: {language}",
+			"waitingTranslation": "Esperando la traducción...",
+			"failed": "Error: No se pudo transcribir."
+		},
+		"actions": {
+			"edit": "Editar",
+			"download": "Descargar",
+			"rename": "Renombrar",
+			"uploadJson": "Subir JSON",
+			"translate": "Traducir",
+			"delete": "Eliminar"
+		},
+		"toasts": {
+			"loadFailed": "No se pudo cargar la transcripción. Inténtalo de nuevo."
+		}
+	},
+	"modals": {
+		"transcription": {
+			"pickFile": "Elige un archivo",
+			"sourceUrl": "O una URL de origen",
+			"sourceUrlPlaceholder": "https://youtube.com/watch?v=Hd33fCdW",
+			"whisperModel": "Modelo de Whisper",
+			"language": "Idioma",
+			"device": "Dispositivo",
+			"deviceGpu": "GPU",
+			"deviceCpu": "CPU",
+			"beamSize": "Tamaño del haz",
+			"initialPrompt": "Prompt inicial (opcional)",
+			"initialPromptPlaceholder": "p. ej. contexto para el modelo",
+			"hotwords": "Palabras clave (separadas por comas, opcional)",
+			"hotwordsPlaceholder": "p. ej. palabra1, palabra2",
+			"enableVad": "Activar VAD (detección de actividad de voz)",
+			"vadThreshold": "Umbral VAD",
+			"vadThresholdPlaceholder": "0.5 (por defecto)",
+			"vadMinSpeech": "Duración mínima de habla (ms)",
+			"vadMinSpeechPlaceholder": "250 (por defecto)",
+			"vadMinSilence": "Duración mínima de silencio (ms)",
+			"vadMinSilencePlaceholder": "500 (por defecto)",
+			"start": "Iniciar",
+			"errorValidUrl": "Introduce una URL válida",
+			"toasts": {
+				"invalidUrl": "Debes introducir una URL válida.",
+				"noFileOrUrl": "Sin archivo ni URL.",
+				"success": "¡Éxito!",
+				"uploadFailed": "Error al subir",
+				"uploadError": "Ocurrió un error durante la subida"
+			}
+		},
+		"translation": {
+			"title": "Traducir",
+			"targetLanguages": "Idiomas de destino para {language}",
+			"pickOne": "Elige uno",
+			"translate": "Traducir",
+			"toasts": {
+				"started": "¡Traducción iniciada!",
+				"error": "¡Error al traducir el texto!"
+			}
+		},
+		"rename": {
+			"title": "Renombrar transcripción",
+			"newFileName": "Nuevo nombre de archivo",
+			"placeholder": "Introduce el nuevo nombre de archivo",
+			"rename": "Renombrar",
+			"toasts": {
+				"success": "¡Archivo renombrado correctamente!",
+				"error": "No se pudo renombrar el archivo. Inténtalo de nuevo."
+			}
+		},
+		"upload": {
+			"title": "Subir JSON",
+			"description": "Sube un archivo JSON para reemplazar el resultado de la transcripción de:",
+			"selectFile": "Selecciona un archivo JSON",
+			"upload": "Subir",
+			"toasts": {
+				"invalidFile": "Selecciona un archivo JSON válido",
+				"noFile": "Selecciona un archivo JSON",
+				"noChanges": "¡No se realizaron cambios!",
+				"success": "JSON subido correctamente",
+				"invalidFormat": "Formato de archivo JSON no válido",
+				"failed": "No se pudo subir el JSON"
+			}
+		},
+		"download": {
+			"title": "Opciones de descarga",
+			"fileFormat": "Formato de archivo",
+			"textLanguage": "Idioma del texto",
+			"includeWords": "Incluir marcas de tiempo por palabra",
+			"tooltipFile": "Descargar archivo {format} en {language}.",
+			"tooltipCopy": "Copiar el texto sin formato en el idioma '{language}'.",
+			"tooltipMedia": "Descargar el medio de origen",
+			"file": "Archivo",
+			"copy": "Copiar",
+			"media": "Medio",
+			"toasts": {
+				"noData": "No hay datos disponibles para descargar",
+				"copied": "Texto copiado al portapapeles"
+			}
+		}
+	},
+	"editor": {
+		"waitingTask": "Esperando a que termine la tarea de {action}...",
+		"actionTranslating": "traducción",
+		"actionTranscribing": "transcripción",
+		"home": "Inicio",
+		"save": "Guardar (Ctrl+S)",
+		"audioMode": "Modo audio",
+		"exitAudioMode": "Salir del modo audio",
+		"subtitlesLanguage": "Idioma de los subtítulos",
+		"table": {
+			"start": "Inicio",
+			"end": "Fin",
+			"text": "Texto",
+			"info": "Info"
+		},
+		"noMoreSegments": "No hay más segmentos que cargar",
+		"loadingMore": "Cargando más...",
+		"goToCurrentSegment": "Ir al segmento del tiempo actual",
+		"segment": {
+			"setToCurrentTime": "Ajustar al tiempo actual",
+			"cps": "CPS: {value}",
+			"duration": "Duración: {value}s",
+			"insertAbove": "Insertar arriba",
+			"insertBelow": "Insertar abajo",
+			"split": "Dividir segmento"
+		},
+		"settings": {
+			"seekOnClick": "Saltar al hacer clic",
+			"seekOnClickTooltip": "Al hacer clic en un campo de tiempo, salta el vídeo a esa posición.",
+			"autosave": "Autoguardado",
+			"autosaveTooltip": "Guardar los cambios automáticamente cada 30s."
+		},
+		"goTo": {
+			"placeholder": "0-{max}",
+			"goToSegment": "Ir al segmento",
+			"goAndSeek": "Ir y saltar al inicio del segmento"
+		},
+		"toasts": {
+			"noChanges": "¡No se realizaron cambios!",
+			"saveError": "¡No se pudo guardar!",
+			"autosaving": "Autoguardando...",
+			"saved": "¡Guardado!",
+			"autosaveDisabled": "El autoguardado está desactivado.",
+			"autosaveEnabled": "Autoguardado activado."
+		}
+	},
+	"layout": {
+		"serviceErrors": {
+			"languagesFetch": "No se pudieron obtener los idiomas disponibles.",
+			"serviceReporting": "El servicio de transcripción está informando de un error. Las nuevas transcripciones no están disponibles.",
+			"serviceUnreachable": "No se pudo contactar con el servicio de transcripción. No se pueden crear nuevas transcripciones."
+		}
+	}
+}

@@ -100,30 +100,12 @@ export const uploadJSON = async function (id, jsonData) {
     return updatedTranscription;
 }
 
-export const getRandomSentence = function () {
-    const sentences = [
-        "Audio in, text out. What's your sound about?",
-        "Drop the beat, I'll drop the text!",
-        "Everybody knows the bird is the word!",
-        "From soundcheck to spellcheck!",
-        "I got 99 problems but transcribing ain't one!",
-        "I'm all ears!",
-        "iTranscribe, you dictate!",
-        "Lost for words?",
-        "Sound check 1, 2, 3...",
-        "Sound's up! What's your script?",
-        "Transcribe, transcribe, transcribe!",
-        "What are you transcribing today?",
-        "What's the story, morning wordy?",
-        "Words, don't come easy, but I can help find the way.",
-        "You speak, I write. It's no magic, just AI!",
-        "Can't understand that language? I can translate!",
-        "I mean every word I say!"
-    ]
+// Number of taglines available under the `taglines` i18n key. Keep in sync with the locale files.
+export const TAGLINE_COUNT = 17;
 
-    const randomSentence = sentences[Math.floor(Math.random() * sentences.length)];
-
-    return randomSentence;
+// Returns a random tagline index that the UI resolves against the active locale's `taglines` list.
+export const getRandomTaglineIndex = function () {
+    return Math.floor(Math.random() * TAGLINE_COUNT);
 }
 
 // Expects a segments array with start, end and text properties

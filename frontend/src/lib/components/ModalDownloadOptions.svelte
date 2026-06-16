@@ -1,6 +1,7 @@
 <script>
     import {downloadSRT, downloadTXT, downloadJSON, downloadVTT, CLIENT_API_HOST} from '$lib/utils';
     import toast from 'svelte-french-toast';
+    import { _ } from 'svelte-i18n';
     export let tr;
 
     let subtitleFormat = "srt";
@@ -30,7 +31,7 @@
         }
         
         if (segments.length == 0 || text == "") {
-            toast.error("No data available for download");
+            toast.error($_('modals.download.toasts.noData'));
             return;
         }
 
@@ -71,7 +72,7 @@
         try {
             await navigator.clipboard.writeText(text);
             console.log('Text copied to clipboard');
-            toast.success('Text copied to clipboard');
+            toast.success($_('modals.download.toasts.copied'));
         } catch (err) {
             console.error('Error in copying text: ', err);
         }
@@ -82,12 +83,12 @@
     <form method="dialog" class="modal-box flex flex-col items-center justify-center">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
         {#if tr}
-        <h1 class="text-center font-bold mt-2 pb-2">Download Options</h1>
+        <h1 class="text-center font-bold mt-2 pb-2">{$_('modals.download.title')}</h1>
 
         <div class="flex flex-row space-x-4">
             <div class="form-control">
                 <label for="format" class="label">
-                    <span class="label-text font-bold">File Format</span>
+                    <span class="label-text font-bold">{$_('modals.download.fileFormat')}</span>
                 </label>
                 <select bind:value={subtitleFormat} name="format" class="select select-bordered w-full max-w-xs">
                     <option value="srt">SRT</option>
@@ -99,7 +100,7 @@
 
             <div class="form-control">
                 <label for="language" class="label">
-                    <span class="label-text font-bold">Text Language</span>
+                    <span class="label-text font-bold">{$_('modals.download.textLanguage')}</span>
                 </label>
                 <select bind:value={language} name="language" class="select select-bordered w-full max-w-xs uppercase">
                     <option value="original">✅ {tr.result.language}</option>
@@ -113,14 +114,14 @@
         {#if subtitleFormat === "json"}
         <div class="form-control mt-4">
             <label class="label cursor-pointer space-x-2">
-                <span class="label-text">Include word-level timestamps</span>
+                <span class="label-text">{$_('modals.download.includeWords')}</span>
                 <input type="checkbox" bind:checked={includeWords} class="checkbox" />
             </label>
         </div>
         {/if}
 
         <div class="space-x-2 mt-8">
-            <span class="tooltip" data-tip="Download {subtitleFormat} file in {language}.">
+            <span class="tooltip" data-tip={$_('modals.download.tooltipFile', { values: { format: subtitleFormat, language } })}>
                 <button on:click={downloadSubtitle} class="btn btn-sm btn-success">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-download" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -129,11 +130,11 @@
                         <path d="M12 4l0 12"></path>
                     </svg>
                     <span>
-                        File
+                        {$_('modals.download.file')}
                     </span>
                 </button>
             </span>
-            <span class="tooltip" data-tip="Copy raw text in '{language}' language.">
+            <span class="tooltip" data-tip={$_('modals.download.tooltipCopy', { values: { language } })}>
                 <button on:click={copyText} class="btn btn-sm btn-info">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -141,11 +142,11 @@
                         <path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2"></path>
                      </svg>
                      <span>
-                         Copy
+                         {$_('modals.download.copy')}
                      </span>
                 </button>
             </span>
-            <span class="tooltip" data-tip="Download source media">
+            <span class="tooltip" data-tip={$_('modals.download.tooltipMedia')}>
                 <button on:click={downloadMedia} class="btn btn-sm btn-error">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-download" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -155,7 +156,7 @@
                         <path d="M9.5 14.5l2.5 2.5l2.5 -2.5"></path>
                     </svg>
                     <span>
-                        Media
+                        {$_('modals.download.media')}
                     </span>
                 </button>
             </span>
@@ -169,6 +170,6 @@
         {/if}
     </form>
     <form method="dialog" class="modal-backdrop">
-        <button>close</button>
+        <button>{$_('common.close')}</button>
     </form>
 </dialog>

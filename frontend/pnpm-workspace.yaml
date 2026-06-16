@@ -1,3 +1,4 @@
 allowBuilds:
   '@sveltejs/kit': true
   esbuild: true
+  es5-ext: false

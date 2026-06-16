@@ -1,5 +1,6 @@
 <script>
 	import { editorSettings, currentTranscription, currentVideoPlayerTime } from '$lib/stores';
+    import { _ } from 'svelte-i18n';
     export let language;
     export let segmentsToShow;
     export let setSegmentsToShow;
@@ -96,7 +97,7 @@
         type="number"
         min="0"
         max={getCurrentSegments().length}
-        placeholder="0-{getCurrentSegments().length}"
+        placeholder={$_('editor.goTo.placeholder', { values: { max: getCurrentSegments().length } })}
         bind:value={segmentIndex}
         on:keydown={(e) => e.key === 'Enter' && navigateToSegment()}
         class="input input-sm w-30 input-bordered"
@@ -105,7 +106,7 @@
     <button
         on:click={navigateToSegment}
         class="btn btn-primary btn-xs md:btn-sm btn-square"
-        title="Go to segment"
+        title={$_('editor.goTo.goToSegment')}
         disabled={!segmentIndex || parseInt(segmentIndex) < 0 || parseInt(segmentIndex) > getCurrentSegments().length}
     >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -116,7 +117,7 @@
     <button
         on:click={() => { navigateToSegment(); if ($editorSettings.seekOnClick && segmentIndex) { $currentVideoPlayerTime = getCurrentSegments()[parseInt(segmentIndex)]?.start; } }}
         class="btn btn-primary btn-xs md:btn-sm btn-square"
-        title="Go & Seek to segment start"
+        title={$_('editor.goTo.goAndSeek')}
         disabled={!segmentIndex || parseInt(segmentIndex) < 1 || parseInt(segmentIndex) > getCurrentSegments().length}
     >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

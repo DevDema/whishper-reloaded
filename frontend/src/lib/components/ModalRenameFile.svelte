@@ -1,6 +1,7 @@
 <script>
     import toast from 'svelte-french-toast';
     import { renameTranscription } from '$lib/utils.js';
+    import { _ } from 'svelte-i18n';
 
     export let tr;  // transcription object passed from parent
     let newFileName = '';
@@ -60,11 +61,11 @@
         try {
             const fullNewFileName = newFileName + fileExtension;
             await renameTranscription(tr.id, fullNewFileName);
-            toast.success('File renamed successfully!');
+            toast.success($_('modals.rename.toasts.success'));
             closeModal();
         } catch (error) {
             console.error('Error renaming file:', error);
-            toast.error('Failed to rename file. Please try again.');
+            toast.error($_('modals.rename.toasts.error'));
         } finally {
             isSubmitting = false;
         }
@@ -79,12 +80,12 @@
             on:click={closeModal} 
         >✕</button>
         
-        <h3 class="font-bold text-lg mb-4">Rename Transcription</h3>
+        <h3 class="font-bold text-lg mb-4">{$_('modals.rename.title')}</h3>
         
         {#if tr}
             <div class="form-control w-full">
                 <label class="label" for="newFileName">
-                    <span class="label-text">New file name</span>
+                    <span class="label-text">{$_('modals.rename.newFileName')}</span>
                 </label>
                 <div class="join w-full">
                     <input
@@ -92,7 +93,7 @@
                         id="newFileName"
                         bind:value={newFileName}
                         class="input input-bordered join-item w-full"
-                        placeholder="Enter new file name"
+                        placeholder={$_('modals.rename.placeholder')}
                     />
                     {#if fileExtension}
                         <div class="join-item flex items-center px-3 bg-base-200 border border-base-300">
@@ -112,7 +113,7 @@
                     {#if isSubmitting}
                         <span class="loading loading-spinner"></span>
                     {:else}
-                        Rename
+                        {$_('modals.rename.rename')}
                     {/if}
                 </button>
             </div>

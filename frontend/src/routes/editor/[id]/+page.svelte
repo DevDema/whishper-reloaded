@@ -5,6 +5,7 @@
 	import Editor from '$lib/components/Editor.svelte';
 	import {currentVideoPlayerTime, currentTranscription, audioMode} from '$lib/stores';
 	import { CLIENT_API_HOST } from '$lib/utils';
+	import { _ } from 'svelte-i18n';
 	import { writable } from 'svelte/store';
 
 	let language = writable('original');
@@ -175,7 +176,7 @@
 					   <!-- Go to current time segment button -->
 					   <button
 						   class="btn btn-primary btn-xs md:btn-sm btn-square"
-						   title="Go to segment at current time"
+						   title={$_('editor.goToCurrentSegment')}
 						   on:click={() => goToCurrentTimeSegment()}
 					   >
 						   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
