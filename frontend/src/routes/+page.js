@@ -1,13 +1,13 @@
 /** @type {import('./$types').PageLoad} */
-import {getRandomSentence} from "$lib/utils";
+import {getRandomTaglineIndex} from "$lib/utils";
 import { version } from '../../package.json';
 
 
 export async function load() {
-    const randomSentence = getRandomSentence();
+    const taglineIndex = getRandomTaglineIndex();
 
     return {
-        randomSentence: randomSentence,
+        taglineIndex: taglineIndex,
         version: version
     };
 };

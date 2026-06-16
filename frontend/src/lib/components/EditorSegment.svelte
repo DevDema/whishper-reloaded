@@ -2,6 +2,7 @@
 	import { editorSettings } from '$lib/stores';
 	import { currentVideoPlayerTime, currentTranscription, editorHistory } from '$lib/stores';
 	import { afterUpdate } from 'svelte';
+	import { _ } from 'svelte-i18n';
 	export let index;
 	export let segment;
 	export let translationIndex;
@@ -170,7 +171,7 @@
 				if ($editorSettings.seekOnClick) $currentVideoPlayerTime = e.target.value;
 			}}
 		/>
-		<span class="tooltip" data-tip="Set to current time">
+		<span class="tooltip" data-tip={$_('editor.segment.setToCurrentTime')}>
 			<button
 				on:click={() => {
 					segment.start = $currentVideoPlayerTime;
@@ -211,7 +212,7 @@
 				if ($editorSettings.seekOnClick) $currentVideoPlayerTime = e.target.value;
 			}}
 		/>
-		<span class="tooltip" data-tip="Set to current time">
+		<span class="tooltip" data-tip={$_('editor.segment.setToCurrentTime')}>
 			<button
 				on:click={() => {
 					segment.end = $currentVideoPlayerTime;
@@ -258,12 +259,12 @@
 			<span class="flex flex-col flex-grow text-xs">
 				<span class:text-error={getCps(segment) > 16}>
 					<span class="font-mono font-bold whitespace-nowrap">
-						CPS: {getCps(segment)}
+						{$_('editor.segment.cps', { values: { value: getCps(segment) } })}
 					</span>
 				</span>
 				<span>
 					<span class="font-mono font-bold whitespace-nowrap">
-						Duration: {Math.round((segment.end - segment.start) * 100) / 100}s
+						{$_('editor.segment.duration', { values: { value: Math.round((segment.end - segment.start) * 100) / 100 } })}
 					</span>
 				</span>
 			</span>
@@ -273,7 +274,7 @@
 		class="flex flex-col items-center justify-center space-x-1 space-y-2 align-middle md:space-y-0 lg:flex-row"
 	>
 		<!-- Add above -->
-		<span class="tooltip" data-tip="Insert Above">
+		<span class="tooltip" data-tip={$_('editor.segment.insertAbove')}>
 			<button
 				on:click={() => insertSegmentAbove(index, handleHistory)}
 				class="btn btn-primary btn-xs md:btn-sm btn-square"
@@ -300,7 +301,7 @@
 			</button>
 		</span>
 		<!-- Add below -->
-		<span class="tooltip" data-tip="Insert Below">
+		<span class="tooltip" data-tip={$_('editor.segment.insertBelow')}>
 			<button
 				on:click={() => insertSegmentBelow(index, handleHistory)}
 				class="btn btn-primary btn-xs md:btn-sm btn-square"
@@ -327,7 +328,7 @@
 			</button>
 		</span>
 		<!-- Split -->
-		<span class="tooltip" data-tip="Split segment">
+		<span class="tooltip" data-tip={$_('editor.segment.split')}>
 			<button
 				on:click={() => splitSegment(index, handleHistory)}
 				class="btn btn-primary btn-xs md:btn-sm btn-square"

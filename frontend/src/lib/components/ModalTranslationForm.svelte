@@ -1,6 +1,7 @@
 <script>
     import toast from 'svelte-french-toast';
     import { CLIENT_API_HOST } from '$lib/utils';
+    import { _ } from 'svelte-i18n';
     export let tr;
     export let availableLanguages;
     let targetLanguage = null;
@@ -9,10 +10,10 @@
         if(targetLanguage) {
             const url = `${CLIENT_API_HOST}/api/translate/${id}/${targetLanguage}`;
             fetch(url)
-            .then(() => toast.success('Translation started!'))
+            .then(() => toast.success($_('modals.translation.toasts.started')))
             .catch(error => {
                 console.error(error);
-                toast.error('Error translating text!')
+                toast.error($_('modals.translation.toasts.error'))
             });
         }
     }
@@ -23,16 +24,16 @@
         <button class="absolute btn btn-sm btn-circle btn-ghost right-2 top-2">✕</button>
         {#if tr}
             <h1 class="pb-2 mt-2 font-bold text-center">
-                Translate
+                {$_('modals.translation.title')}
             </h1>
             <div>
                 <!-- Language picker -->
                 <div class="w-full max-w-xs form-control">
                     <label for="target-lan" class="label">
-                      <span class="label-text">Target languages for {tr.result.language}</span>
+                      <span class="label-text">{$_('modals.translation.targetLanguages', { values: { language: tr.result.language } })}</span>
                     </label>
                     <select bind:value={targetLanguage} name="target-lan" class="select select-bordered">
-                      <option disabled selected>Pick one</option>
+                      <option disabled selected>{$_('modals.translation.pickOne')}</option>
                       <!-- Iterate all available languages -->
                       {#each availableLanguages as lan}
                         <!-- When we find the source language -->
@@ -48,11 +49,11 @@
                     </select>
                 </div>
                 <!-- End language picker-->
-                <button on:click={handleTranslate(tr.id)} class="mt-5 btn btn-active btn-primary">Translate</button>
+                <button on:click={handleTranslate(tr.id)} class="mt-5 btn btn-active btn-primary">{$_('modals.translation.translate')}</button>
             </div>
         {/if}
     </form>
     <form method="dialog" class="modal-backdrop">
-        <button>close</button>
+        <button>{$_('common.close')}</button>
     </form>
 </dialog>

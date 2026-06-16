@@ -3,6 +3,7 @@
     import {createEventDispatcher} from 'svelte';
     import {deleteTranscription, getFullTranscription} from "$lib/utils.js";
     import toast from 'svelte-french-toast';
+    import { _ } from 'svelte-i18n';
     export let tr;
     export let languagesAvailable;
 
@@ -21,7 +22,7 @@
             dispatch(action, full); // parent opens the modal once the full data is ready
         } catch (error) {
             console.error(error);
-            toast.error('Could not load transcription. Please try again.');
+            toast.error($_('transcription.toasts.loadFailed'));
         } finally {
             loadingAction = null;
         }
@@ -39,24 +40,24 @@
         <p class="font-bold text-info-content text-md">{tr.fileName.split("_WHSHPR_")[1]}</p>
         <p class="font-mono text-info-content text-sm opacity-60 flex space-x-2 md:space-x-4 lg:space-x-8">
             <span class="space-x-1">
-                <span class="font-bold text-xs">{new Date(Math.round((tr.duration ?? tr.result?.duration ?? 0)) * 1000).toISOString().substr(11, 8)} long</span>
+                <span class="font-bold text-xs">{$_('transcription.meta.duration', { values: { duration: new Date(Math.round((tr.duration ?? tr.result?.duration ?? 0)) * 1000).toISOString().substr(11, 8) } })}</span>
             </span>
             <span class="space-x-1">
-                <span class="font-bold text-xs">{tr.translations.length} translations</span>
+                <span class="font-bold text-xs">{$_('transcription.meta.translations', { values: { count: tr.translations.length } })}</span>
             </span>
             <span class="space-x-1">
-                <span class="font-bold text-xs">{tr.words_count ?? tr.result?.text.split(" ").length ?? 0} words</span>
+                <span class="font-bold text-xs">{$_('transcription.meta.words', { values: { count: tr.words_count ?? tr.result?.text.split(" ").length ?? 0 } })}</span>
             </span>
             {#if tr.vad_filter}
             <span class="space-x-1">
-                <span class="badge badge-primary text-xs tooltip opacity-100" data-tip={`VAD Threshold: ${tr.vad_threshold ?? 0.5} Min Speech: ${tr.vad_min_speech_duration_ms ?? 250}ms Min Silence: ${tr.vad_min_silence_duration_ms ?? 500}ms`}>VAD</span>
+                <span class="badge badge-primary text-xs tooltip opacity-100" data-tip={$_('transcription.meta.vadTooltip', { values: { threshold: tr.vad_threshold ?? 0.5, minSpeech: tr.vad_min_speech_duration_ms ?? 250, minSilence: tr.vad_min_silence_duration_ms ?? 500 } })}>VAD</span>
             </span>
             {/if}
         </p>
     </span>
     <div class="flex items-center justify-center flex-wrap space-x-2">
         <a href="/editor/{tr.id}" class="btn btn-xs md:btn-sm">
-            <span class="tooltip flex items-center justify-center" data-tip="Edit">
+            <span class="tooltip flex items-center justify-center" data-tip={$_('transcription.actions.edit')}>
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                     <path d="M12 15l8.385 -8.415a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3z"></path>
@@ -66,7 +67,7 @@
             </span>
         </a>
         <button on:click={download} disabled={!!loadingAction} class="btn btn-xs md:btn-sm">
-            <span class="tooltip flex items-center justify-center" data-tip="Download">
+            <span class="tooltip flex items-center justify-center" data-tip={$_('transcription.actions.download')}>
                 {#if loadingAction === 'download'}
                     <span class="loading loading-spinner loading-xs"></span>
                 {:else}
@@ -80,7 +81,7 @@
             </span>
         </button>
         <button on:click={rename} disabled={!!loadingAction} class="btn btn-xs md:btn-sm">
-            <span class="tooltip flex items-center justify-center" data-tip="Rename">
+            <span class="tooltip flex items-center justify-center" data-tip={$_('transcription.actions.rename')}>
                 {#if loadingAction === 'rename'}
                     <span class="loading loading-spinner loading-xs"></span>
                 {:else}
@@ -94,7 +95,7 @@
             </span>
         </button>
         <button on:click={upload} disabled={!!loadingAction} class="btn btn-xs md:btn-sm">
-            <span class="tooltip flex items-center justify-center" data-tip="Upload JSON">
+            <span class="tooltip flex items-center justify-center" data-tip={$_('transcription.actions.uploadJson')}>
                 {#if loadingAction === 'upload'}
                     <span class="loading loading-spinner loading-xs"></span>
                 {:else}
@@ -112,7 +113,7 @@
             on:click={translate}
             disabled={!!loadingAction}
             class="btn btn-xs md:btn-sm btn-primary">
-                <span class="tooltip flex items-center justify-center" data-tip="Translate">
+                <span class="tooltip flex items-center justify-center" data-tip={$_('transcription.actions.translate')}>
                     {#if loadingAction === 'translate'}
                         <span class="loading loading-spinner loading-xs"></span>
                     {:else}
@@ -129,7 +130,7 @@
             </button>
         {/if}
         <button on:click={deleteTranscription(tr.id)} class="btn btn-xs md:btn-sm btn-error">
-            <span class="tooltip flex items-center justify-center" data-tip="Delete">
+            <span class="tooltip flex items-center justify-center" data-tip={$_('transcription.actions.delete')}>
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                     <path d="M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007h16zm-9.489 5.14a1 1 0 0 0 -1.218 1.567l1.292 1.293l-1.292 1.293l-.083 .094a1 1 0 0 0 1.497 1.32l1.293 -1.292l1.293 1.292l.094 .083a1 1 0 0 0 1.32 -1.497l-1.292 -1.293l1.292 -1.293l.083 -.094a1 1 0 0 0 -1.497 -1.32l-1.293 1.292l-1.293 -1.292l-.094 -.083z" stroke-width="0" fill="currentColor"></path>

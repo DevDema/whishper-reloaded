@@ -14,6 +14,7 @@
 	import PendingTranscription from '$lib/components/PendingTranscription.svelte';
 	import PendingTranslation from '$lib/components/PendingTranslation.svelte';
 	import ErrorTranscription from '$lib/components/ErrorTranscription.svelte';
+	import { _ } from 'svelte-i18n';
 	import { env } from '$env/dynamic/public';
 
 	let availableLanguages = [];
@@ -94,7 +95,7 @@
 			}
 		})
 		.catch(err => {
-			languagesError = "Could not fetch available languages.";
+			languagesError = $_('layout.serviceErrors.languagesFetch');
 			languagesLoading = false;
 		});
     };
@@ -113,13 +114,13 @@
 				} else {
 					transcriptionServiceAvailable = false;
 					transcriptionServiceStatus = data.service_message || '';
-					transcriptionServiceError = 'Transcription service is reporting an error. New transcriptions are unavailable.';
+					transcriptionServiceError = $_('layout.serviceErrors.serviceReporting');
 				}
 			})
 			.catch(error => {
 				transcriptionServiceAvailable = false;
 				transcriptionServiceStatus = '';
-				transcriptionServiceError = 'Could not reach transcription service. Cannot create new transcriptions.';
+				transcriptionServiceError = $_('layout.serviceErrors.serviceUnreachable');
 			});
 	};
 
@@ -248,51 +249,51 @@
 	<ModalTranscriptionForm />
 {/if}
 
-<header>
+<header class="relative">
 	<h1 class="flex items-center justify-center mt-8 space-x-4 text-4xl font-bold">
 		<span>
-			<img class="w-20 h-20" src="/logo.svg" alt="Logo: a cloud whispering" />
+			<img class="w-20 h-20" src="/logo.svg" alt={$_('header.logoAlt')} />
 		</span>
-		<span> Whishper Reloaded</span>
+		<span> {$_('header.title')}</span>
 	</h1>
-	<h2 class="font-mono text-center text-md opacity-70">{data.randomSentence}</h2>
+	<h2 class="font-mono text-center text-md opacity-70">{$_(`taglines.${data.taglineIndex}`)}</h2>
 </header>
 
 <main class="w-4/6 mx-auto mt-4 mb-8 card bg-neutral text-neutral-content">
 	{#if !transcriptionServiceAvailable}
 		<div class="flex items-center justify-between bg-red-200 border-l-4 border-red-400 p-4 mb-2 text-red-900 font-semibold">
-			<span>🛑 Transcription service is unavailable: {transcriptionServiceError}</span>
+			<span>{$_('home.serviceUnavailable', { values: { error: transcriptionServiceError } })}</span>
 			<button 
 				on:click={checkTranscriptionsAvailability}
 				class="ml-4 px-2 py-1 bg-red-400 hover:bg-red-500 text-white text-sm rounded"
-				title="Refresh"
+				title={$_('common.refresh')}
 			>
-				Refresh
+				{$_('common.refresh')}
 			</button>
 		</div>
 	{/if}
 	{#if languagesError}
         <div class="flex items-center justify-between bg-yellow-200 border-l-4 border-yellow-400 p-4 mb-4 text-yellow-900 font-semibold">
-            <span>⚠️ Language features are unavailable: {languagesError}</span>
+            <span>{$_('home.languagesUnavailable', { values: { error: languagesError } })}</span>
 			<button 
 				on:click={getAvailableLangs}
 				class="ml-4 px-2 py-1 bg-yellow-400 hover:bg-red-500 text-white text-sm rounded"
-				title="Refresh"
+				title={$_('common.refresh')}
 			>
-				Refresh
+				{$_('common.refresh')}
 			</button>
         </div>
     {/if}
 	{#if $uploadProgress > 0}
 		<div class="flex flex-col items-center justify-center px-4 pt-4 my-4">
 			<progress class="w-full mx-2 progress progress-success" value="{$uploadProgress}" max="100"></progress>
-			<span>Uploading...</span>
+			<span>{$_('common.uploading')}</span>
 		</div>
 	{:else }
 		<button
 			class="max-w-md mx-auto mt-8 btn btn-primary btn-md"
 			onclick="modalNewTranscription.showModal()"
-			disabled={!transcriptionServiceAvailable}>✨ new transcription</button
+			disabled={!transcriptionServiceAvailable}>{$_('home.newTranscription')}</button
 		>
 	{/if}
 	{#if $loadingTranscriptions}
@@ -305,7 +306,7 @@
 			<input
 			type="text"
 			bind:value={searchText}
-			placeholder="Search transcriptions..."
+			placeholder={$_('home.search.placeholder')}
 			class="input input-bordered w-full pr-12"
 			on:input={onSearchInput}
 			/>
@@ -313,7 +314,7 @@
 			<button
 				class="absolute right-3 flex items-center justify-center btn btn-sm btn-ghost p-0 min-h-0 h-8 w-8"
 				on:click={clearSearch}
-				title="Clear"
+				title={$_('home.search.clear')}
 				tabindex="0"
 				type="button"
 				style="font-size: 1.45rem; line-height:1"
@@ -323,9 +324,9 @@
 			{/if}
 		</div>
 		{#if searchText.length >= 4 && searching}
-			<p class="text-xs opacity-60 mt-2 mb-0">{filteredTranscriptions.length} result{filteredTranscriptions.length === 1 ? '' : 's'} found.</p>
+			<p class="text-xs opacity-60 mt-2 mb-0">{$_('home.search.results', { values: { count: filteredTranscriptions.length } })}</p>
 		{:else if searchText.length > 0 && searchText.length < 4}
-			<p class="text-xs text-warning mt-2 mb-0">Type at least 4 characters to search.</p>
+			<p class="text-xs text-warning mt-2 mb-0">{$_('home.search.minChars')}</p>
 		{/if}
 		</div>
 		<div class="items-center mb-0 text-center card-body">
@@ -349,7 +350,7 @@
 						{/if}
 					{/each}
 				{:else}
-					<p class="text-2xl font-bold text-center">🔮 No transcriptions found 🔮</p>
+					<p class="text-2xl font-bold text-center">{$_('home.empty.noResults')}</p>
 				{/if}
 			{:else}
 				{#if $transcriptions.length > 0}
@@ -373,12 +374,12 @@
 
 					<!-- Pagination only if not searching -->
 					<div class="flex justify-center space-x-4 my-4">
-						<button on:click={prevPage} disabled={$currentPage === 1} class="btn btn-sm btn-ghost">Previous</button>
-						<span>Page {$currentPage} of {totalPages}</span>
-						<button on:click={nextPage} disabled={$currentPage === totalPages} class="btn btn-sm btn-ghost">Next</button>
+						<button on:click={prevPage} disabled={$currentPage === 1} class="btn btn-sm btn-ghost">{$_('home.pagination.previous')}</button>
+						<span>{$_('home.pagination.page', { values: { current: $currentPage, total: totalPages } })}</span>
+						<button on:click={nextPage} disabled={$currentPage === totalPages} class="btn btn-sm btn-ghost">{$_('home.pagination.next')}</button>
 					</div>
 				{:else}
-					<p class="text-2xl font-bold text-center">🔮 No transcriptions yet 🔮</p>
+					<p class="text-2xl font-bold text-center">{$_('home.empty.none')}</p>
 				{/if}
 			{/if}
 		</div>
@@ -386,10 +387,10 @@
 </main>
 
 <footer class="text-center py-4 text-sm opacity-70">
-	<p>Whishper version: {data.version}</p>
+	<p>{$_('footer.version', { values: { version: data.version } })}</p>
 	<p>
-		<a href="https://github.com/DevDema/whishper" class="link">Whishper-Reloaded</a> is a fork of
+		<a href="https://github.com/DevDema/whishper" class="link">Whishper-Reloaded</a> {$_('footer.forkOf')}
 		<a href="https://github.com/pluja/whishper" class="link">Whishper</a>.
-		Praise the idea of the original creator.
+		{$_('footer.praise')}
 	</p>
 </footer>
