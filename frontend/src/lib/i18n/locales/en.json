@@ -1,0 +1,224 @@
+{
+	"common": {
+		"refresh": "Refresh",
+		"close": "close",
+		"delete": "Delete",
+		"cancel": "Cancel",
+		"loading": "Loading...",
+		"uploading": "Uploading..."
+	},
+	"language": {
+		"switcher": "Language"
+	},
+	"header": {
+		"title": "Whishper Reloaded",
+		"logoAlt": "Logo: a cloud whispering"
+	},
+	"footer": {
+		"version": "Whishper version: {version}",
+		"forkOf": "is a fork of",
+		"praise": "Praise the idea of the original creator."
+	},
+	"taglines": [
+		"Audio in, text out. What's your sound about?",
+		"Drop the beat, I'll drop the text!",
+		"Everybody knows the bird is the word!",
+		"From soundcheck to spellcheck!",
+		"I got 99 problems but transcribing ain't one!",
+		"I'm all ears!",
+		"iTranscribe, you dictate!",
+		"Lost for words?",
+		"Sound check 1, 2, 3...",
+		"Sound's up! What's your script?",
+		"Transcribe, transcribe, transcribe!",
+		"What are you transcribing today?",
+		"What's the story, morning wordy?",
+		"Words, don't come easy, but I can help find the way.",
+		"You speak, I write. It's no magic, just AI!",
+		"Can't understand that language? I can translate!",
+		"I mean every word I say!"
+	],
+	"home": {
+		"newTranscription": "✨ new transcription",
+		"serviceUnavailable": "🛑 Transcription service is unavailable: {error}",
+		"languagesUnavailable": "⚠️ Language features are unavailable: {error}",
+		"search": {
+			"placeholder": "Search transcriptions...",
+			"clear": "Clear",
+			"results": "{count, plural, one {# result found.} other {# results found.}}",
+			"minChars": "Type at least 4 characters to search."
+		},
+		"pagination": {
+			"previous": "Previous",
+			"next": "Next",
+			"page": "Page {current} of {total}"
+		},
+		"empty": {
+			"noResults": "🔮 No transcriptions found 🔮",
+			"none": "🔮 No transcriptions yet 🔮"
+		}
+	},
+	"transcription": {
+		"meta": {
+			"duration": "{duration} long",
+			"translations": "{count} translations",
+			"words": "{count} words",
+			"vadTooltip": "VAD Threshold: {threshold} Min Speech: {minSpeech}ms Min Silence: {minSilence}ms"
+		},
+		"status": {
+			"downloadingModel": "Downloading model \"{model}\"...",
+			"transcribing": "Transcribing... {percent}%",
+			"waitingTranscription": "Waiting for transcription...",
+			"pending": "Pending transcription... Language: {language}",
+			"waitingTranslation": "Waiting for translation...",
+			"failed": "Failed: Could not transcribe."
+		},
+		"actions": {
+			"edit": "Edit",
+			"download": "Download",
+			"rename": "Rename",
+			"uploadJson": "Upload JSON",
+			"translate": "Translate",
+			"delete": "Delete"
+		},
+		"toasts": {
+			"loadFailed": "Could not load transcription. Please try again."
+		}
+	},
+	"modals": {
+		"transcription": {
+			"pickFile": "Pick a file",
+			"sourceUrl": "Or a source URL",
+			"sourceUrlPlaceholder": "https://youtube.com/watch?v=Hd33fCdW",
+			"whisperModel": "Whisper model",
+			"language": "Language",
+			"device": "Device",
+			"deviceGpu": "GPU",
+			"deviceCpu": "CPU",
+			"beamSize": "Beam size",
+			"initialPrompt": "Initial prompt (optional)",
+			"initialPromptPlaceholder": "e.g. context for the model",
+			"hotwords": "Hotwords (comma separated, optional)",
+			"hotwordsPlaceholder": "e.g. keyword1, keyword2",
+			"enableVad": "Enable VAD (voice activity detection)",
+			"vadThreshold": "VAD threshold",
+			"vadThresholdPlaceholder": "0.5 (default)",
+			"vadMinSpeech": "Min speech duration (ms)",
+			"vadMinSpeechPlaceholder": "250 (default)",
+			"vadMinSilence": "Min silence duration (ms)",
+			"vadMinSilencePlaceholder": "500 (default)",
+			"start": "Start",
+			"errorValidUrl": "Enter a valid URL",
+			"toasts": {
+				"invalidUrl": "You must enter a valid URL.",
+				"noFileOrUrl": "No file or URL.",
+				"success": "Success!",
+				"uploadFailed": "Upload failed",
+				"uploadError": "An error occurred during upload"
+			}
+		},
+		"translation": {
+			"title": "Translate",
+			"targetLanguages": "Target languages for {language}",
+			"pickOne": "Pick one",
+			"translate": "Translate",
+			"toasts": {
+				"started": "Translation started!",
+				"error": "Error translating text!"
+			}
+		},
+		"rename": {
+			"title": "Rename Transcription",
+			"newFileName": "New file name",
+			"placeholder": "Enter new file name",
+			"rename": "Rename",
+			"toasts": {
+				"success": "File renamed successfully!",
+				"error": "Failed to rename file. Please try again."
+			}
+		},
+		"upload": {
+			"title": "Upload JSON",
+			"description": "Upload a JSON file to replace the transcription result for:",
+			"selectFile": "Select JSON File",
+			"upload": "Upload",
+			"toasts": {
+				"invalidFile": "Please select a valid JSON file",
+				"noFile": "Please select a JSON file",
+				"noChanges": "No changes were made!",
+				"success": "JSON uploaded successfully",
+				"invalidFormat": "Invalid JSON file format",
+				"failed": "Failed to upload JSON"
+			}
+		},
+		"download": {
+			"title": "Download Options",
+			"fileFormat": "File Format",
+			"textLanguage": "Text Language",
+			"includeWords": "Include word-level timestamps",
+			"tooltipFile": "Download {format} file in {language}.",
+			"tooltipCopy": "Copy raw text in '{language}' language.",
+			"tooltipMedia": "Download source media",
+			"file": "File",
+			"copy": "Copy",
+			"media": "Media",
+			"toasts": {
+				"noData": "No data available for download",
+				"copied": "Text copied to clipboard"
+			}
+		}
+	},
+	"editor": {
+		"waitingTask": "Waiting for task to finish {action}...",
+		"actionTranslating": "translating",
+		"actionTranscribing": "transcribing",
+		"home": "Home",
+		"save": "Save (Ctrl+S)",
+		"audioMode": "Audio Mode",
+		"exitAudioMode": "Exit Audio Mode",
+		"subtitlesLanguage": "Subtitles language",
+		"table": {
+			"start": "Start",
+			"end": "End",
+			"text": "Text",
+			"info": "Info"
+		},
+		"noMoreSegments": "No more segments to load",
+		"loadingMore": "Loading more...",
+		"goToCurrentSegment": "Go to segment at current time",
+		"segment": {
+			"setToCurrentTime": "Set to current time",
+			"cps": "CPS: {value}",
+			"duration": "Duration: {value}s",
+			"insertAbove": "Insert Above",
+			"insertBelow": "Insert Below",
+			"split": "Split segment"
+		},
+		"settings": {
+			"seekOnClick": "Seek on click",
+			"seekOnClickTooltip": "When clicking a timestamp input, seek the video to that position.",
+			"autosave": "Autosave",
+			"autosaveTooltip": "Automatically save changes every 30s."
+		},
+		"goTo": {
+			"placeholder": "0-{max}",
+			"goToSegment": "Go to segment",
+			"goAndSeek": "Go & Seek to segment start"
+		},
+		"toasts": {
+			"noChanges": "No changes were made!",
+			"saveError": "Couldn't save!",
+			"autosaving": "Autosaving...",
+			"saved": "Saved!",
+			"autosaveDisabled": "Autosave is disabled.",
+			"autosaveEnabled": "Autosave enabled."
+		}
+	},
+	"layout": {
+		"serviceErrors": {
+			"languagesFetch": "Could not fetch available languages.",
+			"serviceReporting": "Transcription service is reporting an error. New transcriptions are unavailable.",
+			"serviceUnreachable": "Could not reach transcription service. Cannot create new transcriptions."
+		}
+	}
+}

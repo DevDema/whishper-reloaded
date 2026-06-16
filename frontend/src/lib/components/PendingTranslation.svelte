@@ -1,5 +1,6 @@
 <script>
     export let tr;
+    import { _ } from 'svelte-i18n';
 </script>
 
 <div class="alert alert-info p-3">
@@ -18,7 +19,7 @@
         </p>
         <p class="opacity-60">
             <span class="font-mono text-info-content text-sm ">
-                Waiting for translation...
+                {$_('transcription.status.waitingTranslation')}
             </span>
         </p>
     </span>

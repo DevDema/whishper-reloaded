@@ -1,6 +1,7 @@
 <script>
     import { uploadJSON } from '$lib/utils';
     import toast from 'svelte-french-toast';
+    import { _ } from 'svelte-i18n';
     export let tr;
 
     let fileInput;
@@ -11,7 +12,7 @@
         const file = event.target.files[0];
         if (file) {
             if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
-                toast.error('Please select a valid JSON file');
+                toast.error($_('modals.upload.toasts.invalidFile'));
                 return;
             }
             selectedFile = file;
@@ -20,7 +21,7 @@
 
     async function handleUpload() {
         if (!selectedFile || !tr) {
-            toast.error('Please select a JSON file');
+            toast.error($_('modals.upload.toasts.noFile'));
             return;
         }
 
@@ -33,11 +34,11 @@
             const result = await uploadJSON(tr.id, jsonData);
 
             if (result.noChanges) {
-                toast('No changes were made!', {
+                toast($_('modals.upload.toasts.noChanges'), {
                     icon: '👐'
                 });
             } else {
-                toast.success('JSON uploaded successfully');
+                toast.success($_('modals.upload.toasts.success'));
 
                 // Reset state and close modal
                 clearFile();
@@ -46,9 +47,9 @@
         } catch (error) {
             console.error('Upload error:', error);
             if (error instanceof SyntaxError) {
-                toast.error('Invalid JSON file format');
+                toast.error($_('modals.upload.toasts.invalidFormat'));
             } else {
-                toast.error(error.message || 'Failed to upload JSON');
+                toast.error(error.message || $_('modals.upload.toasts.failed'));
             }
         } finally {
             uploading = false;
@@ -65,15 +66,15 @@
     <form method="dialog" class="modal-box flex flex-col items-center justify-center">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
         {#if tr}
-        <h1 class="text-center font-bold mt-2 pb-2">Upload JSON</h1>
+        <h1 class="text-center font-bold mt-2 pb-2">{$_('modals.upload.title')}</h1>
         <p class="text-sm opacity-70 text-center mb-4">
-            Upload a JSON file to replace the transcription result for:<br>
+            {$_('modals.upload.description')}<br>
             <span class="font-mono">{tr.fileName.split("_WHSHPR_")[1]}</span>
         </p>
 
         <div class="form-control w-full max-w-md">
             <label for="jsonFile" class="label">
-                <span class="label-text font-bold">Select JSON File</span>
+                <span class="label-text font-bold">{$_('modals.upload.selectFile')}</span>
             </label>
             <input
                 bind:this={fileInput}
@@ -106,7 +107,7 @@
             >
                 {#if uploading}
                     <span class="loading loading-spinner loading-sm"></span>
-                    Uploading...
+                    {$_('common.uploading')}
                 {:else}
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -114,7 +115,7 @@
                         <path d="M7 9l5 -5l5 5"></path>
                         <path d="M12 4l0 12"></path>
                     </svg>
-                    Upload
+                    {$_('modals.upload.upload')}
                 {/if}
             </button>
         </div>
@@ -125,6 +126,6 @@
         {/if}
     </form>
     <form method="dialog" class="modal-backdrop">
-        <button>close</button>
+        <button>{$_('common.close')}</button>
     </form>
 </dialog>

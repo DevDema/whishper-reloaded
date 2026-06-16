@@ -6,6 +6,7 @@
 	import EditorSegment from './EditorSegment.svelte';
 	import { CLIENT_API_HOST } from '$lib/utils';
 	import GoToSegment from './GoToSegment.svelte';
+	import { _ } from 'svelte-i18n';
 
 	export let language;
 	export let segmentsToShow;
@@ -87,24 +88,24 @@
 			if (!response.ok) {
 				if (response.status === 304) {
 					if (!$editorSettings.autoSave) {
-						toast('No changes were made!', {
+						toast($_('editor.toasts.noChanges'), {
 							icon: '👐'
 						});
 					}
 					return;
 				} else {
-					toast.error("Couldn't save!");
+					toast.error($_('editor.toasts.saveError'));
 					throw new Error(`HTTP error! status: ${response.status}`);
 				}
 			}
 
 			if ($editorSettings.autoSave) {
-				toast('Autosaving...', { icon: 'ℹ️' });
+				toast($_('editor.toasts.autosaving'), { icon: 'ℹ️' });
 			} else {
-				toast.success('Saved!');
+				toast.success($_('editor.toasts.saved'));
 			}
 		} catch (error) {
-			toast.error("Couldn't save!");
+			toast.error($_('editor.toasts.saveError'));
 			console.error('Error:', error);
 		}
 	}
@@ -159,7 +160,7 @@
 		};
 
 		if (!$editorSettings.autoSave) {
-			toast('Autosave is disabled.', {
+			toast($_('editor.toasts.autosaveDisabled'), {
 				icon: '👋'
 			});
 		}
@@ -172,14 +173,14 @@
 	let autosaveInterval;
 	let autoSaveAux = $editorSettings.autoSave;
 	$: if ($editorSettings.autoSave) {
-		toast.success('Autosave enabled.');
+		toast.success($_('editor.toasts.autosaveEnabled'));
 		autoSaveAux = true;
 		autosaveInterval = setInterval(() => {
 			saveChanges();
 		}, $editorSettings.autosaveInterval);
 	} else {
 		if (autoSaveAux == true) {
-			toast('Autosave is disabled.', {
+			toast($_('editor.toasts.autosaveDisabled'), {
 				icon: '👋'
 			});
 			autoSaveAux = false;
@@ -191,7 +192,7 @@
 {#if $currentTranscription.status != 2}
 	<div class="flex items-center justify-center">
 		<span class="loading loading-spinner loading-lg"></span>
-		<p class="text-center">Waiting for task to finish {$currentTranscription.status == 3 ? "translating" : "transcribing"}...</p>
+		<p class="text-center">{$_('editor.waitingTask', { values: { action: $currentTranscription.status == 3 ? $_('editor.actionTranslating') : $_('editor.actionTranscribing') } })}</p>
 	</div>
 {:else}
 {#if $audioMode}
@@ -218,7 +219,7 @@
 						{/each}
 					</select>
 				{/if}
-				
+
 				<!-- Editor Settings -->
 				<EditorSettings />
 
@@ -227,7 +228,7 @@
 				<!-- Menu -->
 				<ul class="menu menu-horizontal bg-base-200 rounded-box">
 					<li>
-						<a href="/" class="tooltip" data-tip="Home">
+						<a href="/" class="tooltip" data-tip={$_('editor.home')}>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								class="h-5 w-5"
@@ -244,7 +245,7 @@
 						</a>
 					</li>
 					<li>
-						<button on:click={saveChanges} class="tooltip" data-tip="Save (Ctrl+S)">
+						<button on:click={saveChanges} class="tooltip" data-tip={$_('editor.save')}>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								class="icon icon-tabler icon-tabler-device-floppy"
@@ -266,7 +267,7 @@
 					</li>
 					   {#if !isAudioOnly}
 					   <li>
-						   <button on:click={() => $audioMode = !$audioMode} class="tooltip" data-tip="Exit Audio Mode">
+						   <button on:click={() => $audioMode = !$audioMode} class="tooltip" data-tip={$_('editor.exitAudioMode')}>
 							   <svg
 								   xmlns="http://www.w3.org/2000/svg"
 								   class="h-5 w-5"
@@ -295,10 +296,10 @@
 			<thead>
 				<tr>
 					<th />
-					<th>Start</th>
-					<th>End</th>
-					<th>Text</th>
-					<th>Info</th>
+					<th>{$_('editor.table.start')}</th>
+					<th>{$_('editor.table.end')}</th>
+					<th>{$_('editor.table.text')}</th>
+					<th>{$_('editor.table.info')}</th>
 					<th />
 				</tr>
 			</thead>
@@ -321,14 +322,14 @@
 		<button bind:this={loadMoreButton}>
 			{#if $language == 'original'}
 				{#if segmentsToShow >= $currentTranscription.result.segments.length}
-					No more segments to load
+					{$_('editor.noMoreSegments')}
 				{:else}
-					Loading more...
+					{$_('editor.loadingMore')}
 				{/if}
 			{:else if segmentsToShow >= $currentTranscription.translations.filter((translation) => translation.targetLanguage == $language)[0].result.segments.length}
-				No more segments to load
+				{$_('editor.noMoreSegments')}
 			{:else}
-				Loading more...
+				{$_('editor.loadingMore')}
 			{/if}
 		</button>
 		<!-- End Segments table -->
@@ -342,7 +343,7 @@
 		<!-- Menu -->
 		<ul class="menu menu-horizontal bg-base-200 rounded-box mt-6">
 			<li>
-				<a href="/" class="tooltip" data-tip="Home">
+				<a href="/" class="tooltip" data-tip={$_('editor.home')}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						class="h-5 w-5"
@@ -359,7 +360,7 @@
 				</a>
 			</li>
 			<li>
-				<button on:click={saveChanges} class="tooltip" data-tip="Save (Ctrl+S)">
+				<button on:click={saveChanges} class="tooltip" data-tip={$_('editor.save')}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						class="icon icon-tabler icon-tabler-device-floppy"
@@ -380,7 +381,7 @@
 				</button>
 			</li>
 			<li>
-				<button on:click={() => $audioMode = !$audioMode} class="tooltip" data-tip="Audio Mode">
+				<button on:click={() => $audioMode = !$audioMode} class="tooltip" data-tip={$_('editor.audioMode')}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						class="h-5 w-5"
@@ -403,7 +404,7 @@
 		{#if $currentTranscription.translations.length > 0}
 			<div class="form-control max-w-xs my-4">
 				<label for="language" class="label">
-					<span class="label-text">Subtitles language</span>
+					<span class="label-text">{$_('editor.subtitlesLanguage')}</span>
 				</label>
 				<select
 					bind:value={$language}
@@ -432,10 +433,10 @@
 			<thead>
 				<tr>
 					<th />
-					<th>Start</th>
-					<th>End</th>
-					<th>Text</th>
-					<th>Info</th>
+					<th>{$_('editor.table.start')}</th>
+					<th>{$_('editor.table.end')}</th>
+					<th>{$_('editor.table.text')}</th>
+					<th>{$_('editor.table.info')}</th>
 					<th />
 				</tr>
 			</thead>
@@ -458,14 +459,14 @@
 		<button bind:this={loadMoreButton}>
 			{#if $language == 'original'}
 				{#if segmentsToShow >= $currentTranscription.result.segments.length}
-					No more segments to load
+					{$_('editor.noMoreSegments')}
 				{:else}
-					Loading more...
+					{$_('editor.loadingMore')}
 				{/if}
 			{:else if segmentsToShow >= $currentTranscription.translations.filter((translation) => translation.targetLanguage == $language)[0].result.segments.length}
-				No more segments to load
+				{$_('editor.noMoreSegments')}
 			{:else}
-				Loading more...
+				{$_('editor.loadingMore')}
 			{/if}
 		</button>
 		<!-- End Segments table -->

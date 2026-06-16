@@ -2,6 +2,7 @@
 	import { validateURL, CLIENT_API_HOST } from '$lib/utils.js';
 	import { env } from '$env/dynamic/public';
 	import { uploadProgress } from '$lib/stores';
+	import { _ } from 'svelte-i18n';
 
 	import toast from 'svelte-french-toast';
 
@@ -74,12 +75,12 @@
 	// Function that sends the data as a form to the backend
 	async function sendForm() {
 	   if (sourceUrl && !validateURL(sourceUrl)) {
-		   toast.error('You must enter a valid URL.');
+		   toast.error($_('modals.transcription.toasts.invalidUrl'));
 		   return;
 	   }
 
 	   if (!sourceUrl && !fileInput) {
-		   toast.error('No file or URL.');
+		   toast.error($_('modals.transcription.toasts.noFileOrUrl'));
 		   return;
 	   }
 
@@ -127,10 +128,10 @@
 		   xhr.addEventListener('load', () => {
 			   if (xhr.status === 200) {
 				   resolve(xhr.response);
-				   toast.success('Success!');
+				   toast.success($_('modals.transcription.toasts.success'));
 			   } else {
 				   reject(xhr.statusText);
-				   toast.error('Upload failed');
+				   toast.error($_('modals.transcription.toasts.uploadFailed'));
 			   }
 			   uploadProgress.set(0); // Reset progress after completion
 		   });
@@ -138,7 +139,7 @@
 		   // Set up error event listener
 		   xhr.addEventListener('error', () => {
 			   reject(xhr.statusText);
-			   toast.error('An error occurred during upload');
+			   toast.error($_('modals.transcription.toasts.uploadError'));
 			   uploadProgress.set(0); // Reset progress on error
 		   });
 
@@ -151,12 +152,12 @@
 	   fileInput.value = '';
 	   uploadProgress.set(0);
 
-	   toast.success('Success!');
+	   toast.success($_('modals.transcription.toasts.success'));
 	}
 
 	// Reactive statement
 	$: if (sourceUrl && !validateURL(sourceUrl)) {
-		errorMessage = 'Enter a valid URL';
+		errorMessage = $_('modals.transcription.errorValidUrl');
 		disableSubmit = true;
 	} else {
 		errorMessage = '';
@@ -219,7 +220,7 @@
 			<div class="mt-0 space-y-2 w-full flex flex-col items-center">
 				<div class="w-full form-control">
 					<label for="file" class="label">
-						<span class="label-text">Pick a file</span>
+						<span class="label-text">{$_('modals.transcription.pickFile')}</span>
 					</label>
 					<input
 						name="file"
@@ -231,13 +232,13 @@
 
 				<div class="w-full form-control">
 					<label for="sourceUrl" class="label">
-						<span class="label-text">Or a source URL</span>
+						<span class="label-text">{$_('modals.transcription.sourceUrl')}</span>
 					</label>
 					<input
 						name="sourceUrl"
 						bind:value={sourceUrl}
 						type="text"
-						placeholder="https://youtube.com/watch?v=Hd33fCdW"
+						placeholder={$_('modals.transcription.sourceUrlPlaceholder')}
 						class="w-full input input-sm input-bordered input-primary"
 					/>
 				</div>
@@ -248,7 +249,7 @@
 		<div class="horizontal-selectors mb-2">
 			<div class="form-control">
 				<label for="modelSize" class="label">
-					<span class="label-text">Whisper model</span>
+					<span class="label-text">{$_('modals.transcription.whisperModel')}</span>
 				</label>
 				<select name="modelSize" bind:value={modelSize} class="select select-bordered">
 					{#each models as m}
@@ -258,7 +259,7 @@
 			</div>
 			<div class="form-control">
 				<label for="language" class="label">
-					<span class="label-text">Language</span>
+					<span class="label-text">{$_('modals.transcription.language')}</span>
 				</label>
 				<select name="language" bind:value={language} class="select select-bordered">
 					{#each languages as l}
@@ -268,15 +269,15 @@
 			</div>
 			<div class="form-control">
 				<label for="device" class="label">
-					<span class="label-text">Device</span>
+					<span class="label-text">{$_('modals.transcription.device')}</span>
 				</label>
 				<select name="device" bind:value={device} class="select select-bordered">
 					{#if env.PUBLIC_WHISHPER_PROFILE == 'gpu'}
-						<option selected value="cuda">GPU</option>
-						<option value="cpu">CPU</option>
+						<option selected value="cuda">{$_('modals.transcription.deviceGpu')}</option>
+						<option value="cpu">{$_('modals.transcription.deviceCpu')}</option>
 					{:else}
-						<option selected value="cpu">CPU</option>
-						<option disabled value="cuda">GPU</option>
+						<option selected value="cpu">{$_('modals.transcription.deviceCpu')}</option>
+						<option disabled value="cuda">{$_('modals.transcription.deviceGpu')}</option>
 					{/if}
 				</select>
 			</div>
@@ -287,7 +288,7 @@
 			<div class="flex flex-row flex-wrap gap-4 w-full">
 				<div class="w-full form-control">
 					<label for="beamSize" class="label">
-						<span class="label-text">Beam size</span>
+						<span class="label-text">{$_('modals.transcription.beamSize')}</span>
 					</label>
 					<input
 						name="beamSize"
@@ -301,27 +302,27 @@
 
 				<div class="w-full form-control">
 					<label for="initialPrompt" class="label">
-						<span class="label-text">Initial prompt (optional)</span>
+						<span class="label-text">{$_('modals.transcription.initialPrompt')}</span>
 					</label>
 					<textarea
 						name="initialPrompt"
 						bind:value={initialPrompt}
 						class="w-full input input-sm input-bordered input-primary"
-						placeholder="e.g. context for the model"
+						placeholder={$_('modals.transcription.initialPromptPlaceholder')}
 						rows="3"
 					/>
 				</div>
 
 				<div class="w-full form-control">
 					<label for="hotwords" class="label">
-						<span class="label-text">Hotwords (comma separated, optional)</span>
+						<span class="label-text">{$_('modals.transcription.hotwords')}</span>
 					</label>
 					<input
 						name="hotwords"
 						type="text"
 						bind:value={hotwords}
 						class="w-full input input-sm input-bordered input-primary"
-						placeholder="e.g. keyword1, keyword2"
+						placeholder={$_('modals.transcription.hotwordsPlaceholder')}
 					/>
 				</div>
 			</div>
@@ -332,14 +333,14 @@
 		<div class="form-control mb-2">
 			<label class="label cursor-pointer">
 				<input type="checkbox" bind:checked={enableVad} class="checkbox checkbox-sm" />
-				<span class="label-text ml-2">Enable VAD (voice activity detection)</span>
+				<span class="label-text ml-2">{$_('modals.transcription.enableVad')}</span>
 			</label>
 		</div>
 		{#if enableVad}
 			<div class="flex flex-row flex-wrap gap-4 w-full">
 				<div class="w-full form-control">
 					<label for="vadThreshold" class="label">
-						<span class="label-text">VAD threshold</span>
+						<span class="label-text">{$_('modals.transcription.vadThreshold')}</span>
 					</label>
 					<input
 						name="vadThreshold"
@@ -349,12 +350,12 @@
 						step="0.01"
 						bind:value={vadThreshold}
 						class="w-full input input-sm input-bordered input-primary"
-						placeholder="0.5 (default)"
+						placeholder={$_('modals.transcription.vadThresholdPlaceholder')}
 					/>
 				</div>
 				<div class="w-full form-control">
 					<label for="vadMinSpeech" class="label">
-						<span class="label-text">Min speech duration (ms)</span>
+						<span class="label-text">{$_('modals.transcription.vadMinSpeech')}</span>
 					</label>
 					<input
 						name="vadMinSpeech"
@@ -362,12 +363,12 @@
 						min="0"
 						bind:value={vadMinSpeech}
 						class="w-full input input-sm input-bordered input-primary"
-						placeholder="250 (default)"
+						placeholder={$_('modals.transcription.vadMinSpeechPlaceholder')}
 					/>
 				</div>
 				<div class="w-full form-control">
 					<label for="vadMinSilence" class="label">
-						<span class="label-text">Min silence duration (ms)</span>
+						<span class="label-text">{$_('modals.transcription.vadMinSilence')}</span>
 					</label>
 					<input
 						name="vadMinSilence"
@@ -375,7 +376,7 @@
 						min="0"
 						bind:value={vadMinSilence}
 						class="w-full input input-sm input-bordered input-primary"
-						placeholder="500 (default)"
+						placeholder={$_('modals.transcription.vadMinSilencePlaceholder')}
 					/>
 				</div>
 			</div>
@@ -384,10 +385,10 @@
 		<div class="mb-0 divider w-full" />
 		<!--Actions-->
 		<button class="btn btn-primary full-width-btn mt-2" on:click={sendForm} disabled={disableSubmit}
-			>Start</button
+			>{$_('modals.transcription.start')}</button
 		>
 	</form>
 	<form method="dialog" class="modal-backdrop">
-		<button>close</button>
+		<button>{$_('common.close')}</button>
 	</form>
 </dialog>

@@ -1,21 +1,22 @@
 <script>
     import { editorSettings } from '$lib/stores';
+    import { _ } from 'svelte-i18n';
 </script>
 
 <div class="flex flex-row items-center justify-center p-3 space-x-4 m-2">
     <div
         class="form-control tooltip"
-        data-tip="When clicking a timestamp input, seek the video to that position."
+        data-tip={$_('editor.settings.seekOnClickTooltip')}
     >
         <label class="label cursor-pointer space-x-2">
-            <span class="label-text">Seek on click</span>
+            <span class="label-text">{$_('editor.settings.seekOnClick')}</span>
             <input bind:checked={$editorSettings.seekOnClick} type="checkbox" class="checkbox checkbox-sm" />
         </label>
     </div>
 
-    <div class="form-control tooltip" data-tip="Automatically save changes every 30s.">
+    <div class="form-control tooltip" data-tip={$_('editor.settings.autosaveTooltip')}>
         <label class="label cursor-pointer space-x-2">
-            <span class="label-text">Autosave</span>
+            <span class="label-text">{$_('editor.settings.autosave')}</span>
             <input bind:checked={$editorSettings.autoSave} type="checkbox" class="checkbox checkbox-sm" />
         </label>
     </div>
