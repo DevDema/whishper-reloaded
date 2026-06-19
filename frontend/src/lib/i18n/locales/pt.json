@@ -39,7 +39,8 @@
 		"Eu cumpro cada palavra que digo!"
 	],
 	"home": {
-		"newTranscription": "✨ nova transcrição",
+		"fileCount": "{count, plural, one {# arquivo} other {# arquivos}}",
+		"newTranscription": "✨ Nova transcrição",
 		"serviceUnavailable": "🛑 O serviço de transcrição está indisponível: {error}",
 		"languagesUnavailable": "⚠️ Os recursos de idioma estão indisponíveis: {error}",
 		"search": {
@@ -59,6 +60,9 @@
 		}
 	},
 	"transcription": {
+		"statusLabel": {
+			"done": "Concluída"
+		},
 		"meta": {
 			"duration": "{duration} de duração",
 			"translations": "{count} traduções",
@@ -87,6 +91,7 @@
 	},
 	"modals": {
 		"transcription": {
+			"dropHint": "ou clique para selecionar · Áudio e vídeo suportados",
 			"pickFile": "Escolha um arquivo",
 			"sourceUrl": "Ou uma URL de origem",
 			"sourceUrlPlaceholder": "https://youtube.com/watch?v=Hd33fCdW",
@@ -169,6 +174,7 @@
 		}
 	},
 	"editor": {
+		"back": "Voltar",
 		"waitingTask": "Aguardando a conclusão da tarefa de {action}...",
 		"actionTranslating": "tradução",
 		"actionTranscribing": "transcrição",

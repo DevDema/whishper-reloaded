@@ -1,17 +1,22 @@
 <script>
-    import {deleteTranscription} from "$lib/utils.js";
-    import { _ } from 'svelte-i18n';
-    export let tr;
+	import { deleteTranscription } from '$lib/utils.js';
+	import { _ } from 'svelte-i18n';
+	import { Trash2 } from 'lucide-svelte';
+	import TranscriptionRow from './TranscriptionRow.svelte';
+	import Button from './ui/Button.svelte';
+	export let tr;
 </script>
 
+<TranscriptionRow kind="error">
+	<p class="text-foreground text-[0.88rem] font-medium truncate">id-{tr.id}</p>
+	<p class="text-muted-foreground text-[0.75rem] font-mono mt-0.5">
+		{$_('transcription.status.failed')}
+	</p>
 
-<div class="alert alert-error p-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-    <span>
-        <p class="font-bold text-info-content text-md">id-{tr.id}</p>
-        <p class="font-mono text-info-content text-sm opacity-70">{$_('transcription.status.failed')}</p>
-    </span>
-    <div>
-        <button on:click={deleteTranscription(tr.id)} class="btn btn-sm">{$_('transcription.actions.delete')}</button>
-    </div>
-</div>
+	<svelte:fragment slot="actions">
+		<Button variant="danger" size="sm" on:click={() => deleteTranscription(tr.id)}>
+			<Trash2 size={14} />
+			{$_('transcription.actions.delete')}
+		</Button>
+	</svelte:fragment>
+</TranscriptionRow>
