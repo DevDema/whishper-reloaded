@@ -1,175 +1,196 @@
 <script>
-    import {downloadSRT, downloadTXT, downloadJSON, downloadVTT, CLIENT_API_HOST} from '$lib/utils';
-    import toast from 'svelte-french-toast';
-    import { _ } from 'svelte-i18n';
-    export let tr;
+	import { downloadSRT, downloadTXT, downloadJSON, downloadVTT, CLIENT_API_HOST } from '$lib/utils';
+	import toast from 'svelte-french-toast';
+	import { _ } from 'svelte-i18n';
+	import Modal from './ui/Modal.svelte';
+	import Checkbox from './ui/Checkbox.svelte';
+	import Spinner from './ui/Spinner.svelte';
+	import { X, Download, Copy, Film, Check } from 'lucide-svelte';
 
-    let subtitleFormat = "srt";
-    let language = "original";
-    let includeWords = false;
+	export let open = false;
+	export let tr;
 
-    function downloadSubtitle() {
-        console.log("download subtitle");
-        let segments = [];
-        let text = "";
-        let title = "subtitles";
+	const FORMATS = ['srt', 'vtt', 'json', 'txt'];
 
-        console.log(language)
-        if (language == "original") {
-            segments = tr.result.segments;
-            text = tr.result.text;
-            title = tr.fileName.split("_WHSHPR_")[1]
-        } else {
-            for (const translation of tr.translations) {
-                if (translation.targetLanguage == language) {
-                    segments = translation.result.segments;
-                    text = translation.result.text;
-                    title = tr.fileName.split("_WHSHPR_")[1]
-                    break;
-                }
-            }
-        }
-        
-        if (segments.length == 0 || text == "") {
-            toast.error($_('modals.download.toasts.noData'));
-            return;
-        }
+	let subtitleFormat = 'srt';
+	let language = 'original';
+	let includeWords = false;
+	let copied = false;
 
-        if (subtitleFormat == "srt") {
-            downloadSRT(segments, title);
-        } else if (subtitleFormat == "vtt") {
-            downloadVTT(segments, title);
-        } else if (subtitleFormat == "json") {
-            downloadJSON(tr.result, title, includeWords);
-        } else if (subtitleFormat == "txt") {
-            downloadTXT(text, title);
-        }
-    }
+	function downloadSubtitle() {
+		let segments = [];
+		let text = '';
+		let title = 'subtitles';
 
-    function downloadMedia() {
-        let link = document.createElement('a');
-        link.href = `${CLIENT_API_HOST}/api/video/${tr.fileName}`;
-        link.target = "_blank";
-        link.download = tr.fileName.split('_WHSHPR_')[1]+".mp4";
-        link.click();
-    }
+		if (language == 'original') {
+			segments = tr.result.segments;
+			text = tr.result.text;
+			title = tr.fileName.split('_WHSHPR_')[1];
+		} else {
+			for (const translation of tr.translations) {
+				if (translation.targetLanguage == language) {
+					segments = translation.result.segments;
+					text = translation.result.text;
+					title = tr.fileName.split('_WHSHPR_')[1];
+					break;
+				}
+			}
+		}
 
-    async function copyText() {
-        console.log("copy text");
-        let text = "";
-        if (language == "original") {
-            text = tr.result.text;
-        } else {
-            for (const translation of tr.translations) {
-                console.log(translation.targetLanguage == language)
-                if (translation.targetLanguage == language) {
-                    text = translation.result.text;
-                    break;
-                }
-            }
-        }
-        // Copy tr.result.text to clipboard
-        try {
-            await navigator.clipboard.writeText(text);
-            console.log('Text copied to clipboard');
-            toast.success($_('modals.download.toasts.copied'));
-        } catch (err) {
-            console.error('Error in copying text: ', err);
-        }
-    }
+		if (segments.length == 0 || text == '') {
+			toast.error($_('modals.download.toasts.noData'));
+			return;
+		}
+
+		if (subtitleFormat == 'srt') {
+			downloadSRT(segments, title);
+		} else if (subtitleFormat == 'vtt') {
+			downloadVTT(segments, title);
+		} else if (subtitleFormat == 'json') {
+			downloadJSON(tr.result, title, includeWords);
+		} else if (subtitleFormat == 'txt') {
+			downloadTXT(text, title);
+		}
+	}
+
+	function downloadMedia() {
+		let link = document.createElement('a');
+		link.href = `${CLIENT_API_HOST}/api/video/${tr.fileName}`;
+		link.target = '_blank';
+		link.download = tr.fileName.split('_WHSHPR_')[1] + '.mp4';
+		link.click();
+	}
+
+	async function copyText() {
+		let text = '';
+		if (language == 'original') {
+			text = tr.result.text;
+		} else {
+			for (const translation of tr.translations) {
+				if (translation.targetLanguage == language) {
+					text = translation.result.text;
+					break;
+				}
+			}
+		}
+		try {
+			await navigator.clipboard.writeText(text);
+			toast.success($_('modals.download.toasts.copied'));
+			copied = true;
+			setTimeout(() => (copied = false), 1500);
+		} catch (err) {
+			console.error('Error in copying text: ', err);
+		}
+	}
 </script>
 
-<dialog id="modalDownloadOptions" class="modal">
-    <form method="dialog" class="modal-box flex flex-col items-center justify-center">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-        {#if tr}
-        <h1 class="text-center font-bold mt-2 pb-2">{$_('modals.download.title')}</h1>
+<Modal bind:open size="md" let:close>
+	<div class="p-6">
+		<div class="flex items-start justify-between mb-6">
+			<div>
+				<h2 class="text-foreground text-[0.95rem] font-semibold">{$_('modals.download.title')}</h2>
+				{#if tr}
+					<p class="text-muted-foreground text-[0.72rem] font-mono mt-0.5 truncate max-w-[16rem]">
+						{tr.fileName.split('_WHSHPR_')[1]}
+					</p>
+				{/if}
+			</div>
+			<button
+				on:click={close}
+				class="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all shrink-0"
+			>
+				<X size={14} />
+			</button>
+		</div>
 
-        <div class="flex flex-row space-x-4">
-            <div class="form-control">
-                <label for="format" class="label">
-                    <span class="label-text font-bold">{$_('modals.download.fileFormat')}</span>
-                </label>
-                <select bind:value={subtitleFormat} name="format" class="select select-bordered w-full max-w-xs">
-                    <option value="srt">SRT</option>
-                    <option value="vtt">VTT</option>
-                    <option value="json">JSON</option>
-                    <option value="txt">TXT</option>
-                </select>
-            </div>
+		{#if tr}
+			<div class="space-y-4 mb-7">
+				<!-- Format -->
+				<div>
+					<p class="text-muted-foreground mb-2 text-[0.72rem] uppercase tracking-wider">{$_('modals.download.fileFormat')}</p>
+					<div class="flex items-center gap-1.5 flex-wrap">
+						{#each FORMATS as f}
+							<button
+								on:click={() => (subtitleFormat = f)}
+								class="px-3 py-1.5 rounded-lg border transition-all text-[0.78rem] font-medium uppercase {subtitleFormat ===
+								f
+									? 'bg-primary border-primary/50 text-primary-foreground shadow-lg shadow-primary/20'
+									: 'border-border bg-muted text-muted-foreground hover:text-foreground hover:border-border/80'}"
+							>
+								{f}
+							</button>
+						{/each}
+					</div>
+				</div>
 
-            <div class="form-control">
-                <label for="language" class="label">
-                    <span class="label-text font-bold">{$_('modals.download.textLanguage')}</span>
-                </label>
-                <select bind:value={language} name="language" class="select select-bordered w-full max-w-xs uppercase">
-                    <option value="original">✅ {tr.result.language}</option>
-                    {#each tr.translations as translation}
-                        <option value="{translation.targetLanguage}">🤖 {translation.targetLanguage}</option>
-                    {/each}
-                </select>
-            </div>
-        </div>
+				<!-- Language -->
+				<div>
+					<p class="text-muted-foreground mb-2 text-[0.72rem] uppercase tracking-wider">{$_('modals.download.textLanguage')}</p>
+					<div class="flex items-center gap-1.5 flex-wrap">
+						<button
+							on:click={() => (language = 'original')}
+							class="px-3 py-1.5 rounded-lg border transition-all text-[0.78rem] font-medium uppercase {language ===
+							'original'
+								? 'bg-primary border-primary/50 text-primary-foreground shadow-lg shadow-primary/20'
+								: 'border-border bg-muted text-muted-foreground hover:text-foreground hover:border-border/80'}"
+						>
+							{tr.result.language}
+						</button>
+						{#each tr.translations as translation}
+							<button
+								on:click={() => (language = translation.targetLanguage)}
+								class="px-3 py-1.5 rounded-lg border transition-all text-[0.78rem] font-medium uppercase {language ===
+								translation.targetLanguage
+									? 'bg-primary border-primary/50 text-primary-foreground shadow-lg shadow-primary/20'
+									: 'border-border bg-muted text-muted-foreground hover:text-foreground hover:border-border/80'}"
+							>
+								{translation.targetLanguage}
+							</button>
+						{/each}
+					</div>
+				</div>
 
-        {#if subtitleFormat === "json"}
-        <div class="form-control mt-4">
-            <label class="label cursor-pointer space-x-2">
-                <span class="label-text">{$_('modals.download.includeWords')}</span>
-                <input type="checkbox" bind:checked={includeWords} class="checkbox" />
-            </label>
-        </div>
-        {/if}
+				{#if subtitleFormat === 'json'}
+					<label class="flex items-center gap-2 cursor-pointer">
+						<Checkbox bind:checked={includeWords} />
+						<span class="text-muted-foreground text-[0.78rem]">{$_('modals.download.includeWords')}</span>
+					</label>
+				{/if}
+			</div>
 
-        <div class="space-x-2 mt-8">
-            <span class="tooltip" data-tip={$_('modals.download.tooltipFile', { values: { format: subtitleFormat, language } })}>
-                <button on:click={downloadSubtitle} class="btn btn-sm btn-success">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-download" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
-                        <path d="M7 11l5 5l5 -5"></path>
-                        <path d="M12 4l0 12"></path>
-                    </svg>
-                    <span>
-                        {$_('modals.download.file')}
-                    </span>
-                </button>
-            </span>
-            <span class="tooltip" data-tip={$_('modals.download.tooltipCopy', { values: { language } })}>
-                <button on:click={copyText} class="btn btn-sm btn-info">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                        <path d="M8 8m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z"></path>
-                        <path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2"></path>
-                     </svg>
-                     <span>
-                         {$_('modals.download.copy')}
-                     </span>
-                </button>
-            </span>
-            <span class="tooltip" data-tip={$_('modals.download.tooltipMedia')}>
-                <button on:click={downloadMedia} class="btn btn-sm btn-error">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-download" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                        <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
-                        <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path>
-                        <path d="M12 17v-6"></path>
-                        <path d="M9.5 14.5l2.5 2.5l2.5 -2.5"></path>
-                    </svg>
-                    <span>
-                        {$_('modals.download.media')}
-                    </span>
-                </button>
-            </span>
-        </div>
-        {:else}
-            <div class="flex items-center justify-center w-screen h-screen">
-                <h1>
-                    <span class="loading loading-bars loading-lg" />
-                </h1>
-            </div>
-        {/if}
-    </form>
-    <form method="dialog" class="modal-backdrop">
-        <button>{$_('common.close')}</button>
-    </form>
-</dialog>
+			<!-- Actions -->
+			<div class="grid grid-cols-3 gap-2">
+				<button
+					on:click={downloadSubtitle}
+					title={$_('modals.download.tooltipFile', { values: { format: subtitleFormat, language } })}
+					class="flex flex-col items-center gap-2 py-3.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
+				>
+					<Download size={17} />
+					<span class="text-[0.7rem] font-semibold tracking-wider">{$_('modals.download.file')}</span>
+				</button>
+				<button
+					on:click={copyText}
+					title={$_('modals.download.tooltipCopy', { values: { language } })}
+					class="flex flex-col items-center gap-2 py-3.5 rounded-xl border transition-all hover:scale-[1.02] active:scale-[0.98] {copied
+						? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+						: 'border-blue-500/20 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/40'}"
+				>
+					{#if copied}<Check size={17} />{:else}<Copy size={17} />{/if}
+					<span class="text-[0.7rem] font-semibold tracking-wider">{$_('modals.download.copy')}</span>
+				</button>
+				<button
+					on:click={downloadMedia}
+					title={$_('modals.download.tooltipMedia')}
+					class="flex flex-col items-center gap-2 py-3.5 rounded-xl border border-violet-500/20 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 hover:border-violet-500/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
+				>
+					<Film size={17} />
+					<span class="text-[0.7rem] font-semibold tracking-wider">{$_('modals.download.media')}</span>
+				</button>
+			</div>
+		{:else}
+			<div class="flex items-center justify-center py-12 text-muted-foreground">
+				<Spinner size={28} />
+			</div>
+		{/if}
+	</div>
+</Modal>

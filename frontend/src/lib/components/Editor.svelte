@@ -1,46 +1,42 @@
 <script>
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 	import toast from 'svelte-french-toast';
-	import {editorSettings, currentTranscription, editorHistory, audioMode } from '$lib/stores';
+	import { editorSettings, currentTranscription, editorHistory, audioMode } from '$lib/stores';
 	import EditorSettings from './EditorSettings.svelte';
 	import EditorSegment from './EditorSegment.svelte';
-	import { CLIENT_API_HOST } from '$lib/utils';
 	import GoToSegment from './GoToSegment.svelte';
+	import IconButton from './ui/IconButton.svelte';
+	import Select from './ui/Select.svelte';
+	import Spinner from './ui/Spinner.svelte';
+	import ThemeToggle from './ui/ThemeToggle.svelte';
+	import { ArrowLeft, Save, Volume2, MonitorPlay } from 'lucide-svelte';
 	import { _ } from 'svelte-i18n';
 
 	export let language;
 	export let segmentsToShow;
 	export let setSegmentsToShow;
-	// List of audio-only file extensions
+
 	const audioExtensions = [
-		'mp3', 'm4a', 'wav', 'aac', 'ogg', 'flac', 'aiff', 'wma', 'alac', 'opus', 'amr', 'pcm', 'mka', 'dsd', 'wv', 'ape', 'm3u', 'm3u8', 'pls', 'aif', 'au', 'ra', 'ram', 'ac3', 'dts', 'mid', 'midi', 'mpa', 'mpc', 'oga', 'spx', 'tta', 'voc', 'vox', 'caf', 'snd', 'kar', 'mod', 's3m', 'xm', 'it', 'mtm', 'umx', 'amz', 'mogg', 'wv', '8svx', 'cda', 'gsm', 'ivs', 'mlp', 'mpc', 'msv', 'nmf', 'shn', 'tak', 'tta', 'vqf', 'xa'
+		'mp3', 'm4a', 'wav', 'aac', 'ogg', 'flac', 'aiff', 'wma', 'alac', 'opus', 'amr', 'pcm', 'mka', 'dsd', 'wv', 'ape', 'm3u', 'm3u8', 'pls', 'aif', 'au', 'ra', 'ram', 'ac3', 'dts', 'mid', 'midi', 'mpa', 'mpc', 'oga', 'spx', 'tta', 'voc', 'vox', 'caf', 'snd', 'kar', 'mod', 's3m', 'xm', 'it', 'mtm', 'umx', 'amz', 'mogg', '8svx', 'cda', 'gsm', 'ivs', 'mlp', 'msv', 'nmf', 'shn', 'tak', 'vqf', 'xa'
 	];
 
-	// Helper to check if file is audio-only
 	function isAudioOnlyFile(fileName) {
 		if (!fileName) return false;
 		const ext = fileName.split('.').pop().toLowerCase();
 		return audioExtensions.includes(ext);
 	}
 
-	// Track if current file is audio-only
 	let isAudioOnly = false;
 
-	// Reactively update audioMode and isAudioOnly when fileName changes
 	$: {
 		if ($currentTranscription && $currentTranscription.fileName) {
 			isAudioOnly = isAudioOnlyFile($currentTranscription.fileName);
 			if (isAudioOnly && !$audioMode) {
 				$audioMode = true;
 			}
-			// If not audio-only and audioMode is true, allow user to switch
-			if (!isAudioOnly && $audioMode) {
-				// Do not force switch, let user control
-			}
 		}
 	}
 
-	// Segments lazy loading
 	function loadMore() {
 		setSegmentsToShow(segmentsToShow + 10);
 	}
@@ -60,14 +56,11 @@
 				.join(' ')
 				.replace(/(\r\n|\n|\r)/gm, ' ');
 		}
-		console.log(text);
 		return text;
 	}
 
 	async function saveChanges() {
-		var url = `${CLIENT_API_HOST}/api/transcriptions`; // replace with your actual endpoint
-		console.log($language)
-		// Update text to match segments
+		var url = `${CLIENT_API_HOST}/api/transcriptions`;
 		if ($language == 'original') {
 			$currentTranscription.result.text = await textFromSegments();
 		} else {
@@ -88,9 +81,7 @@
 			if (!response.ok) {
 				if (response.status === 304) {
 					if (!$editorSettings.autoSave) {
-						toast($_('editor.toasts.noChanges'), {
-							icon: '👐'
-						});
+						toast($_('editor.toasts.noChanges'), { icon: '👐' });
 					}
 					return;
 				} else {
@@ -110,10 +101,11 @@
 		}
 	}
 
+	import { CLIENT_API_HOST } from '$lib/utils';
+
 	let handleKeyDown;
 	let observer;
 	onMount(() => {
-		// Lazy loading
 		observer = new IntersectionObserver((entries) => {
 			entries.forEach((entry) => {
 				if (entry.isIntersecting) {
@@ -123,12 +115,9 @@
 		});
 		observer.observe(loadMoreButton);
 
-		// Function to handle Ctrl+Z and Ctrl+S shortcuts
 		editorHistory.set([JSON.parse(JSON.stringify($currentTranscription))]);
 		let isUndoing = false;
 		handleKeyDown = function (e) {
-
-			// Undo (CTRL+Z)
 			if (e.ctrlKey && e.key === 'z' && !isUndoing) {
 				isUndoing = true;
 				let previousTranscription = null;
@@ -156,20 +145,15 @@
 					isSaving = false;
 				}
 			}
-
 		};
 
 		if (!$editorSettings.autoSave) {
-			toast($_('editor.toasts.autosaveDisabled'), {
-				icon: '👋'
-			});
+			toast($_('editor.toasts.autosaveDisabled'), { icon: '👋' });
 		}
 
-		// Listen to keydown event
 		document.addEventListener('keydown', handleKeyDown);
 	});
 
-	// Autosave
 	let autosaveInterval;
 	let autoSaveAux = $editorSettings.autoSave;
 	$: if ($editorSettings.autoSave) {
@@ -180,283 +164,98 @@
 		}, $editorSettings.autosaveInterval);
 	} else {
 		if (autoSaveAux == true) {
-			toast($_('editor.toasts.autosaveDisabled'), {
-				icon: '👋'
-			});
+			toast($_('editor.toasts.autosaveDisabled'), { icon: '👋' });
 			autoSaveAux = false;
 		}
 		clearInterval(autosaveInterval);
 	}
+
+	$: displayName = $currentTranscription?.fileName?.split('_WHSHPR_')[1] ?? '';
 </script>
 
 {#if $currentTranscription.status != 2}
-	<div class="flex items-center justify-center">
-		<span class="loading loading-spinner loading-lg"></span>
-		<p class="text-center">{$_('editor.waitingTask', { values: { action: $currentTranscription.status == 3 ? $_('editor.actionTranslating') : $_('editor.actionTranscribing') } })}</p>
+	<div class="flex items-center justify-center gap-3 py-20 text-muted-foreground">
+		<Spinner size={24} />
+		<p>
+			{$_('editor.waitingTask', {
+				values: {
+					action:
+						$currentTranscription.status == 3
+							? $_('editor.actionTranslating')
+							: $_('editor.actionTranscribing')
+				}
+			})}
+		</p>
 	</div>
 {:else}
-{#if $audioMode}
-	<!-- Audio Mode Header -->
-	<div class="sticky top-0 z-10 bg-base-100 border-b p-4">
-		<div class="flex items-center justify-between gap-4">
-			<!-- Title -->
-			<h1 class="text-xl font-semibold truncate flex-shrink min-w-0" title={$currentTranscription.fileName.split('_WHSHPR_')[1]}>
-				{$currentTranscription.fileName.split('_WHSHPR_')[1]}
-			</h1>
-			
-			<!-- Menu and Settings Container -->
-			<div class="flex items-center gap-4 flex-shrink-0">
-				<!-- Language Selector -->
+	<!-- Header -->
+	<div class="sticky top-0 z-10 bg-card/60 backdrop-blur-sm border-b border-border px-4 py-3">
+		<div class="flex items-center justify-between gap-4 max-w-5xl mx-auto">
+			<div class="flex items-center gap-3 min-w-0">
+				<a
+					href="/"
+					title={$_('editor.back')}
+					aria-label={$_('editor.back')}
+					class="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center border border-border bg-muted text-muted-foreground hover:text-foreground hover:bg-secondary transition-all hover:scale-105 active:scale-95"
+				>
+					<ArrowLeft size={16} />
+				</a>
+				<h1 class="text-[1rem] font-semibold truncate min-w-0 text-foreground" title={displayName}>
+					{displayName}
+				</h1>
+			</div>
+
+			<div class="flex items-center gap-2 flex-shrink-0">
 				{#if $currentTranscription.translations.length > 0}
-					<select
-						bind:value={$language}
-						name="language"
-						class="select select-sm select-bordered uppercase"
-					>
+					<Select bind:value={$language} class="uppercase !py-2 w-auto min-w-[7rem]">
 						<option value="original">✅ {$currentTranscription.result.language}</option>
 						{#each $currentTranscription.translations as translation}
 							<option value={translation.targetLanguage}>🤖 {translation.targetLanguage}</option>
 						{/each}
-					</select>
+					</Select>
 				{/if}
 
-				<!-- Editor Settings -->
 				<EditorSettings />
+				<GoToSegment language={$language} {segmentsToShow} {setSegmentsToShow} />
 
-				   <GoToSegment language={$language} segmentsToShow={segmentsToShow} setSegmentsToShow={setSegmentsToShow} />
-
-				<!-- Menu -->
-				<ul class="menu menu-horizontal bg-base-200 rounded-box">
-					<li>
-						<a href="/" class="tooltip" data-tip={$_('editor.home')}>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="h-5 w-5"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-								><path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-								/></svg
-							>
-						</a>
-					</li>
-					<li>
-						<button on:click={saveChanges} class="tooltip" data-tip={$_('editor.save')}>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="icon icon-tabler icon-tabler-device-floppy"
-								width="24"
-								height="24"
-								viewBox="0 0 24 24"
-								stroke-width="2"
-								stroke="currentColor"
-								fill="none"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							>
-								<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-								<path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
-								<path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-								<path d="M14 4l0 4l-6 0l0 -4" />
-							</svg>
-						</button>
-					</li>
-					   {#if !isAudioOnly}
-					   <li>
-						   <button on:click={() => $audioMode = !$audioMode} class="tooltip" data-tip={$_('editor.exitAudioMode')}>
-							   <svg
-								   xmlns="http://www.w3.org/2000/svg"
-								   class="h-5 w-5"
-								   fill="none"
-								   viewBox="0 0 24 24"
-								   stroke="currentColor"
-							   >
-								   <path
-									   stroke-linecap="round"
-									   stroke-linejoin="round"
-									   stroke-width="2"
-									   d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 9H6a2 2 0 00-2 2v2a2 2 0 002 2h3l6 6V3L9 9z"
-								   />
-							   </svg>
-						   </button>
-					   </li>
-					   {/if}
-				</ul>
+				<div class="flex items-center gap-1.5">
+					<ThemeToggle />
+					<IconButton title={$_('editor.save')} on:click={saveChanges}>
+						<Save size={16} />
+					</IconButton>
+					{#if !isAudioOnly}
+						<IconButton
+							title={$audioMode ? $_('editor.exitAudioMode') : $_('editor.audioMode')}
+							on:click={() => ($audioMode = !$audioMode)}
+						>
+							{#if $audioMode}<MonitorPlay size={16} />{:else}<Volume2 size={16} />{/if}
+						</IconButton>
+					{/if}
+				</div>
 			</div>
 		</div>
 	</div>
-	
-	<div class="overflow-x-auto px-4">
-		<!-- Segments table -->
-		<table class="table" class:audio-mode={$audioMode}>
-			<thead>
-				<tr>
-					<th />
-					<th>{$_('editor.table.start')}</th>
-					<th>{$_('editor.table.end')}</th>
-					<th>{$_('editor.table.text')}</th>
-					<th>{$_('editor.table.info')}</th>
-					<th />
-				</tr>
-			</thead>
-			<tbody>
-				{#if $language == 'original'}
-					{#each $currentTranscription.result.segments.slice(0, segmentsToShow) as segment, index (segment.id)}
-						<EditorSegment {segment} {index} translationIndex={-1} />
-					{/each}
-				{:else}
-					{#each $currentTranscription.translations as translation, translationIndex}
-						{#if translation.targetLanguage == $language}
-							{#each translation.result.segments.slice(0, segmentsToShow) as segment, index (segment.id)}
-								<EditorSegment {segment} {index} {translationIndex} />
-							{/each}
-						{/if}
-					{/each}
-				{/if}
-			</tbody>
-		</table>
-		<button bind:this={loadMoreButton}>
-			{#if $language == 'original'}
-				{#if segmentsToShow >= $currentTranscription.result.segments.length}
-					{$_('editor.noMoreSegments')}
-				{:else}
-					{$_('editor.loadingMore')}
-				{/if}
-			{:else if segmentsToShow >= $currentTranscription.translations.filter((translation) => translation.targetLanguage == $language)[0].result.segments.length}
-				{$_('editor.noMoreSegments')}
-			{:else}
-				{$_('editor.loadingMore')}
-			{/if}
-		</button>
-		<!-- End Segments table -->
-	</div>
-{:else}
-	<!-- Normal Mode Header -->
-	<div class="flex flex-col items-center break-words">
-		<h1 class="text-center text-2xl mt-8 break-words">
-			{$currentTranscription.fileName.split('_WHSHPR_')[1]}
-		</h1>
-		<!-- Menu -->
-		<ul class="menu menu-horizontal bg-base-200 rounded-box mt-6">
-			<li>
-				<a href="/" class="tooltip" data-tip={$_('editor.home')}>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-5 w-5"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-						><path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-						/></svg
-					>
-				</a>
-			</li>
-			<li>
-				<button on:click={saveChanges} class="tooltip" data-tip={$_('editor.save')}>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="icon icon-tabler icon-tabler-device-floppy"
-						width="24"
-						height="24"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-						stroke="currentColor"
-						fill="none"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-					>
-						<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-						<path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
-						<path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-						<path d="M14 4l0 4l-6 0l0 -4" />
-					</svg>
-				</button>
-			</li>
-			<li>
-				<button on:click={() => $audioMode = !$audioMode} class="tooltip" data-tip={$_('editor.audioMode')}>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-5 w-5"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 9H6a2 2 0 00-2 2v2a2 2 0 002 2h3l6 6V3L9 9z"
-						/>
-					</svg>
-				</button>
-			</li>
-		</ul>
-		<!-- End Menu -->
 
-		{#if $currentTranscription.translations.length > 0}
-			<div class="form-control max-w-xs my-4">
-				<label for="language" class="label">
-					<span class="label-text">{$_('editor.subtitlesLanguage')}</span>
-				</label>
-				<select
-					bind:value={$language}
-					name="language"
-					class="select select-sm select-bordered uppercase"
-				>
-					<option value="original">✅ {$currentTranscription.result.language}</option>
-					{#each $currentTranscription.translations as translation}
-						<option value={translation.targetLanguage}>🤖 {translation.targetLanguage}</option>
+	<!-- Segments -->
+	<div class="max-w-5xl mx-auto px-4 py-5 space-y-1.5">
+		{#if $language == 'original'}
+			{#each $currentTranscription.result.segments.slice(0, segmentsToShow) as segment, index (segment.id)}
+				<EditorSegment {segment} {index} translationIndex={-1} />
+			{/each}
+		{:else}
+			{#each $currentTranscription.translations as translation, translationIndex}
+				{#if translation.targetLanguage == $language}
+					{#each translation.result.segments.slice(0, segmentsToShow) as segment, index (segment.id)}
+						<EditorSegment {segment} {index} {translationIndex} />
 					{/each}
-				</select>
-			</div>
+				{/if}
+			{/each}
 		{/if}
-	</div>
-	<div class="mt-4">
-		<!-- Editor configuration -->
-		 <div class="flex flex-row items-center justify-center p-3 space-x-4 m-2">
-			<EditorSettings />
-			<GoToSegment language={$language} segmentsToShow={segmentsToShow} setSegmentsToShow={(v) => segmentsToShow = v} />
-		</div>
-		<!-- End Editor configuration -->
-	
-		<div class="overflow-x-auto">
-		<!-- Segments table -->
-		<table class="table px-4" class:audio-mode={$audioMode}>
-			<thead>
-				<tr>
-					<th />
-					<th>{$_('editor.table.start')}</th>
-					<th>{$_('editor.table.end')}</th>
-					<th>{$_('editor.table.text')}</th>
-					<th>{$_('editor.table.info')}</th>
-					<th />
-				</tr>
-			</thead>
-			<tbody>
-				{#if $language == 'original'}
-					{#each $currentTranscription.result.segments.slice(0, segmentsToShow) as segment, index (segment.id)}
-						<EditorSegment {segment} {index} translationIndex={-1} />
-					{/each}
-				{:else}
-					{#each $currentTranscription.translations as translation, translationIndex}
-						{#if translation.targetLanguage == $language}
-							{#each translation.result.segments.slice(0, segmentsToShow) as segment, index (segment.id)}
-								<EditorSegment {segment} {index} {translationIndex} />
-							{/each}
-						{/if}
-					{/each}
-				{/if}
-			</tbody>
-		</table>
-		<button bind:this={loadMoreButton}>
+
+		<button
+			bind:this={loadMoreButton}
+			class="w-full text-center text-[0.78rem] text-muted-foreground py-4"
+		>
 			{#if $language == 'original'}
 				{#if segmentsToShow >= $currentTranscription.result.segments.length}
 					{$_('editor.noMoreSegments')}
@@ -469,8 +268,5 @@
 				{$_('editor.loadingMore')}
 			{/if}
 		</button>
-		<!-- End Segments table -->
-		</div>
 	</div>
-{/if}
 {/if}

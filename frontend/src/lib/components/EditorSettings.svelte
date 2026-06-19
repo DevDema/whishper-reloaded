@@ -1,23 +1,23 @@
 <script>
-    import { editorSettings } from '$lib/stores';
-    import { _ } from 'svelte-i18n';
+	import { editorSettings } from '$lib/stores';
+	import { _ } from 'svelte-i18n';
+	import Checkbox from './ui/Checkbox.svelte';
 </script>
 
-<div class="flex flex-row items-center justify-center p-3 space-x-4 m-2">
-    <div
-        class="form-control tooltip"
-        data-tip={$_('editor.settings.seekOnClickTooltip')}
-    >
-        <label class="label cursor-pointer space-x-2">
-            <span class="label-text">{$_('editor.settings.seekOnClick')}</span>
-            <input bind:checked={$editorSettings.seekOnClick} type="checkbox" class="checkbox checkbox-sm" />
-        </label>
-    </div>
+<div class="flex items-center gap-4 px-3 py-1.5 rounded-lg border border-border bg-muted/50">
+	<label
+		class="flex items-center gap-2 cursor-pointer select-none"
+		title={$_('editor.settings.seekOnClickTooltip')}
+	>
+		<Checkbox bind:checked={$editorSettings.seekOnClick} />
+		<span class="text-muted-foreground text-[0.78rem]">{$_('editor.settings.seekOnClick')}</span>
+	</label>
 
-    <div class="form-control tooltip" data-tip={$_('editor.settings.autosaveTooltip')}>
-        <label class="label cursor-pointer space-x-2">
-            <span class="label-text">{$_('editor.settings.autosave')}</span>
-            <input bind:checked={$editorSettings.autoSave} type="checkbox" class="checkbox checkbox-sm" />
-        </label>
-    </div>
+	<label
+		class="flex items-center gap-2 cursor-pointer select-none"
+		title={$_('editor.settings.autosaveTooltip')}
+	>
+		<Checkbox bind:checked={$editorSettings.autoSave} />
+		<span class="text-muted-foreground text-[0.78rem]">{$_('editor.settings.autosave')}</span>
+	</label>
 </div>

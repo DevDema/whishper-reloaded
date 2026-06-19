@@ -3,8 +3,16 @@
 	import { env } from '$env/dynamic/public';
 	import { uploadProgress } from '$lib/stores';
 	import { _ } from 'svelte-i18n';
-
 	import toast from 'svelte-french-toast';
+	import Modal from './ui/Modal.svelte';
+	import Button from './ui/Button.svelte';
+	import Input from './ui/Input.svelte';
+	import Textarea from './ui/Textarea.svelte';
+	import Select from './ui/Select.svelte';
+	import Switch from './ui/Switch.svelte';
+	import { Sparkles, X, Upload, FileAudio, Mic } from 'lucide-svelte';
+
+	export let open = false;
 
 	let errorMessage = '';
 	let disableSubmit = true;
@@ -12,49 +20,18 @@
 	let language = 'auto';
 	let sourceUrl = '';
 	let fileInput;
+	let selectedFile = null;
+	let dragging = false;
+	let submitting = false;
 	let device = env.PUBLIC_WHISHPER_PROFILE == 'gpu' ? 'cuda' : 'cpu';
 
 	let languages = [
-		'auto',
-		'ar',
-		'be',
-		'bg',
-		'bn',
-		'ca',
-		'cs',
-		'cy',
-		'da',
-		'de',
-		'el',
-		'en',
-		'es',
-		'fr',
-		'it',
-		'ja',
-		'nl',
-		'pl',
-		'pt',
-		'ru',
-		'sk',
-		'sl',
-		'sv',
-		'tk',
-		'tr',
-		'zh'
+		'auto', 'ar', 'be', 'bg', 'bn', 'ca', 'cs', 'cy', 'da', 'de', 'el', 'en', 'es', 'fr', 'it',
+		'ja', 'nl', 'pl', 'pt', 'ru', 'sk', 'sl', 'sv', 'tk', 'tr', 'zh'
 	];
 	let models = [
-		'tiny',
-		'tiny.en',
-		'base',
-		'base.en',
-		'small',
-		'small.en',
-		'medium',
-		'medium.en',
-		'large-v2',
-		'large-v3'
+		'tiny', 'tiny.en', 'base', 'base.en', 'small', 'small.en', 'medium', 'medium.en', 'large-v2', 'large-v3'
 	];
-	// Sort the languages
 	languages.sort((a, b) => {
 		if (a == 'auto') return -1;
 		if (b == 'auto') return 1;
@@ -72,90 +49,107 @@
 	let vadMinSpeech = '';
 	let vadMinSilence = '';
 
-	// Function that sends the data as a form to the backend
-	async function sendForm() {
-	   if (sourceUrl && !validateURL(sourceUrl)) {
-		   toast.error($_('modals.transcription.toasts.invalidUrl'));
-		   return;
-	   }
-
-	   if (!sourceUrl && !fileInput) {
-		   toast.error($_('modals.transcription.toasts.noFileOrUrl'));
-		   return;
-	   }
-
-	   let formData = new FormData();
-	   formData.append('language', language);
-	   formData.append('modelSize', modelSize);
-	   if (device == 'cuda' || device == 'cpu') {
-		   formData.append('device', device);
-	   } else {
-		   formData.append('device', 'cpu');
-	   }
-	   formData.append('sourceUrl', sourceUrl);
-	   if (sourceUrl == '') {
-		   formData.append('file', fileInput.files[0]);
-	   }
-	   // Add new params
-	   formData.append('beam_size', beamSize);
-	   if (initialPrompt && initialPrompt.trim() !== '') {
-		   formData.append('initial_prompt', initialPrompt);
-	   }
-	   if (hotwords && hotwords.trim() !== '') {
-		   // Send as comma-separated string
-		   formData.append('hotwords', hotwords);
-	   }
-	   // VAD params
-	   if (enableVad) {
-		   formData.append('vad_filter', 'true');
-		   if (vadThreshold !== '') formData.append('vad_threshold', vadThreshold);
-		   if (vadMinSpeech !== '') formData.append('vad_min_speech_duration_ms', vadMinSpeech);
-		   if (vadMinSilence !== '') formData.append('vad_min_silence_duration_ms', vadMinSilence);
-	   }
-
-	   return new Promise((resolve, reject) => {
-		   const xhr = new XMLHttpRequest();
-
-		   // Set up progress event listener
-		   xhr.upload.addEventListener('progress', (event) => {
-			   if (event.lengthComputable) {
-				   const percentCompleted = Math.round((event.loaded * 100) / event.total);
-				   uploadProgress.set(percentCompleted);
-			   }
-		   });
-
-		   // Set up load event listener
-		   xhr.addEventListener('load', () => {
-			   if (xhr.status === 200) {
-				   resolve(xhr.response);
-				   toast.success($_('modals.transcription.toasts.success'));
-			   } else {
-				   reject(xhr.statusText);
-				   toast.error($_('modals.transcription.toasts.uploadFailed'));
-			   }
-			   uploadProgress.set(0); // Reset progress after completion
-		   });
-
-		   // Set up error event listener
-		   xhr.addEventListener('error', () => {
-			   reject(xhr.statusText);
-			   toast.error($_('modals.transcription.toasts.uploadError'));
-			   uploadProgress.set(0); // Reset progress on error
-		   });
-
-		   xhr.open('POST', `${CLIENT_API_HOST}/api/transcriptions`);
-		   xhr.send(formData);
-	   });
-
-	   // Set file and sourceUrl to empty
-	   sourceUrl = '';
-	   fileInput.value = '';
-	   uploadProgress.set(0);
-
-	   toast.success($_('modals.transcription.toasts.success'));
+	function handleDrop(e) {
+		e.preventDefault();
+		dragging = false;
+		const f = e.dataTransfer.files[0];
+		if (f) selectedFile = f;
 	}
 
-	// Reactive statement
+	function handleFileSelect(e) {
+		const f = e.target.files?.[0];
+		if (f) selectedFile = f;
+	}
+
+	function clearFile() {
+		selectedFile = null;
+		if (fileInput) fileInput.value = '';
+	}
+
+	async function sendForm() {
+		if (sourceUrl && !validateURL(sourceUrl)) {
+			toast.error($_('modals.transcription.toasts.invalidUrl'));
+			return;
+		}
+
+		if (!sourceUrl && !selectedFile) {
+			toast.error($_('modals.transcription.toasts.noFileOrUrl'));
+			return;
+		}
+
+		let formData = new FormData();
+		formData.append('language', language);
+		formData.append('modelSize', modelSize);
+		if (device == 'cuda' || device == 'cpu') {
+			formData.append('device', device);
+		} else {
+			formData.append('device', 'cpu');
+		}
+		formData.append('sourceUrl', sourceUrl);
+		if (sourceUrl == '') {
+			formData.append('file', selectedFile);
+		}
+		formData.append('beam_size', beamSize);
+		if (initialPrompt && initialPrompt.trim() !== '') {
+			formData.append('initial_prompt', initialPrompt);
+		}
+		if (hotwords && hotwords.trim() !== '') {
+			formData.append('hotwords', hotwords);
+		}
+		if (enableVad) {
+			formData.append('vad_filter', 'true');
+			if (vadThreshold !== '') formData.append('vad_threshold', vadThreshold);
+			if (vadMinSpeech !== '') formData.append('vad_min_speech_duration_ms', vadMinSpeech);
+			if (vadMinSilence !== '') formData.append('vad_min_silence_duration_ms', vadMinSilence);
+		}
+
+		return new Promise((resolve, reject) => {
+			const xhr = new XMLHttpRequest();
+
+			xhr.upload.addEventListener('progress', (event) => {
+				if (event.lengthComputable) {
+					const percentCompleted = Math.round((event.loaded * 100) / event.total);
+					uploadProgress.set(percentCompleted);
+				}
+			});
+
+			xhr.addEventListener('load', () => {
+				if (xhr.status === 200) {
+					resolve(xhr.response);
+					toast.success($_('modals.transcription.toasts.success'));
+				} else {
+					reject(xhr.statusText);
+					toast.error($_('modals.transcription.toasts.uploadFailed'));
+				}
+				uploadProgress.set(0);
+			});
+
+			xhr.addEventListener('error', () => {
+				reject(xhr.statusText);
+				toast.error($_('modals.transcription.toasts.uploadError'));
+				uploadProgress.set(0);
+			});
+
+			xhr.open('POST', `${CLIENT_API_HOST}/api/transcriptions`);
+			xhr.send(formData);
+		});
+	}
+
+	async function handleStart() {
+		if (submitting) return;
+		submitting = true;
+		try {
+			await sendForm();
+			clearFile();
+			sourceUrl = '';
+			open = false;
+		} catch (e) {
+			console.error(e);
+		} finally {
+			submitting = false;
+		}
+	}
+
 	$: if (sourceUrl && !validateURL(sourceUrl)) {
 		errorMessage = $_('modals.transcription.errorValidUrl');
 		disableSubmit = true;
@@ -165,230 +159,161 @@
 	}
 </script>
 
+<Modal bind:open size="lg" let:close>
+	<!-- Header -->
+	<div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
+		<div class="flex items-center gap-2.5">
+			<div class="w-8 h-8 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center">
+				<Sparkles size={15} class="text-primary" />
+			</div>
+			<h3 class="text-foreground text-[0.95rem] font-semibold">{$_('home.newTranscription')}</h3>
+		</div>
+		<button
+			on:click={close}
+			class="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+		>
+			<X size={15} />
+		</button>
+	</div>
 
-<style>
-	.centered-modal-box {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		min-width: 350px;
-		width: 100%;
-		max-width: 480px;
-		margin: 0 auto;
-	}
-	.full-width-btn {
-		width: 100%;
-		min-width: 200px;
-		max-width: 100%;
-		display: block;
-	}
-	.horizontal-selectors {
-		display: flex;
-		flex-direction: row;
-		gap: 1rem;
-		width: 100%;
-		justify-content: center;
-	}
-	.horizontal-selectors > div {
-		flex: 1 1 0;
-		min-width: 0;
-	}
-</style>
-
-<dialog id="modalNewTranscription" class="modal">
-	<form method="dialog" class="modal-box centered-modal-box">
-		<button class="absolute btn btn-sm btn-circle btn-ghost right-2 top-2">✕</button>
-		{#if errorMessage != ''}
-			<div class="alert alert-error">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="w-6 h-6 stroke-current shrink-0"
-					fill="none"
-					viewBox="0 0 24 24"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-					/>
-				</svg>
-				<span>{errorMessage}</span>
+	<!-- Body -->
+	<div class="px-6 py-5 space-y-5">
+		{#if errorMessage}
+			<div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-red-500/20 bg-red-500/5 text-red-400 text-[0.8rem]">
+				{errorMessage}
 			</div>
 		{/if}
-			<div class="mt-0 space-y-2 w-full flex flex-col items-center">
-				<div class="w-full form-control">
-					<label for="file" class="label">
-						<span class="label-text">{$_('modals.transcription.pickFile')}</span>
-					</label>
-					<input
-						name="file"
-						bind:this={fileInput}
-						type="file"
-						class="w-full file-input file-input-sm file-input-bordered file-input-primary"
-					/>
-				</div>
 
-				<div class="w-full form-control">
-					<label for="sourceUrl" class="label">
-						<span class="label-text">{$_('modals.transcription.sourceUrl')}</span>
-					</label>
-					<input
-						name="sourceUrl"
-						bind:value={sourceUrl}
-						type="text"
-						placeholder={$_('modals.transcription.sourceUrlPlaceholder')}
-						class="w-full input input-sm input-bordered input-primary"
-					/>
+		<!-- Drop zone -->
+		<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+		<div
+			on:dragover={(e) => { e.preventDefault(); dragging = true; }}
+			on:dragleave={() => (dragging = false)}
+			on:drop={handleDrop}
+			on:click={() => fileInput?.click()}
+			class="relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 cursor-pointer transition-all {dragging
+				? 'border-primary/60 bg-primary/5'
+				: selectedFile
+				? 'border-emerald-500/40 bg-emerald-500/5'
+				: 'border-border hover:border-primary/40 hover:bg-muted/50'}"
+			role="button"
+			tabindex="0"
+		>
+			<input bind:this={fileInput} type="file" class="hidden" accept="audio/*,video/*" on:change={handleFileSelect} />
+			{#if selectedFile}
+				<div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+					<FileAudio size={22} class="text-emerald-400" />
 				</div>
-			</div>
+				<div class="text-center">
+					<p class="text-foreground text-[0.85rem] font-medium">{selectedFile.name}</p>
+					<p class="text-muted-foreground text-[0.72rem] mt-0.5">
+						{(selectedFile.size / 1024 / 1024).toFixed(1)} MB
+					</p>
+				</div>
+				<button
+					on:click|stopPropagation={clearFile}
+					class="text-muted-foreground hover:text-foreground transition-colors text-[0.72rem]"
+				>
+					{$_('common.cancel')}
+				</button>
+			{:else}
+				<div class="w-12 h-12 rounded-xl bg-muted border border-border flex items-center justify-center">
+					<Upload size={20} class="text-muted-foreground" />
+				</div>
+				<div class="text-center">
+					<p class="text-foreground text-[0.85rem] font-medium">{$_('modals.transcription.pickFile')}</p>
+					<p class="text-muted-foreground text-[0.72rem] mt-0.5">{$_('modals.transcription.dropHint')}</p>
+				</div>
+			{/if}
+		</div>
 
-		<div class="mb-0 divider w-full" />
-		<!-- Whisper Configuration -->
-		<div class="horizontal-selectors mb-2">
-			<div class="form-control">
-				<label for="modelSize" class="label">
-					<span class="label-text">{$_('modals.transcription.whisperModel')}</span>
-				</label>
-				<select name="modelSize" bind:value={modelSize} class="select select-bordered">
-					{#each models as m}
-						<option value={m}>{m}</option>
-					{/each}
-				</select>
+		<!-- Source URL -->
+		<div class="space-y-1.5">
+			<label for="sourceUrl" class="text-muted-foreground text-[0.75rem]">{$_('modals.transcription.sourceUrl')}</label>
+			<Input id="sourceUrl" bind:value={sourceUrl} placeholder={$_('modals.transcription.sourceUrlPlaceholder')} />
+		</div>
+
+		<!-- Model / Language / Device -->
+		<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+			<div class="space-y-1.5">
+				<label for="modelSize" class="text-muted-foreground text-[0.75rem]">{$_('modals.transcription.whisperModel')}</label>
+				<Select id="modelSize" bind:value={modelSize}>
+					{#each models as m}<option value={m}>{m}</option>{/each}
+				</Select>
 			</div>
-			<div class="form-control">
-				<label for="language" class="label">
-					<span class="label-text">{$_('modals.transcription.language')}</span>
-				</label>
-				<select name="language" bind:value={language} class="select select-bordered">
-					{#each languages as l}
-						<option value={l}>{l}</option>
-					{/each}
-				</select>
+			<div class="space-y-1.5">
+				<label for="language" class="text-muted-foreground text-[0.75rem]">{$_('modals.transcription.language')}</label>
+				<Select id="language" bind:value={language}>
+					{#each languages as l}<option value={l}>{l}</option>{/each}
+				</Select>
 			</div>
-			<div class="form-control">
-				<label for="device" class="label">
-					<span class="label-text">{$_('modals.transcription.device')}</span>
-				</label>
-				<select name="device" bind:value={device} class="select select-bordered">
+			<div class="space-y-1.5">
+				<label for="device" class="text-muted-foreground text-[0.75rem]">{$_('modals.transcription.device')}</label>
+				<Select id="device" bind:value={device}>
 					{#if env.PUBLIC_WHISHPER_PROFILE == 'gpu'}
-						<option selected value="cuda">{$_('modals.transcription.deviceGpu')}</option>
+						<option value="cuda">{$_('modals.transcription.deviceGpu')}</option>
 						<option value="cpu">{$_('modals.transcription.deviceCpu')}</option>
 					{:else}
-						<option selected value="cpu">{$_('modals.transcription.deviceCpu')}</option>
+						<option value="cpu">{$_('modals.transcription.deviceCpu')}</option>
 						<option disabled value="cuda">{$_('modals.transcription.deviceGpu')}</option>
 					{/if}
-				</select>
+				</Select>
 			</div>
 		</div>
 
-		<div class="mb-0 divider w-full" />
-
-			<div class="flex flex-row flex-wrap gap-4 w-full">
-				<div class="w-full form-control">
-					<label for="beamSize" class="label">
-						<span class="label-text">{$_('modals.transcription.beamSize')}</span>
-					</label>
-					<input
-						name="beamSize"
-						type="number"
-						min="1"
-						max="20"
-						bind:value={beamSize}
-						class="w-full input input-sm input-bordered input-primary"
-					/>
-				</div>
-
-				<div class="w-full form-control">
-					<label for="initialPrompt" class="label">
-						<span class="label-text">{$_('modals.transcription.initialPrompt')}</span>
-					</label>
-					<textarea
-						name="initialPrompt"
-						bind:value={initialPrompt}
-						class="w-full input input-sm input-bordered input-primary"
-						placeholder={$_('modals.transcription.initialPromptPlaceholder')}
-						rows="3"
-					/>
-				</div>
-
-				<div class="w-full form-control">
-					<label for="hotwords" class="label">
-						<span class="label-text">{$_('modals.transcription.hotwords')}</span>
-					</label>
-					<input
-						name="hotwords"
-						type="text"
-						bind:value={hotwords}
-						class="w-full input input-sm input-bordered input-primary"
-						placeholder={$_('modals.transcription.hotwordsPlaceholder')}
-					/>
-				</div>
+		<!-- Advanced -->
+		<div class="grid grid-cols-1 gap-3">
+			<div class="space-y-1.5">
+				<label for="beamSize" class="text-muted-foreground text-[0.75rem]">{$_('modals.transcription.beamSize')}</label>
+				<Input id="beamSize" type="number" min="1" max="20" bind:value={beamSize} />
 			</div>
-
-		<div class="mb-0 divider w-full" />
-
-		<!-- VAD options -->
-		<div class="form-control mb-2">
-			<label class="label cursor-pointer">
-				<input type="checkbox" bind:checked={enableVad} class="checkbox checkbox-sm" />
-				<span class="label-text ml-2">{$_('modals.transcription.enableVad')}</span>
-			</label>
+			<div class="space-y-1.5">
+				<label for="initialPrompt" class="text-muted-foreground text-[0.75rem]">{$_('modals.transcription.initialPrompt')}</label>
+				<Textarea id="initialPrompt" rows="3" bind:value={initialPrompt} placeholder={$_('modals.transcription.initialPromptPlaceholder')} />
+			</div>
+			<div class="space-y-1.5">
+				<label for="hotwords" class="text-muted-foreground text-[0.75rem]">{$_('modals.transcription.hotwords')}</label>
+				<Input id="hotwords" bind:value={hotwords} placeholder={$_('modals.transcription.hotwordsPlaceholder')} />
+			</div>
 		</div>
-		{#if enableVad}
-			<div class="flex flex-row flex-wrap gap-4 w-full">
-				<div class="w-full form-control">
-					<label for="vadThreshold" class="label">
-						<span class="label-text">{$_('modals.transcription.vadThreshold')}</span>
-					</label>
-					<input
-						name="vadThreshold"
-						type="number"
-						min="0"
-						max="1"
-						step="0.01"
-						bind:value={vadThreshold}
-						class="w-full input input-sm input-bordered input-primary"
-						placeholder={$_('modals.transcription.vadThresholdPlaceholder')}
-					/>
+
+		<!-- VAD -->
+		<div class="rounded-xl border border-border bg-muted/40 p-4 space-y-3">
+			<Switch bind:checked={enableVad} label={$_('modals.transcription.enableVad')} />
+			{#if enableVad}
+				<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+					<div class="space-y-1.5">
+						<label for="vadThreshold" class="text-muted-foreground text-[0.72rem]">{$_('modals.transcription.vadThreshold')}</label>
+						<Input id="vadThreshold" type="number" min="0" max="1" step="0.01" bind:value={vadThreshold} placeholder={$_('modals.transcription.vadThresholdPlaceholder')} />
+					</div>
+					<div class="space-y-1.5">
+						<label for="vadMinSpeech" class="text-muted-foreground text-[0.72rem]">{$_('modals.transcription.vadMinSpeech')}</label>
+						<Input id="vadMinSpeech" type="number" min="0" bind:value={vadMinSpeech} placeholder={$_('modals.transcription.vadMinSpeechPlaceholder')} />
+					</div>
+					<div class="space-y-1.5">
+						<label for="vadMinSilence" class="text-muted-foreground text-[0.72rem]">{$_('modals.transcription.vadMinSilence')}</label>
+						<Input id="vadMinSilence" type="number" min="0" bind:value={vadMinSilence} placeholder={$_('modals.transcription.vadMinSilencePlaceholder')} />
+					</div>
 				</div>
-				<div class="w-full form-control">
-					<label for="vadMinSpeech" class="label">
-						<span class="label-text">{$_('modals.transcription.vadMinSpeech')}</span>
-					</label>
-					<input
-						name="vadMinSpeech"
-						type="number"
-						min="0"
-						bind:value={vadMinSpeech}
-						class="w-full input input-sm input-bordered input-primary"
-						placeholder={$_('modals.transcription.vadMinSpeechPlaceholder')}
-					/>
+			{/if}
+		</div>
+
+		{#if $uploadProgress > 0}
+			<div class="space-y-1.5">
+				<div class="h-2 w-full rounded-full bg-muted overflow-hidden">
+					<div class="h-full rounded-full bg-primary transition-all duration-300" style="width:{$uploadProgress}%"></div>
 				</div>
-				<div class="w-full form-control">
-					<label for="vadMinSilence" class="label">
-						<span class="label-text">{$_('modals.transcription.vadMinSilence')}</span>
-					</label>
-					<input
-						name="vadMinSilence"
-						type="number"
-						min="0"
-						bind:value={vadMinSilence}
-						class="w-full input input-sm input-bordered input-primary"
-						placeholder={$_('modals.transcription.vadMinSilencePlaceholder')}
-					/>
-				</div>
+				<p class="text-center text-muted-foreground text-[0.75rem]">{$_('common.uploading')}</p>
 			</div>
 		{/if}
+	</div>
 
-		<div class="mb-0 divider w-full" />
-		<!--Actions-->
-		<button class="btn btn-primary full-width-btn mt-2" on:click={sendForm} disabled={disableSubmit}
-			>{$_('modals.transcription.start')}</button
-		>
-	</form>
-	<form method="dialog" class="modal-backdrop">
-		<button>{$_('common.close')}</button>
-	</form>
-</dialog>
+	<!-- Footer -->
+	<div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-border">
+		<Button variant="secondary" on:click={close}>{$_('common.cancel')}</Button>
+		<Button on:click={handleStart} disabled={disableSubmit || submitting || (!selectedFile && !sourceUrl)}>
+			<Mic size={14} />
+			{$_('modals.transcription.start')}
+		</Button>
+	</div>
+</Modal>

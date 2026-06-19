@@ -39,7 +39,8 @@
 		"I mean every word I say!"
 	],
 	"home": {
-		"newTranscription": "✨ new transcription",
+		"fileCount": "{count, plural, one {# file} other {# files}}",
+		"newTranscription": "✨ New transcription",
 		"serviceUnavailable": "🛑 Transcription service is unavailable: {error}",
 		"languagesUnavailable": "⚠️ Language features are unavailable: {error}",
 		"search": {
@@ -59,6 +60,9 @@
 		}
 	},
 	"transcription": {
+		"statusLabel": {
+			"done": "Completed"
+		},
 		"meta": {
 			"duration": "{duration} long",
 			"translations": "{count} translations",
@@ -88,6 +92,7 @@
 	"modals": {
 		"transcription": {
 			"pickFile": "Pick a file",
+			"dropHint": "or click to select · Audio and video supported",
 			"sourceUrl": "Or a source URL",
 			"sourceUrlPlaceholder": "https://youtube.com/watch?v=Hd33fCdW",
 			"whisperModel": "Whisper model",
@@ -169,6 +174,7 @@
 		}
 	},
 	"editor": {
+		"back": "Back",
 		"waitingTask": "Waiting for task to finish {action}...",
 		"actionTranslating": "translating",
 		"actionTranscribing": "transcribing",

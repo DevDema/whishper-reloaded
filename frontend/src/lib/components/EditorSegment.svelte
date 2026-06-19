@@ -3,6 +3,8 @@
 	import { currentVideoPlayerTime, currentTranscription, editorHistory } from '$lib/stores';
 	import { afterUpdate } from 'svelte';
 	import { _ } from 'svelte-i18n';
+	import IconButton from './ui/IconButton.svelte';
+	import { Clock, ArrowUpToLine, ArrowDownToLine, Split, Trash2 } from 'lucide-svelte';
 	export let index;
 	export let segment;
 	export let translationIndex;
@@ -10,36 +12,24 @@
 	let isActive = false;
 
 	function getCps(s) {
-		// Find duration
 		let duration = s.end - s.start;
-
-		// Count characters
 		let charCount = s.text.length;
-
-		// Calculate CPS
 		let cps = charCount / duration;
-
-		// Round to 2 decimals
 		cps = Math.round(cps * 100) / 100;
-		// Truncate to integer
 		return Math.trunc(cps);
 	}
 
 	function deleteSegment(index, callback) {
-		console.log($currentTranscription)
 		const source =
 			translationIndex == -1
 				? $currentTranscription.result.segments
 				: $currentTranscription.translations[translationIndex].result.segments;
 		source.splice(index, 1);
-		// Update index
-		$currentTranscription = { ...$currentTranscription }; // deep copy
+		$currentTranscription = { ...$currentTranscription };
 		callback();
 	}
 
-	// This function takes a segment and splits it into two segments at the given index
 	function splitSegment(index, callback) {
-		// Choose the correct source based on translationIndex
 		const source =
 			translationIndex == -1
 				? $currentTranscription.result.segments
@@ -54,11 +44,9 @@
 		const duration = segment.end - segment.start;
 		const midTime = segment.start + duration / 2;
 
-		// Update current segment
 		segment.text = firstHalf;
 		segment.end = midTime;
 
-		// Create and insert new segment
 		const newSegment = {
 			id: JSON.stringify(Date.now()),
 			start: midTime,
@@ -82,7 +70,6 @@
 		}
 	}
 
-	// Save history on editing
 	function handleHistory() {
 		let currentT = JSON.parse(JSON.stringify($currentTranscription));
 		editorHistory.update((value) => {
@@ -102,7 +89,7 @@
 			text: '',
 			words: []
 		});
-		$currentTranscription = { ...$currentTranscription }; // deep copy
+		$currentTranscription = { ...$currentTranscription };
 		callback();
 	}
 
@@ -118,7 +105,7 @@
 			text: '',
 			words: []
 		});
-		$currentTranscription = { ...$currentTranscription }; // deep copy
+		$currentTranscription = { ...$currentTranscription };
 		callback();
 	}
 
@@ -127,16 +114,13 @@
 	function handleTab(e) {
 		if (e.key === 'Tab') {
 			e.preventDefault();
-			// Find all segment text input divs
 			const allInputs = Array.from(document.querySelectorAll('[data-segment-text-input]'));
 			const idx = allInputs.indexOf(textInputEl);
 			if (e.shiftKey) {
-				// Shift+Tab: go to previous
 				if (idx > 0) {
 					allInputs[idx - 1].focus();
 				}
 			} else {
-				// Tab: go to next
 				if (idx !== -1 && idx < allInputs.length - 1) {
 					allInputs[idx + 1].focus();
 				}
@@ -154,234 +138,111 @@
 	} else {
 		isActive = false;
 	}
+
+	$: cpsValue = getCps(segment);
+	$: cpsHigh = cpsValue > 16;
 </script>
 
-<tr class:bg-warning={isActive} class:bg-opacity-30={isActive} data-start={segment.start} class="align-middle">
-	<th class="whitespace-nowrap">{index}</th>
-	<td class="space-x-2 whitespace-nowrap">
-		<!-- Start input -->
-		<input
-			class="w-20 input input-sm input-bordered"
-			type="number"
-			step="0.01"
-			bind:value={segment.start}
-			on:input={(e) => ($currentVideoPlayerTime.set(e.target.value))}
-			on:input={handleHistory}
-			on:click={(e) => {
-				if ($editorSettings.seekOnClick) $currentVideoPlayerTime = e.target.value;
-			}}
-		/>
-		<span class="tooltip" data-tip={$_('editor.segment.setToCurrentTime')}>
-			<button
-				on:click={() => {
-					segment.start = $currentVideoPlayerTime;
-					handleHistory();
-				}}
-				class="btn btn-xs btn-primary"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="w-4 h-4 stroke-white"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<path d="M12 7v5l2 2" />
-					<path d="M17 22l5 -3l-5 -3z" />
-					<path d="M13.017 20.943a9 9 0 1 1 7.831 -7.292" />
-				</svg>
-			</button>
+<div
+	data-segment-row
+	data-start={segment.start}
+	class="group rounded-xl border bg-card transition-all px-4 py-3 {isActive
+		? 'border-amber-400/50 ring-1 ring-amber-400/30 bg-amber-500/5'
+		: 'border-border hover:border-border/80'}"
+>
+	<div class="flex items-start gap-3">
+		<!-- Index -->
+		<span class="text-muted-foreground text-[0.7rem] font-mono mt-2.5 w-6 text-right shrink-0 tabular-nums">
+			{index}
 		</span>
-	</td>
-	<td class="space-x-2 whitespace-nowrap">
-		<!-- End input -->
-		<input
-			class="w-20 input input-sm input-bordered"
-			type="number"
-			step="0.01"
-			bind:value={segment.end}
-			on:input={(e) => ($currentVideoPlayerTime = e.target.value)}
-			on:input={handleHistory}
-			on:click={(e) => {
-				if ($editorSettings.seekOnClick) $currentVideoPlayerTime = e.target.value;
-			}}
-		/>
-		<span class="tooltip" data-tip={$_('editor.segment.setToCurrentTime')}>
-			<button
-				on:click={() => {
-					segment.end = $currentVideoPlayerTime;
-					handleHistory();
-				}}
-				class="btn btn-xs btn-primary"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="w-4 h-4 stroke-white"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
+
+		<!-- Timestamps -->
+		<div class="flex flex-col gap-1.5 shrink-0">
+			<div class="flex items-center gap-1">
+				<input
+					class="w-20 px-2 py-1.5 rounded-lg bg-muted border border-border text-foreground text-[0.78rem] font-mono focus:outline-none focus:ring-2 focus:ring-primary/40"
+					type="number"
+					step="0.01"
+					bind:value={segment.start}
+					on:input={(e) => ($currentVideoPlayerTime = e.target.value)}
+					on:input={handleHistory}
+					on:click={(e) => {
+						if ($editorSettings.seekOnClick) $currentVideoPlayerTime = e.target.value;
+					}}
+				/>
+				<IconButton
+					variant="primary"
+					class="w-7 h-7"
+					title={$_('editor.segment.setToCurrentTime')}
+					on:click={() => {
+						segment.start = $currentVideoPlayerTime;
+						handleHistory();
+					}}
 				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<path d="M12 7v5l2 2" />
-					<path d="M17 22l5 -3l-5 -3z" />
-					<path d="M13.017 20.943a9 9 0 1 1 7.831 -7.292" />
-				</svg>
-			</button>
-		</span>
-	</td>
-	   <td class="w-full px-2">
-		   <!-- Text input -->
-		   <div
-			   bind:this={textInputEl}
-			   bind:textContent={segment.text}
-			   on:input={handleKeystrokes}
-			   class="w-full min-w-[200px] p-3 font-mono font-bold border-2 rounded-lg bg-base-100 focus:outline-none focus:ring-2 focus:ring-primary"
-			   class:border-error={getCps(segment) > 16}
-			   contenteditable="true"
-			   tabindex="0"
-			   on:keydown={handleTab}
-			   style="min-height:2.5rem;"
-		   />
-	   </td>
-	<td>
-		<div>
-			<span class="flex flex-col flex-grow text-xs">
-				<span class:text-error={getCps(segment) > 16}>
-					<span class="font-mono font-bold whitespace-nowrap">
-						{$_('editor.segment.cps', { values: { value: getCps(segment) } })}
-					</span>
-				</span>
-				<span>
-					<span class="font-mono font-bold whitespace-nowrap">
-						{$_('editor.segment.duration', { values: { value: Math.round((segment.end - segment.start) * 100) / 100 } })}
-					</span>
-				</span>
-			</span>
+					<Clock size={13} />
+				</IconButton>
+			</div>
+			<div class="flex items-center gap-1">
+				<input
+					class="w-20 px-2 py-1.5 rounded-lg bg-muted border border-border text-foreground text-[0.78rem] font-mono focus:outline-none focus:ring-2 focus:ring-primary/40"
+					type="number"
+					step="0.01"
+					bind:value={segment.end}
+					on:input={(e) => ($currentVideoPlayerTime = e.target.value)}
+					on:input={handleHistory}
+					on:click={(e) => {
+						if ($editorSettings.seekOnClick) $currentVideoPlayerTime = e.target.value;
+					}}
+				/>
+				<IconButton
+					variant="primary"
+					class="w-7 h-7"
+					title={$_('editor.segment.setToCurrentTime')}
+					on:click={() => {
+						segment.end = $currentVideoPlayerTime;
+						handleHistory();
+					}}
+				>
+					<Clock size={13} />
+				</IconButton>
+			</div>
 		</div>
-	</td>
-	<td
-		class="flex flex-col items-center justify-center space-x-1 space-y-2 align-middle md:space-y-0 lg:flex-row"
-	>
-		<!-- Add above -->
-		<span class="tooltip" data-tip={$_('editor.segment.insertAbove')}>
-			<button
-				on:click={() => insertSegmentAbove(index, handleHistory)}
-				class="btn btn-primary btn-xs md:btn-sm btn-square"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="w-5 h-5"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<path
-						d="M20 6v4a1 1 0 0 1 -1 1h-14a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h14a1 1 0 0 1 1 1z"
-					/>
-					<path d="M12 15l0 4" />
-					<path d="M14 17l-4 0" />
-				</svg>
-			</button>
-		</span>
-		<!-- Add below -->
-		<span class="tooltip" data-tip={$_('editor.segment.insertBelow')}>
-			<button
-				on:click={() => insertSegmentBelow(index, handleHistory)}
-				class="btn btn-primary btn-xs md:btn-sm btn-square"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="w-5 h-5"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<path
-						d="M4 18v-4a1 1 0 0 1 1 -1h14a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-14a1 1 0 0 1 -1 -1z"
-					/>
-					<path d="M12 9v-4" />
-					<path d="M10 7l4 0" />
-				</svg>
-			</button>
-		</span>
-		<!-- Split -->
-		<span class="tooltip" data-tip={$_('editor.segment.split')}>
-			<button
-				on:click={() => splitSegment(index, handleHistory)}
-				class="btn btn-primary btn-xs md:btn-sm btn-square"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="icon icon-tabler icon-tabler-arrows-split"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<path d="M21 17h-8l-3.5 -5h-6.5" />
-					<path d="M21 7h-8l-3.495 5" />
-					<path d="M18 10l3 -3l-3 -3" />
-					<path d="M18 20l3 -3l-3 -3" />
-				</svg>
-			</button>
-		</span>
-		<!-- Delete -->
-		<button
-			on:click={deleteSegment(index, handleHistory)}
-			class="btn btn-error btn-xs md:btn-sm btn-square"
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="w-5 h-5"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				stroke-width="2"
-				stroke="currentColor"
-				fill="none"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-				<path
-					d="M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007h16zm-9.489 5.14a1 1 0 0 0 -1.218 1.567l1.292 1.293l-1.292 1.293l-.083 .094a1 1 0 0 0 1.497 1.32l1.293 -1.292l1.293 1.292l.094 .083a1 1 0 0 0 1.32 -1.497l-1.292 -1.293l1.292 -1.293l.083 -.094a1 1 0 0 0 -1.497 -1.32l-1.293 1.292l-1.293 -1.292l-.094 -.083z"
-					stroke-width="0"
-					fill="currentColor"
-				/>
-				<path
-					d="M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005h4z"
-					stroke-width="0"
-					fill="currentColor"
-				/>
-			</svg>
-		</button>
-	</td>
-</tr>
+
+		<!-- Text -->
+		<div class="flex-1 min-w-0">
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
+			<div
+				bind:this={textInputEl}
+				bind:textContent={segment.text}
+				on:input={handleKeystrokes}
+				on:keydown={handleTab}
+				class="w-full min-h-[2.5rem] p-2.5 rounded-lg bg-muted border text-[0.85rem] font-mono leading-relaxed text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 {cpsHigh
+					? 'border-red-500/60'
+					: 'border-border'}"
+				contenteditable="true"
+				tabindex="0"
+			/>
+			<div class="flex items-center gap-3 mt-1.5 text-[0.68rem] font-mono text-muted-foreground">
+				<span class={cpsHigh ? 'text-red-400' : ''}>{$_('editor.segment.cps', { values: { value: cpsValue } })}</span>
+				<span class="text-border">·</span>
+				<span>{$_('editor.segment.duration', { values: { value: Math.round((segment.end - segment.start) * 100) / 100 } })}</span>
+			</div>
+		</div>
+
+		<!-- Actions -->
+		<div class="flex flex-col gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+			<IconButton variant="primary" size="sm" title={$_('editor.segment.insertAbove')} on:click={() => insertSegmentAbove(index, handleHistory)}>
+				<ArrowUpToLine size={13} />
+			</IconButton>
+			<IconButton variant="primary" size="sm" title={$_('editor.segment.insertBelow')} on:click={() => insertSegmentBelow(index, handleHistory)}>
+				<ArrowDownToLine size={13} />
+			</IconButton>
+			<IconButton variant="primary" size="sm" title={$_('editor.segment.split')} on:click={() => splitSegment(index, handleHistory)}>
+				<Split size={13} />
+			</IconButton>
+			<IconButton variant="danger" size="sm" title={$_('transcription.actions.delete')} on:click={() => deleteSegment(index, handleHistory)}>
+				<Trash2 size={13} />
+			</IconButton>
+		</div>
+	</div>
+</div>
