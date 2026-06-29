@@ -1,41 +1,64 @@
 <script>
 	import toast from 'svelte-french-toast';
 	import { CLIENT_API_HOST } from '$lib/utils';
-	import { _ } from 'svelte-i18n';
+	import { _, locale } from 'svelte-i18n';
+	import { getTargetLanguageOptions } from '$lib/languages.js';
 	import Modal from './ui/Modal.svelte';
 	import Button from './ui/Button.svelte';
 	import Select from './ui/Select.svelte';
+	import Spinner from './ui/Spinner.svelte';
 	import { Languages, X } from 'lucide-svelte';
 
 	export let open = false;
 	export let tr;
 	export let availableLanguages;
+	export let languagesLoading = false;
 	let targetLanguage = null;
 
-	const handleTranslate = (id) => {
-		if (targetLanguage) {
-			const url = `${CLIENT_API_HOST}/api/translate/${id}/${targetLanguage}`;
-			fetch(url)
-				.then(() => {
-					toast.success($_('modals.translation.toasts.started'));
-					open = false;
-				})
-				.catch((error) => {
-					console.error(error);
-					toast.error($_('modals.translation.toasts.error'));
-				});
+	$: sourceLanguage = tr?.result?.language;
+	$: targetOptions = getTargetLanguageOptions(
+		availableLanguages,
+		sourceLanguage,
+		$locale || 'en'
+	);
+
+	$: if (open && tr && targetOptions.length) {
+		if (!targetLanguage || !targetOptions.some((o) => o.code === targetLanguage)) {
+			targetLanguage =
+				targetOptions.find((o) => o.code === 'en')?.code ?? targetOptions[0].code;
 		}
+	}
+
+	$: if (!open) {
+		targetLanguage = null;
+	}
+
+	const handleTranslate = (id) => {
+		if (!targetLanguage) return;
+
+		open = false;
+		toast.success($_('modals.translation.toasts.started'));
+
+		const url = `${CLIENT_API_HOST}/api/translate/${id}/${targetLanguage}`;
+		fetch(url).catch((error) => {
+			console.error(error);
+			toast.error($_('modals.translation.toasts.error'));
+		});
 	};
 </script>
 
-<Modal bind:open size="md" let:close>
+<Modal bind:open size="sm" let:close>
 	<div class="p-6">
-		<div class="flex items-center justify-between mb-5">
+		<div class="flex items-center justify-between mb-6">
 			<div class="flex items-center gap-2.5">
-				<div class="w-8 h-8 rounded-lg bg-primary/15 border border-primary/25 flex items-center justify-center">
+				<div
+					class="w-8 h-8 rounded-lg bg-primary/15 border border-primary/25 flex items-center justify-center"
+				>
 					<Languages size={14} class="text-primary" />
 				</div>
-				<h2 class="text-foreground text-[0.95rem] font-semibold">{$_('modals.translation.title')}</h2>
+				<h2 class="text-foreground text-[0.95rem] font-semibold">
+					{$_('modals.translation.title')}
+				</h2>
 			</div>
 			<button
 				on:click={close}
@@ -46,29 +69,36 @@
 		</div>
 
 		{#if tr}
-			<label for="targetLan" class="text-muted-foreground mb-2 block text-[0.72rem] uppercase tracking-wider">
-				{$_('modals.translation.targetLanguages', { values: { language: tr.result.language } })}
-			</label>
-			<Select id="targetLan" bind:value={targetLanguage}>
-				<option disabled selected value={null}>{$_('modals.translation.pickOne')}</option>
-				{#each availableLanguages as lan}
-					{#if lan.code == tr.result.language}
-						{#each lan.targets as t}
-							{#if t != tr.result.language}
-								<option value={t}>{t}</option>
-							{/if}
-						{/each}
-					{/if}
-				{/each}
-			</Select>
+			{#if languagesLoading}
+				<div class="flex items-center justify-center py-10 text-muted-foreground">
+					<Spinner size={22} />
+				</div>
+			{:else if targetOptions.length === 0}
+				<p class="text-muted-foreground text-[0.85rem] leading-relaxed">
+					{$_('modals.translation.noLanguagesAvailable')}
+				</p>
+			{:else}
+				<label
+					for="targetLan"
+					class="text-muted-foreground mb-2 block text-[0.72rem] uppercase tracking-wider"
+				>
+					{$_('modals.translation.targetLanguage')}
+				</label>
+				<Select id="targetLan" bind:value={targetLanguage} class="mb-6">
+					{#each targetOptions as option (option.code)}
+						<option value={option.code}>{option.label}</option>
+					{/each}
+				</Select>
 
-			<div class="flex items-center justify-end gap-2 mt-6">
-				<Button variant="secondary" size="sm" on:click={close}>{$_('common.cancel')}</Button>
-				<Button size="sm" on:click={() => handleTranslate(tr.id)} disabled={!targetLanguage}>
-					<Languages size={14} />
+				<Button
+					class="w-full py-2.5 text-[0.85rem] font-bold tracking-wide"
+					disabled={!targetLanguage}
+					on:click={() => handleTranslate(tr.id)}
+				>
+					<Languages size={15} />
 					{$_('modals.translation.translate')}
 				</Button>
-			</div>
+			{/if}
 		{/if}
 	</div>
 </Modal>
