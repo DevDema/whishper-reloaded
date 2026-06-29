@@ -1,3 +1,105 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+
+@source "./";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+  --background: #f3f3f8;
+  --foreground: #0d0e1c;
+  --card: #ffffff;
+  --card-foreground: #0d0e1c;
+  --popover: #ffffff;
+  --popover-foreground: #0d0e1c;
+  --primary: #6d45f5;
+  --primary-foreground: #ffffff;
+  --secondary: #eaeaf2;
+  --secondary-foreground: #3a3a58;
+  --muted: #ebebf2;
+  --muted-foreground: #6b6b8a;
+  --accent: #6d45f5;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: #ebebf2;
+  --input-background: #ebebf2;
+  --switch-background: #c8c8dc;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: #6d45f5;
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: #09090f;
+  --foreground: #e8eaf0;
+  --card: #111218;
+  --card-foreground: #e8eaf0;
+  --popover: #111218;
+  --popover-foreground: #e8eaf0;
+  --primary: #7c5cfc;
+  --primary-foreground: #ffffff;
+  --secondary: #1c1e2a;
+  --secondary-foreground: #b0b4c8;
+  --muted: #1a1c26;
+  --muted-foreground: #6b7094;
+  --accent: #6d48f7;
+  --accent-foreground: #ffffff;
+  --destructive: #e03e3e;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.07);
+  --input: #1a1c26;
+  --input-background: #1a1c26;
+  --switch-background: #2e3147;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: #7c5cfc;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+}

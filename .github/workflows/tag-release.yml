@@ -1,0 +1,49 @@
+# .github/workflows/tag-release.yml
+name: Tag Release
+
+# Triggered when a release PR (created by prepare-release.yml) is merged into main.
+# The release PR is created from a branch named "release/<version>", so the version
+# is recovered from the head branch name and pushed as a git tag. Pushing the tag
+# in turn triggers the Release workflow (release.yml) via its `push: tags: v*` trigger.
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  create-tag:
+    name: Create Git Tag
+    # Only run when the PR was actually merged (not just closed) and it came from a
+    # release branch.
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Determine version from branch name
+        id: get_version
+        run: |
+          # Head branch is "release/<version>" (e.g. release/v1.0.0).
+          VERSION="${{ github.event.pull_request.head.ref }}"
+          VERSION="${VERSION#release/}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION already exists, skipping."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"

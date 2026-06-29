@@ -1,9 +1,9 @@
 <script>
 	import { Toaster } from 'svelte-french-toast';
 	import { transcriptions, uploadProgress, currentPage, loadingTranscriptions } from '$lib/stores';
-	import { browser, dev } from '$app/environment';
+	import { browser } from '$app/environment';
 	import { CLIENT_WS_HOST } from '$lib/utils';
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy, tick } from 'svelte';
 	import ModalTranscriptionForm from '$lib/components/ModalTranscriptionForm.svelte';
 	import ModalDownloadOptions from '$lib/components/ModalDownloadOptions.svelte';
 	import ModalTranslationForm from '$lib/components/ModalTranslationForm.svelte';
@@ -14,33 +14,39 @@
 	import PendingTranscription from '$lib/components/PendingTranscription.svelte';
 	import PendingTranslation from '$lib/components/PendingTranslation.svelte';
 	import ErrorTranscription from '$lib/components/ErrorTranscription.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import SearchField from '$lib/components/ui/SearchField.svelte';
+	import Banner from '$lib/components/ui/Banner.svelte';
+	import Pagination from '$lib/components/ui/Pagination.svelte';
+	import Spinner from '$lib/components/ui/Spinner.svelte';
+	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
+	import { Plus, Layers, Search } from 'lucide-svelte';
 	import { _ } from 'svelte-i18n';
 	import { env } from '$env/dynamic/public';
 
 	let availableLanguages = [];
-    let languagesError = null; 
-    let languagesLoading = true;
-    let languagesAvailable = false; 
+	let languagesError = null;
+	let languagesLoading = true;
+	let languagesAvailable = false;
 	let transcriptionServiceAvailable = false;
 	let transcriptionServiceStatus = '';
 	let transcriptionServiceError = '';
 	let intervalId;
-    const itemsPerPage = 10;
-	const UPDATE_INTERVAL = 1_000; // ms
+	const itemsPerPage = 10;
 
-    $: totalPages = Math.ceil($transcriptions.length / itemsPerPage);
+	$: totalPages = Math.ceil($transcriptions.length / itemsPerPage);
 
-    $: paginatedTranscriptions = $transcriptions.slice().reverse()
-        .slice(($currentPage - 1) * itemsPerPage, $currentPage * itemsPerPage);
+	$: paginatedTranscriptions = $transcriptions
+		.slice()
+		.reverse()
+		.slice(($currentPage - 1) * itemsPerPage, $currentPage * itemsPerPage);
 
-		import { tick } from "svelte";
-
-	let searchText = "";
+	let searchText = '';
 	let searchTimeout;
 	let searching = false; // active state
 	let filteredTranscriptions = [];
 
-	// --- Debounced search Logic ----
+	// --- Debounced search logic ----
 
 	function onSearchInput(event) {
 		searchText = event.target.value;
@@ -55,59 +61,50 @@
 			}, 1000);
 		} else {
 			filteredTranscriptions = []; // Clear if <4 chars
-			// Switch back to paginated
 		}
 	}
 
 	function doSearch() {
 		const text = searchText.toLowerCase();
-		filteredTranscriptions = $transcriptions.filter(tr => {
-			return tr.fileName.toLowerCase().includes(text);
-		}).reverse();
+		filteredTranscriptions = $transcriptions
+			.filter((tr) => tr.fileName.toLowerCase().includes(text))
+			.reverse();
 		searching = true;
 	}
 
 	function clearSearch() {
-		searchText = "";
+		searchText = '';
 		filteredTranscriptions = [];
 		searching = false;
 	}
 
-    function prevPage() {
-        if ($currentPage > 1) currentPage.set($currentPage - 1);
-    }
-
-    function nextPage() {
-        if ($currentPage < totalPages) currentPage.set($currentPage + 1);
-    }
-
-    const getAvailableLangs = async () => {
+	const getAvailableLangs = async () => {
 		return fetch(`${env.PUBLIC_TRANSLATION_API_HOST}/languages`)
-		.then(res => res.json())
-		.then(data => {
-			if (data && data.length > 0) {
+			.then((res) => res.json())
+			.then((data) => {
+				if (data && data.length > 0) {
 					availableLanguages = data;
 					languagesAvailable = true;
 					languagesError = null;
 					languagesLoading = false;
-			} else {
-				throw new Error("No languages returned");
-			}
-		})
-		.catch(err => {
-			languagesError = $_('layout.serviceErrors.languagesFetch');
-			languagesLoading = false;
-		});
-    };
+				} else {
+					throw new Error('No languages returned');
+				}
+			})
+			.catch(() => {
+				languagesError = $_('layout.serviceErrors.languagesFetch');
+				languagesLoading = false;
+			});
+	};
 
 	const checkTranscriptionsAvailability = async () => {
 		return fetch(`${env.PUBLIC_API_HOST}/api/status`)
-			.then(res => {
-				if (!res.ok) throw new Error("Transcription service unavailable");
+			.then((res) => {
+				if (!res.ok) throw new Error('Transcription service unavailable');
 				return res.json();
 			})
-			.then(data => {
-				if (data.status === "ok") {
+			.then((data) => {
+				if (data.status === 'ok') {
 					transcriptionServiceAvailable = true;
 					transcriptionServiceStatus = data.service_message || '';
 					transcriptionServiceError = '';
@@ -117,7 +114,7 @@
 					transcriptionServiceError = $_('layout.serviceErrors.serviceReporting');
 				}
 			})
-			.catch(error => {
+			.catch(() => {
 				transcriptionServiceAvailable = false;
 				transcriptionServiceStatus = '';
 				transcriptionServiceError = $_('layout.serviceErrors.serviceUnreachable');
@@ -126,47 +123,42 @@
 
 	const fetchData = async () => {
 		loadingTranscriptions.set(true);
-		const endpoint = browser ? `${env.PUBLIC_API_HOST}/api/list-transcriptions` : `${env.PUBLIC_INTERNAL_API_HOST}/api/list-transcriptions`;
+		const endpoint = browser
+			? `${env.PUBLIC_API_HOST}/api/list-transcriptions`
+			: `${env.PUBLIC_INTERNAL_API_HOST}/api/list-transcriptions`;
 
-		return fetch(endpoint).then(response => {
-			return response.json();
-		}).then(ts => {
-			if (ts) {
-				transcriptions.update(_ => ts.length > 0 ? ts : []);
-			} else {
-				transcriptions.update(_ => []);
-			} 
-		}).finally(ts => {
-			loadingTranscriptions.set(false);
-		});
-	}
+		return fetch(endpoint)
+			.then((response) => response.json())
+			.then((ts) => {
+				if (ts) {
+					transcriptions.update((_) => (ts.length > 0 ? ts : []));
+				} else {
+					transcriptions.update((_) => []);
+				}
+			})
+			.finally(() => {
+				loadingTranscriptions.set(false);
+			});
+	};
 
-    onMount(async () => {
+	onMount(async () => {
 		if ($transcriptions.length === 0) {
-			await Promise.all([
-				getAvailableLangs(),
-				checkTranscriptionsAvailability(),
-				fetchData()
-			]);
+			await Promise.all([getAvailableLangs(), checkTranscriptionsAvailability(), fetchData()]);
 		} else {
-			await Promise.all([
-				getAvailableLangs(),
-				checkTranscriptionsAvailability()
-			]);
+			await Promise.all([getAvailableLangs(), checkTranscriptionsAvailability()]);
 		}
 
 		intervalId = setInterval(checkTranscriptionsAvailability, 30_000);
 		connect();
-    });
+	});
 
 	onDestroy(() => {
-        clearInterval(intervalId);
-
+		clearInterval(intervalId);
 		if (socket) {
 			socket.close(1000);
 		}
-    });
-	
+	});
+
 	let socket;
 	export let data;
 
@@ -199,198 +191,205 @@
 		};
 
 		socket.onmessage = (event) => {
-            let update = JSON.parse(event.data);
-            // use update to update the store
-            transcriptions.update(transcriptions => {
-                let index = transcriptions.findIndex(tr => tr.id === update.id);
-                if (index >= 0) {
-                    // replace the item at index
-                    transcriptions[index] = update;
-                } else {
-                    // add the new item
-                    transcriptions.push(update);
-                }
-                return transcriptions; // return a new object to trigger reactivity
-            });
-        };
+			let update = JSON.parse(event.data);
+			transcriptions.update((transcriptions) => {
+				let index = transcriptions.findIndex((tr) => tr.id === update.id);
+				if (index >= 0) {
+					transcriptions[index] = update;
+				} else {
+					transcriptions.push(update);
+				}
+				return transcriptions;
+			});
+		};
 	}
 
+	// --- Modal state ---
+	let newTranscriptionOpen = false;
+	let downloadOpen = false;
+	let translateOpen = false;
+	let renameOpen = false;
+	let uploadOpen = false;
+
 	let downloadTranscription = null;
-	let handleDownload = (event) => {
-		downloadTranscription = event.detail; // this will be the transcription to download
-		modalDownloadOptions.showModal(); // show the modal
-	};
 	let translateTranscription = null;
-	let handleTranslate = (event) => {
-		translateTranscription = event.detail; // this will be the transcription to translate
-		modalTranslation.showModal(); // show the modal
-	};
 	let renameTranscription = null;
-	let handleRename = (event) => {
-		renameTranscription = event.detail; // this will be the transcription to rename
-		modalRename.showModal(); // show the modal
-	};
 	let uploadTranscription = null;
-	let handleUpload = (event) => {
-		uploadTranscription = event.detail; // this will be the transcription to upload JSON for
-		modalUploadJSON.showModal(); // show the modal
+
+	const handleDownload = (event) => {
+		downloadTranscription = event.detail;
+		downloadOpen = true;
+	};
+	const handleTranslate = (event) => {
+		translateTranscription = event.detail;
+		translateOpen = true;
+	};
+	const handleRename = (event) => {
+		renameTranscription = event.detail;
+		renameOpen = true;
+	};
+	const handleUpload = (event) => {
+		uploadTranscription = event.detail;
+		uploadOpen = true;
 	};
 </script>
 
-<Toaster />
-<ModalDownloadOptions tr={downloadTranscription} />
-<ModalRenameFile tr={renameTranscription} />
-<ModalUploadJSON tr={uploadTranscription} />
+<Toaster
+	toastOptions={{
+		style: 'background: var(--card); color: var(--foreground); border: 1px solid var(--border);'
+	}}
+/>
+<ModalDownloadOptions bind:open={downloadOpen} tr={downloadTranscription} />
+<ModalRenameFile bind:open={renameOpen} tr={renameTranscription} />
+<ModalUploadJSON bind:open={uploadOpen} tr={uploadTranscription} />
 
 {#if !languagesError}
-	<ModalTranslationForm tr={translateTranscription} availableLanguages={availableLanguages} />
+	<ModalTranslationForm bind:open={translateOpen} tr={translateTranscription} {availableLanguages} {languagesLoading} />
 {/if}
 {#if transcriptionServiceAvailable}
-	<ModalTranscriptionForm />
+	<ModalTranscriptionForm bind:open={newTranscriptionOpen} />
 {/if}
 
-<header class="relative">
-	<h1 class="flex items-center justify-center mt-8 space-x-4 text-4xl font-bold">
-		<span>
-			<img class="w-20 h-20" src="/logo.svg" alt={$_('header.logoAlt')} />
-		</span>
-		<span> {$_('header.title')}</span>
-	</h1>
-	<h2 class="font-mono text-center text-md opacity-70">{$_(`taglines.${data.taglineIndex}`)}</h2>
-</header>
+<div class="min-h-screen bg-background">
+	<!-- Header -->
+	<header class="border-b border-border/50 bg-card/40 backdrop-blur-sm sticky top-0 z-10">
+		<div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+			<div class="flex items-center gap-3">
+				<div
+					class="w-9 h-9 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center overflow-hidden"
+				>
+					<img class="w-6 h-6" src="/logo.svg" alt={$_('header.logoAlt')} />
+				</div>
+				<div>
+					<h1 class="text-foreground text-[1.05rem] font-semibold leading-tight">
+						{$_('header.title')}
+					</h1>
+					<p class="text-muted-foreground text-[0.72rem]">{$_(`taglines.${data.taglineIndex}`)}</p>
+				</div>
+			</div>
+			<div class="flex items-center gap-2">
+				<ThemeToggle />
+				<span
+					class="px-2 py-0.5 rounded-md bg-muted border border-border text-muted-foreground text-[0.72rem] font-mono"
+				>
+					v{data.version}
+				</span>
+			</div>
+		</div>
+	</header>
 
-<main class="w-4/6 mx-auto mt-4 mb-8 card bg-neutral text-neutral-content">
-	{#if !transcriptionServiceAvailable}
-		<div class="flex items-center justify-between bg-red-200 border-l-4 border-red-400 p-4 mb-2 text-red-900 font-semibold">
-			<span>{$_('home.serviceUnavailable', { values: { error: transcriptionServiceError } })}</span>
-			<button 
-				on:click={checkTranscriptionsAvailability}
-				class="ml-4 px-2 py-1 bg-red-400 hover:bg-red-500 text-white text-sm rounded"
-				title={$_('common.refresh')}
-			>
-				{$_('common.refresh')}
-			</button>
-		</div>
-	{/if}
-	{#if languagesError}
-        <div class="flex items-center justify-between bg-yellow-200 border-l-4 border-yellow-400 p-4 mb-4 text-yellow-900 font-semibold">
-            <span>{$_('home.languagesUnavailable', { values: { error: languagesError } })}</span>
-			<button 
-				on:click={getAvailableLangs}
-				class="ml-4 px-2 py-1 bg-yellow-400 hover:bg-red-500 text-white text-sm rounded"
-				title={$_('common.refresh')}
-			>
-				{$_('common.refresh')}
-			</button>
-        </div>
-    {/if}
-	{#if $uploadProgress > 0}
-		<div class="flex flex-col items-center justify-center px-4 pt-4 my-4">
-			<progress class="w-full mx-2 progress progress-success" value="{$uploadProgress}" max="100"></progress>
-			<span>{$_('common.uploading')}</span>
-		</div>
-	{:else }
-		<button
-			class="max-w-md mx-auto mt-8 btn btn-primary btn-md"
-			onclick="modalNewTranscription.showModal()"
-			disabled={!transcriptionServiceAvailable}>{$_('home.newTranscription')}</button
-		>
-	{/if}
-	{#if $loadingTranscriptions}
-		<div class="flex justify-center items-center py-20">
-			<span class="loading loading-spinner loading-lg"></span>
-		</div>
-	{:else}
-		<div class="max-w-md mx-auto mt-4 mb-8 w-full">
- 		<div class="relative flex items-center w-full">
-			<input
-			type="text"
-			bind:value={searchText}
-			placeholder={$_('home.search.placeholder')}
-			class="input input-bordered w-full pr-12"
-			on:input={onSearchInput}
-			/>
-			{#if searchText.length >= 4 && searching}
-			<button
-				class="absolute right-3 flex items-center justify-center btn btn-sm btn-ghost p-0 min-h-0 h-8 w-8"
-				on:click={clearSearch}
-				title={$_('home.search.clear')}
-				tabindex="0"
-				type="button"
-				style="font-size: 1.45rem; line-height:1"
-			>
-				✖
-			</button>
-			{/if}
-		</div>
-		{#if searchText.length >= 4 && searching}
-			<p class="text-xs opacity-60 mt-2 mb-0">{$_('home.search.results', { values: { count: filteredTranscriptions.length } })}</p>
-		{:else if searchText.length > 0 && searchText.length < 4}
-			<p class="text-xs text-warning mt-2 mb-0">{$_('home.search.minChars')}</p>
+	<div class="max-w-5xl mx-auto px-6 py-8 space-y-6">
+		<!-- Service errors -->
+		{#if !transcriptionServiceAvailable}
+			<Banner variant="error" retryLabel={$_('common.refresh')} on:click={checkTranscriptionsAvailability}>
+				{$_('home.serviceUnavailable', { values: { error: transcriptionServiceError } })}
+			</Banner>
 		{/if}
-		</div>
-		<div class="items-center mb-0 text-center card-body">
-			{#if searching && searchText.length >= 4}
-				{#if filteredTranscriptions.length > 0}
+		{#if languagesError}
+			<Banner variant="warning" retryLabel={$_('common.refresh')} on:click={getAvailableLangs}>
+				{$_('home.languagesUnavailable', { values: { error: languagesError } })}
+			</Banner>
+		{/if}
+
+		<!-- Upload progress -->
+		{#if $uploadProgress > 0}
+			<div class="flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-4">
+				<div class="h-2 w-full rounded-full bg-muted overflow-hidden">
+					<div class="h-full rounded-full bg-primary transition-all duration-300" style="width:{$uploadProgress}%"></div>
+				</div>
+				<span class="text-muted-foreground text-[0.8rem]">{$_('common.uploading')}</span>
+			</div>
+		{:else}
+			<!-- Actions row -->
+			<div class="flex items-center gap-3">
+				<Button on:click={() => (newTranscriptionOpen = true)} disabled={!transcriptionServiceAvailable}>
+					<Plus size={16} />
+					{$_('home.newTranscription')}
+				</Button>
+
+				<SearchField
+					class="flex-1"
+					bind:value={searchText}
+					placeholder={$_('home.search.placeholder')}
+					on:input={onSearchInput}
+					on:clear={clearSearch}
+				/>
+
+				<div class="flex items-center gap-1.5 text-muted-foreground text-[0.78rem] shrink-0">
+					<Layers size={13} />
+					<span>{$_('home.fileCount', { values: { count: $transcriptions.length } })}</span>
+				</div>
+			</div>
+		{/if}
+
+		<!-- Search hints -->
+		{#if searchText.length >= 4 && searching}
+			<p class="text-xs text-muted-foreground -mt-3">
+				{$_('home.search.results', { values: { count: filteredTranscriptions.length } })}
+			</p>
+		{:else if searchText.length > 0 && searchText.length < 4}
+			<p class="text-xs text-amber-400 -mt-3">{$_('home.search.minChars')}</p>
+		{/if}
+
+		<!-- List -->
+		{#if $loadingTranscriptions}
+			<div class="flex justify-center items-center py-20 text-muted-foreground">
+				<Spinner size={32} />
+			</div>
+		{:else if searching && searchText.length >= 4}
+			{#if filteredTranscriptions.length > 0}
+				<div class="space-y-2">
 					{#each filteredTranscriptions as tr (tr.id)}
 						{#if tr.status == 2}
-							<SuccessTranscription {tr} on:rename={handleRename} on:download={handleDownload} on:translate={handleTranslate} on:upload={handleUpload} languagesAvailable={languagesAvailable} />
+							<SuccessTranscription {tr} on:rename={handleRename} on:download={handleDownload} on:translate={handleTranslate} on:upload={handleUpload} {languagesAvailable} />
 						{/if}
-					{#if tr.status == 1}
-						<RunningTranscription {tr} />
-					{/if}
-					{#if tr.status == 0}
-						<PendingTranscription {tr} />
-					{/if}
-						{#if tr.status == 3}
-							<PendingTranslation {tr} />
-						{/if}
-						{#if tr.status < 0}
-							<ErrorTranscription {tr} />
-						{/if}
+						{#if tr.status == 1}<RunningTranscription {tr} />{/if}
+						{#if tr.status == 0}<PendingTranscription {tr} />{/if}
+						{#if tr.status == 3}<PendingTranslation {tr} />{/if}
+						{#if tr.status < 0}<ErrorTranscription {tr} />{/if}
 					{/each}
-				{:else}
-					<p class="text-2xl font-bold text-center">{$_('home.empty.noResults')}</p>
-				{/if}
+				</div>
 			{:else}
-				{#if $transcriptions.length > 0}
-					{#each paginatedTranscriptions as tr (tr.id)}
-						{#if tr.status == 2}
-							<SuccessTranscription {tr} on:rename={handleRename} on:download={handleDownload} on:translate={handleTranslate} on:upload={handleUpload} languagesAvailable={languagesAvailable} />
-						{/if}
-					{#if tr.status == 1}
-						<RunningTranscription {tr} />
-					{/if}
-					{#if tr.status == 0}
-						<PendingTranscription {tr} />
-					{/if}
-						{#if tr.status == 3}
-							<PendingTranslation {tr} />
-						{/if}
-						{#if tr.status < 0}
-							<ErrorTranscription {tr} />
-						{/if}
-					{/each}
-
-					<!-- Pagination only if not searching -->
-					<div class="flex justify-center space-x-4 my-4">
-						<button on:click={prevPage} disabled={$currentPage === 1} class="btn btn-sm btn-ghost">{$_('home.pagination.previous')}</button>
-						<span>{$_('home.pagination.page', { values: { current: $currentPage, total: totalPages } })}</span>
-						<button on:click={nextPage} disabled={$currentPage === totalPages} class="btn btn-sm btn-ghost">{$_('home.pagination.next')}</button>
-					</div>
-				{:else}
-					<p class="text-2xl font-bold text-center">{$_('home.empty.none')}</p>
-				{/if}
+				<div class="text-center py-16 text-muted-foreground">
+					<Search size={32} class="mx-auto mb-3 opacity-30" />
+					<p class="text-[0.9rem]">{$_('home.empty.noResults')}</p>
+				</div>
 			{/if}
-		</div>
-	{/if}
-</main>
+		{:else if $transcriptions.length > 0}
+			<div class="space-y-2">
+				{#each paginatedTranscriptions as tr (tr.id)}
+					{#if tr.status == 2}
+						<SuccessTranscription {tr} on:rename={handleRename} on:download={handleDownload} on:translate={handleTranslate} on:upload={handleUpload} {languagesAvailable} />
+					{/if}
+					{#if tr.status == 1}<RunningTranscription {tr} />{/if}
+					{#if tr.status == 0}<PendingTranscription {tr} />{/if}
+					{#if tr.status == 3}<PendingTranslation {tr} />{/if}
+					{#if tr.status < 0}<ErrorTranscription {tr} />{/if}
+				{/each}
+			</div>
 
-<footer class="text-center py-4 text-sm opacity-70">
-	<p>{$_('footer.version', { values: { version: data.version } })}</p>
-	<p>
-		<a href="https://github.com/DevDema/whishper" class="link">Whishper-Reloaded</a> {$_('footer.forkOf')}
-		<a href="https://github.com/pluja/whishper" class="link">Whishper</a>.
-		{$_('footer.praise')}
-	</p>
-</footer>
+			<Pagination
+				bind:page={$currentPage}
+				{totalPages}
+				prevLabel={$_('home.pagination.first')}
+				nextLabel={$_('home.pagination.last')}
+			/>
+		{:else}
+			<div class="text-center py-16 text-muted-foreground">
+				<Layers size={32} class="mx-auto mb-3 opacity-30" />
+				<p class="text-[0.9rem]">{$_('home.empty.none')}</p>
+			</div>
+		{/if}
+	</div>
+
+	<!-- Footer -->
+	<footer class="border-t border-border/30 py-4 mt-8">
+		<div class="max-w-5xl mx-auto px-6 text-center text-muted-foreground text-[0.72rem]">
+			{$_('footer.version', { values: { version: data.version } })} ·
+			<a href="https://github.com/DevDema/whishper" class="hover:text-foreground transition-colors underline">Whishper-Reloaded</a>
+			{$_('footer.forkOf')}
+			<a href="https://github.com/pluja/whishper" class="hover:text-foreground transition-colors underline">Whishper</a>.
+			{$_('footer.praise')}
+		</div>
+	</footer>
+</div>

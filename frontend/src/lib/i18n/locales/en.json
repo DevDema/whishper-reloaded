@@ -39,7 +39,8 @@
 		"I mean every word I say!"
 	],
 	"home": {
-		"newTranscription": "✨ new transcription",
+		"fileCount": "{count, plural, one {# file} other {# files}}",
+		"newTranscription": "✨ New transcription",
 		"serviceUnavailable": "🛑 Transcription service is unavailable: {error}",
 		"languagesUnavailable": "⚠️ Language features are unavailable: {error}",
 		"search": {
@@ -49,8 +50,8 @@
 			"minChars": "Type at least 4 characters to search."
 		},
 		"pagination": {
-			"previous": "Previous",
-			"next": "Next",
+			"first": "First",
+			"last": "Last",
 			"page": "Page {current} of {total}"
 		},
 		"empty": {
@@ -59,7 +60,12 @@
 		}
 	},
 	"transcription": {
+		"statusLabel": {
+			"done": "Completed"
+		},
 		"meta": {
+			"model": "Model: {model}",
+			"language": "Language: {language}",
 			"duration": "{duration} long",
 			"translations": "{count} translations",
 			"words": "{count} words",
@@ -88,6 +94,7 @@
 	"modals": {
 		"transcription": {
 			"pickFile": "Pick a file",
+			"dropHint": "or click to select · Audio and video supported",
 			"sourceUrl": "Or a source URL",
 			"sourceUrlPlaceholder": "https://youtube.com/watch?v=Hd33fCdW",
 			"whisperModel": "Whisper model",
@@ -119,8 +126,10 @@
 		},
 		"translation": {
 			"title": "Translate",
+			"targetLanguage": "Target language",
 			"targetLanguages": "Target languages for {language}",
 			"pickOne": "Pick one",
+			"noLanguagesAvailable": "No languages available in LibreTranslate for this source language!",
 			"translate": "Translate",
 			"toasts": {
 				"started": "Translation started!",
@@ -169,6 +178,7 @@
 		}
 	},
 	"editor": {
+		"back": "Back",
 		"waitingTask": "Waiting for task to finish {action}...",
 		"actionTranslating": "translating",
 		"actionTranscribing": "transcribing",

@@ -39,7 +39,8 @@
 		"¡Cumplo cada palabra que digo!"
 	],
 	"home": {
-		"newTranscription": "✨ nueva transcripción",
+		"fileCount": "{count, plural, one {# archivo} other {# archivos}}",
+		"newTranscription": "✨ Nueva transcripción",
 		"serviceUnavailable": "🛑 El servicio de transcripción no está disponible: {error}",
 		"languagesUnavailable": "⚠️ Las funciones de idioma no están disponibles: {error}",
 		"search": {
@@ -49,8 +50,8 @@
 			"minChars": "Escribe al menos 4 caracteres para buscar."
 		},
 		"pagination": {
-			"previous": "Anterior",
-			"next": "Siguiente",
+			"first": "Primero",
+			"last": "Último",
 			"page": "Página {current} de {total}"
 		},
 		"empty": {
@@ -59,7 +60,12 @@
 		}
 	},
 	"transcription": {
+		"statusLabel": {
+			"done": "Completada"
+		},
 		"meta": {
+			"model": "Modelo: {model}",
+			"language": "Idioma: {language}",
 			"duration": "{duration} de duración",
 			"translations": "{count} traducciones",
 			"words": "{count} palabras",
@@ -87,6 +93,7 @@
 	},
 	"modals": {
 		"transcription": {
+			"dropHint": "o haz clic para seleccionar · Audio y vídeo compatibles",
 			"pickFile": "Elige un archivo",
 			"sourceUrl": "O una URL de origen",
 			"sourceUrlPlaceholder": "https://youtube.com/watch?v=Hd33fCdW",
@@ -119,8 +126,10 @@
 		},
 		"translation": {
 			"title": "Traducir",
+			"targetLanguage": "Idioma de destino",
 			"targetLanguages": "Idiomas de destino para {language}",
 			"pickOne": "Elige uno",
+			"noLanguagesAvailable": "No hay idiomas disponibles en LibreTranslate para este idioma de origen.",
 			"translate": "Traducir",
 			"toasts": {
 				"started": "¡Traducción iniciada!",
@@ -169,6 +178,7 @@
 		}
 	},
 	"editor": {
+		"back": "Atrás",
 		"waitingTask": "Esperando a que termine la tarea de {action}...",
 		"actionTranslating": "traducción",
 		"actionTranscribing": "transcripción",

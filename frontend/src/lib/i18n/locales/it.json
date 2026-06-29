@@ -39,7 +39,8 @@
 		"Mantengo ogni parola che dico!"
 	],
 	"home": {
-		"newTranscription": "✨ nuova trascrizione",
+		"fileCount": "{count, plural, one {# file} other {# file}}",
+		"newTranscription": "✨ Nuova trascrizione",
 		"serviceUnavailable": "🛑 Il servizio di trascrizione non è disponibile: {error}",
 		"languagesUnavailable": "⚠️ Le funzioni linguistiche non sono disponibili: {error}",
 		"search": {
@@ -49,8 +50,8 @@
 			"minChars": "Digita almeno 4 caratteri per cercare."
 		},
 		"pagination": {
-			"previous": "Precedente",
-			"next": "Successivo",
+			"first": "Primo",
+			"last": "Ultimo",
 			"page": "Pagina {current} di {total}"
 		},
 		"empty": {
@@ -59,7 +60,12 @@
 		}
 	},
 	"transcription": {
+		"statusLabel": {
+			"done": "Completata"
+		},
 		"meta": {
+			"model": "Modello: {model}",
+			"language": "Lingua: {language}",
 			"duration": "durata {duration}",
 			"translations": "{count} traduzioni",
 			"words": "{count} parole",
@@ -69,7 +75,7 @@
 			"downloadingModel": "Download del modello \"{model}\" in corso...",
 			"transcribing": "Trascrizione... {percent}%",
 			"waitingTranscription": "In attesa della trascrizione...",
-			"pending": "Trascrizione in sospeso... Lingua: {language}",
+			"pending": "Trascrizione in attesa... Lingua: {language}",
 			"waitingTranslation": "In attesa della traduzione...",
 			"failed": "Errore: impossibile trascrivere."
 		},
@@ -87,6 +93,7 @@
 	},
 	"modals": {
 		"transcription": {
+			"dropHint": "o clicca per selezionare · Audio e video supportati",
 			"pickFile": "Scegli un file",
 			"sourceUrl": "Oppure un URL di origine",
 			"sourceUrlPlaceholder": "https://youtube.com/watch?v=Hd33fCdW",
@@ -119,8 +126,10 @@
 		},
 		"translation": {
 			"title": "Traduci",
+			"targetLanguage": "Lingua di destinazione",
 			"targetLanguages": "Lingue di destinazione per {language}",
 			"pickOne": "Scegline una",
+			"noLanguagesAvailable": "Nessuna lingua disponibile in LibreTranslate per questa lingua sorgente!",
 			"translate": "Traduci",
 			"toasts": {
 				"started": "Traduzione avviata!",
@@ -169,6 +178,7 @@
 		}
 	},
 	"editor": {
+		"back": "Indietro",
 		"waitingTask": "In attesa del completamento dell'attività di {action}...",
 		"actionTranslating": "traduzione",
 		"actionTranscribing": "trascrizione",

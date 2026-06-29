@@ -1,142 +1,128 @@
 <!-- SuccessTranscription.svelte -->
 <script>
-    import {createEventDispatcher} from 'svelte';
-    import {deleteTranscription, getFullTranscription} from "$lib/utils.js";
-    import toast from 'svelte-french-toast';
-    import { _ } from 'svelte-i18n';
-    export let tr;
-    export let languagesAvailable;
+	import { createEventDispatcher } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { deleteTranscription, getFullTranscription } from '$lib/utils.js';
+	import toast from 'svelte-french-toast';
+	import { _ } from 'svelte-i18n';
+	import { Pencil, Download, Upload, Languages, Trash2 } from 'lucide-svelte';
+	import TranscriptionRow from './TranscriptionRow.svelte';
+	import IconButton from './ui/IconButton.svelte';
+	import Badge from './ui/Badge.svelte';
+	import Spinner from './ui/Spinner.svelte';
+	import { STATUS_CONFIG } from './ui/statusConfig';
 
-    const dispatch = createEventDispatcher();
+	export let tr;
+	export let languagesAvailable = false;
 
-    // Tracks which action is currently loading the full transcription, so we can show a
-    // spinner and disable the buttons. The list view only holds a lightweight transcription
-    // (no result/segments), so the full record must be fetched before opening any modal.
-    let loadingAction = null;
+	const dispatch = createEventDispatcher();
 
-    const runAction = async (action) => {
-        if (loadingAction) return;
-        loadingAction = action;
-        try {
-            const full = await getFullTranscription(tr.id);
-            dispatch(action, full); // parent opens the modal once the full data is ready
-        } catch (error) {
-            console.error(error);
-            toast.error($_('transcription.toasts.loadFailed'));
-        } finally {
-            loadingAction = null;
-        }
-    };
+	// Tracks which action is currently loading the full transcription, so we can show a
+	// spinner and disable the buttons. The list view only holds a lightweight transcription
+	// (no result/segments), so the full record must be fetched before opening any modal.
+	let loadingAction = null;
 
-    let download = () => runAction('download');
-    let translate = () => runAction('translate');
-    let rename = () => runAction('rename');
-    let upload = () => runAction('upload');
+	const runAction = async (action) => {
+		if (loadingAction) return;
+		loadingAction = action;
+		try {
+			const full = await getFullTranscription(tr.id);
+			dispatch(action, full); // parent opens the modal once the full data is ready
+		} catch (error) {
+			console.error(error);
+			toast.error($_('transcription.toasts.loadFailed'));
+		} finally {
+			loadingAction = null;
+		}
+	};
+
+	// Action handlers stop propagation so clicking a button never triggers the card navigation.
+	const onAction = (action) => (e) => {
+		e.stopPropagation();
+		runAction(action);
+	};
+
+	const onDelete = (e) => {
+		e.stopPropagation();
+		deleteTranscription(tr.id);
+	};
+
+	const openEditor = () => goto(`/editor/${tr.id}`);
+
+	$: displayName = tr.fileName.split('_WHSHPR_')[1];
+	$: duration = $_('transcription.meta.duration', {
+		values: {
+			duration: new Date(Math.round(tr.duration ?? tr.result?.duration ?? 0) * 1000)
+				.toISOString()
+				.substr(11, 8)
+		}
+	});
+	$: translations = $_('transcription.meta.translations', {
+		values: { count: tr.translations.length }
+	});
+	$: words = $_('transcription.meta.words', {
+		values: { count: tr.words_count ?? tr.result?.text.split(' ').length ?? 0 }
+	});
 </script>
 
-<div class="alert alert-success p-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-    <span>
-        <p class="font-bold text-info-content text-md">{tr.fileName.split("_WHSHPR_")[1]}</p>
-        <p class="font-mono text-info-content text-sm opacity-60 flex space-x-2 md:space-x-4 lg:space-x-8">
-            <span class="space-x-1">
-                <span class="font-bold text-xs">{$_('transcription.meta.duration', { values: { duration: new Date(Math.round((tr.duration ?? tr.result?.duration ?? 0)) * 1000).toISOString().substr(11, 8) } })}</span>
-            </span>
-            <span class="space-x-1">
-                <span class="font-bold text-xs">{$_('transcription.meta.translations', { values: { count: tr.translations.length } })}</span>
-            </span>
-            <span class="space-x-1">
-                <span class="font-bold text-xs">{$_('transcription.meta.words', { values: { count: tr.words_count ?? tr.result?.text.split(" ").length ?? 0 } })}</span>
-            </span>
-            {#if tr.vad_filter}
-            <span class="space-x-1">
-                <span class="badge badge-primary text-xs tooltip opacity-100" data-tip={$_('transcription.meta.vadTooltip', { values: { threshold: tr.vad_threshold ?? 0.5, minSpeech: tr.vad_min_speech_duration_ms ?? 250, minSilence: tr.vad_min_silence_duration_ms ?? 500 } })}>VAD</span>
-            </span>
-            {/if}
-        </p>
-    </span>
-    <div class="flex items-center justify-center flex-wrap space-x-2">
-        <a href="/editor/{tr.id}" class="btn btn-xs md:btn-sm">
-            <span class="tooltip flex items-center justify-center" data-tip={$_('transcription.actions.edit')}>
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M12 15l8.385 -8.415a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3z"></path>
-                    <path d="M16 5l3 3"></path>
-                    <path d="M9 7.07a7 7 0 0 0 1 13.93a7 7 0 0 0 6.929 -6"></path>
-                 </svg>
-            </span>
-        </a>
-        <button on:click={download} disabled={!!loadingAction} class="btn btn-xs md:btn-sm">
-            <span class="tooltip flex items-center justify-center" data-tip={$_('transcription.actions.download')}>
-                {#if loadingAction === 'download'}
-                    <span class="loading loading-spinner loading-xs"></span>
-                {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
-                        <path d="M7 11l5 5l5 -5"></path>
-                        <path d="M12 4l0 12"></path>
-                     </svg>
-                {/if}
-            </span>
-        </button>
-        <button on:click={rename} disabled={!!loadingAction} class="btn btn-xs md:btn-sm">
-            <span class="tooltip flex items-center justify-center" data-tip={$_('transcription.actions.rename')}>
-                {#if loadingAction === 'rename'}
-                    <span class="loading loading-spinner loading-xs"></span>
-                {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                        <path d="M8 4h-2c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-14c0-.55-.45-1-1-1z"></path>
-                        <path d="M14 10h-4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1z"></path>
-                        <path d="M20 4h-2c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-14c0-.55-.45-1-1-1z"></path>
-                    </svg>
-                {/if}
-            </span>
-        </button>
-        <button on:click={upload} disabled={!!loadingAction} class="btn btn-xs md:btn-sm">
-            <span class="tooltip flex items-center justify-center" data-tip={$_('transcription.actions.uploadJson')}>
-                {#if loadingAction === 'upload'}
-                    <span class="loading loading-spinner loading-xs"></span>
-                {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
-                        <path d="M7 9l5 -5l5 5"></path>
-                        <path d="M12 4l0 12"></path>
-                    </svg>
-                {/if}
-            </span>
-        </button>
-        {#if languagesAvailable}
-            <button 
-            on:click={translate}
-            disabled={!!loadingAction}
-            class="btn btn-xs md:btn-sm btn-primary">
-                <span class="tooltip flex items-center justify-center" data-tip={$_('transcription.actions.translate')}>
-                    {#if loadingAction === 'translate'}
-                        <span class="loading loading-spinner loading-xs"></span>
-                    {:else}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                            <path d="M4 5h7"></path>
-                            <path d="M7 4c0 4.846 0 7 .5 8"></path>
-                            <path d="M10 8.5c0 2.286 -2 4.5 -3.5 4.5s-2.5 -1.135 -2.5 -2c0 -2 1 -3 3 -3s5 .57 5 2.857c0 1.524 -.667 2.571 -2 3.143"></path>
-                            <path d="M12 20l4 -9l4 9"></path>
-                            <path d="M19.1 18h-6.2"></path>
-                        </svg>
-                    {/if}
-                </span>
-            </button>
-        {/if}
-        <button on:click={deleteTranscription(tr.id)} class="btn btn-xs md:btn-sm btn-error">
-            <span class="tooltip flex items-center justify-center" data-tip={$_('transcription.actions.delete')}>
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007h16zm-9.489 5.14a1 1 0 0 0 -1.218 1.567l1.292 1.293l-1.292 1.293l-.083 .094a1 1 0 0 0 1.497 1.32l1.293 -1.292l1.293 1.292l.094 .083a1 1 0 0 0 1.32 -1.497l-1.292 -1.293l1.292 -1.293l.083 -.094a1 1 0 0 0 -1.497 -1.32l-1.293 1.292l-1.293 -1.292l-.094 -.083z" stroke-width="0" fill="currentColor"></path>
-                    <path d="M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005h4z" stroke-width="0" fill="currentColor"></path>
-                </svg>
-            </span>
-        </button>
-    </div>
-</div>
+<TranscriptionRow kind="done" interactive on:activate={openEditor}>
+	<div class="flex items-center gap-2 mb-1 flex-wrap">
+		<span class="text-foreground truncate text-[0.88rem] font-medium" title={displayName}>
+			{displayName}
+		</span>
+		<Badge mono class={STATUS_CONFIG.done.badge}>{$_('transcription.statusLabel.done')}</Badge>
+		{#if tr.vad_filter}
+			<span
+				title={$_('transcription.meta.vadTooltip', {
+					values: {
+						threshold: tr.vad_threshold ?? 0.5,
+						minSpeech: tr.vad_min_speech_duration_ms ?? 250,
+						minSilence: tr.vad_min_silence_duration_ms ?? 500
+					}
+				})}
+			>
+				<Badge class="border-primary/20 bg-primary/10 text-primary">VAD</Badge>
+			</span>
+		{/if}
+	</div>
+	<div class="flex items-center gap-3 text-muted-foreground text-[0.75rem] font-mono flex-wrap">
+		<span>{duration}</span>
+		<span class="text-border">·</span>
+		<span>{words}</span>
+		<span class="text-border">·</span>
+		<span>{translations}</span>
+		{#if tr.modelSize}
+			<span class="text-border">·</span>
+			<span>{$_('transcription.meta.model', { values: { model: tr.modelSize } })}</span>
+		{/if}
+		<span class="text-border">·</span>
+		<span>{$_('transcription.meta.language', { values: { language: tr.result?.language ?? tr.language ?? 'auto' } })}</span>
+	</div>
+
+	<svelte:fragment slot="actions">
+		<div class="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+			<IconButton title={$_('transcription.actions.rename')} on:click={onAction('rename')} disabled={!!loadingAction}>
+				{#if loadingAction === 'rename'}<Spinner size={13} />{:else}<Pencil size={13} />{/if}
+			</IconButton>
+			<IconButton title={$_('transcription.actions.download')} on:click={onAction('download')} disabled={!!loadingAction}>
+				{#if loadingAction === 'download'}<Spinner size={13} />{:else}<Download size={13} />{/if}
+			</IconButton>
+			<IconButton title={$_('transcription.actions.uploadJson')} on:click={onAction('upload')} disabled={!!loadingAction}>
+				{#if loadingAction === 'upload'}<Spinner size={13} />{:else}<Upload size={13} />{/if}
+			</IconButton>
+			{#if languagesAvailable}
+				<IconButton
+					variant="accent"
+					title={$_('transcription.actions.translate')}
+					on:click={onAction('translate')}
+					disabled={!!loadingAction}
+				>
+					{#if loadingAction === 'translate'}<Spinner size={13} />{:else}<Languages size={13} />{/if}
+				</IconButton>
+			{/if}
+			<IconButton variant="danger" title={$_('transcription.actions.delete')} on:click={onDelete}>
+				<Trash2 size={13} />
+			</IconButton>
+		</div>
+	</svelte:fragment>
+</TranscriptionRow>
