@@ -11,4 +11,11 @@
 	<p class="text-muted-foreground text-[0.75rem] font-mono mt-0.5">
 		{$_('transcription.status.waitingTranslation')}
 	</p>
+	<p class="text-muted-foreground text-[0.7rem] font-mono mt-0.5 flex items-center gap-2 flex-wrap">
+		{#if tr.modelSize}
+			<span>{$_('transcription.meta.model', { values: { model: tr.modelSize } })}</span>
+			<span class="text-border">·</span>
+		{/if}
+		<span>{$_('transcription.meta.language', { values: { language: tr.result?.language ?? tr.language ?? 'auto' } })}</span>
+	</p>
 </TranscriptionRow>
