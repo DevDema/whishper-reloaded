@@ -126,8 +126,10 @@
 		},
 		"translation": {
 			"title": "Traduzir",
+			"targetLanguage": "Idioma de destino",
 			"targetLanguages": "Idiomas de destino para {language}",
 			"pickOne": "Escolha um",
+			"noLanguagesAvailable": "Nenhum idioma disponível no LibreTranslate para este idioma de origem!",
 			"translate": "Traduzir",
 			"toasts": {
 				"started": "Tradução iniciada!",

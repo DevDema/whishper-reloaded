@@ -244,7 +244,7 @@
 <ModalUploadJSON bind:open={uploadOpen} tr={uploadTranscription} />
 
 {#if !languagesError}
-	<ModalTranslationForm bind:open={translateOpen} tr={translateTranscription} {availableLanguages} />
+	<ModalTranslationForm bind:open={translateOpen} tr={translateTranscription} {availableLanguages} {languagesLoading} />
 {/if}
 {#if transcriptionServiceAvailable}
 	<ModalTranscriptionForm bind:open={newTranscriptionOpen} />

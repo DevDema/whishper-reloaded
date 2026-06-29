@@ -5,7 +5,7 @@
 	import { deleteTranscription, getFullTranscription } from '$lib/utils.js';
 	import toast from 'svelte-french-toast';
 	import { _ } from 'svelte-i18n';
-	import { Pencil, Download, Upload, Trash2 } from 'lucide-svelte';
+	import { Pencil, Download, Upload, Languages, Trash2 } from 'lucide-svelte';
 	import TranscriptionRow from './TranscriptionRow.svelte';
 	import IconButton from './ui/IconButton.svelte';
 	import Badge from './ui/Badge.svelte';
@@ -13,7 +13,6 @@
 	import { STATUS_CONFIG } from './ui/statusConfig';
 
 	export let tr;
-	// Kept for compatibility with the list page; translation is handled inside the editor.
 	export let languagesAvailable = false;
 
 	const dispatch = createEventDispatcher();
@@ -111,6 +110,16 @@
 			<IconButton title={$_('transcription.actions.uploadJson')} on:click={onAction('upload')} disabled={!!loadingAction}>
 				{#if loadingAction === 'upload'}<Spinner size={13} />{:else}<Upload size={13} />{/if}
 			</IconButton>
+			{#if languagesAvailable}
+				<IconButton
+					variant="accent"
+					title={$_('transcription.actions.translate')}
+					on:click={onAction('translate')}
+					disabled={!!loadingAction}
+				>
+					{#if loadingAction === 'translate'}<Spinner size={13} />{:else}<Languages size={13} />{/if}
+				</IconButton>
+			{/if}
 			<IconButton variant="danger" title={$_('transcription.actions.delete')} on:click={onDelete}>
 				<Trash2 size={13} />
 			</IconButton>
