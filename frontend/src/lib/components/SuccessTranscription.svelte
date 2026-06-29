@@ -92,6 +92,12 @@
 		<span>{words}</span>
 		<span class="text-border">·</span>
 		<span>{translations}</span>
+		{#if tr.modelSize}
+			<span class="text-border">·</span>
+			<span>{$_('transcription.meta.model', { values: { model: tr.modelSize } })}</span>
+		{/if}
+		<span class="text-border">·</span>
+		<span>{$_('transcription.meta.language', { values: { language: tr.result?.language ?? tr.language ?? 'auto' } })}</span>
 	</div>
 
 	<svelte:fragment slot="actions">

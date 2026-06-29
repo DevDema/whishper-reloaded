@@ -50,8 +50,8 @@
 			"minChars": "Escribe al menos 4 caracteres para buscar."
 		},
 		"pagination": {
-			"previous": "Anterior",
-			"next": "Siguiente",
+			"first": "Primero",
+			"last": "Último",
 			"page": "Página {current} de {total}"
 		},
 		"empty": {
@@ -64,6 +64,8 @@
 			"done": "Completada"
 		},
 		"meta": {
+			"model": "Modelo: {model}",
+			"language": "Idioma: {language}",
 			"duration": "{duration} de duración",
 			"translations": "{count} traducciones",
 			"words": "{count} palabras",
