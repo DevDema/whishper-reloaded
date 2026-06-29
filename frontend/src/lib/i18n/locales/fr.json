@@ -50,8 +50,8 @@
 			"minChars": "Saisissez au moins 4 caractères pour rechercher."
 		},
 		"pagination": {
-			"previous": "Précédent",
-			"next": "Suivant",
+			"first": "Premier",
+			"last": "Dernier",
 			"page": "Page {current} sur {total}"
 		},
 		"empty": {
@@ -64,6 +64,8 @@
 			"done": "Terminée"
 		},
 		"meta": {
+			"model": "Modèle : {model}",
+			"language": "Langue : {language}",
 			"duration": "durée {duration}",
 			"translations": "{count} traductions",
 			"words": "{count} mots",
@@ -73,7 +75,7 @@
 			"downloadingModel": "Téléchargement du modèle « {model} »...",
 			"transcribing": "Transcription... {percent}%",
 			"waitingTranscription": "En attente de la transcription...",
-			"pending": "Transcription en attente... Langue : {language}",
+			"pending": "Transcription en cours... Langue : {language}",
 			"waitingTranslation": "En attente de la traduction...",
 			"failed": "Échec : impossible de transcrire."
 		},

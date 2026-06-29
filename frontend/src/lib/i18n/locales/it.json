@@ -50,8 +50,8 @@
 			"minChars": "Digita almeno 4 caratteri per cercare."
 		},
 		"pagination": {
-			"previous": "Precedente",
-			"next": "Successivo",
+			"first": "Primo",
+			"last": "Ultimo",
 			"page": "Pagina {current} di {total}"
 		},
 		"empty": {
@@ -64,6 +64,8 @@
 			"done": "Completata"
 		},
 		"meta": {
+			"model": "Modello: {model}",
+			"language": "Lingua: {language}",
 			"duration": "durata {duration}",
 			"translations": "{count} traduzioni",
 			"words": "{count} parole",
@@ -73,7 +75,7 @@
 			"downloadingModel": "Download del modello \"{model}\" in corso...",
 			"transcribing": "Trascrizione... {percent}%",
 			"waitingTranscription": "In attesa della trascrizione...",
-			"pending": "Trascrizione in sospeso... Lingua: {language}",
+			"pending": "Trascrizione in attesa... Lingua: {language}",
 			"waitingTranslation": "In attesa della traduzione...",
 			"failed": "Errore: impossibile trascrivere."
 		},

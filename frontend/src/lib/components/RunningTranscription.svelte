@@ -29,6 +29,13 @@
 			{$_('transcription.status.waitingTranscription')}
 		</p>
 	{/if}
+	<p class="text-muted-foreground text-[0.7rem] font-mono mt-0.5 flex items-center gap-2 flex-wrap">
+		{#if tr.modelSize}
+			<span>{$_('transcription.meta.model', { values: { model: tr.modelSize } })}</span>
+			<span class="text-border">·</span>
+		{/if}
+		<span>{$_('transcription.meta.language', { values: { language: tr.language || 'auto' } })}</span>
+	</p>
 	{#if hasProgress}
 		<div class="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
 			<div class="h-full rounded-full bg-blue-400 transition-all duration-300" style="width:{percent}%"></div>

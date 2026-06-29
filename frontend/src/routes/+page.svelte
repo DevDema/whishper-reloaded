@@ -371,8 +371,8 @@
 			<Pagination
 				bind:page={$currentPage}
 				{totalPages}
-				prevLabel={$_('home.pagination.previous')}
-				nextLabel={$_('home.pagination.next')}
+				prevLabel={$_('home.pagination.first')}
+				nextLabel={$_('home.pagination.last')}
 			/>
 		{:else}
 			<div class="text-center py-16 text-muted-foreground">
