@@ -1,33 +1,102 @@
-version: "3"
+# Whishper Reloaded - development stack.
+#
+# Builds every component from source instead of pulling the published images,
+# so you can iterate on the code locally.
+# Requires two env files next to this file: .backend.env and .frontend.env
+# (see README.md -> "Environment files").
+#
+#   docker compose -f docker-compose.dev.yml up -d --build
 
 services:
-  whisper-frontend:
-    extends:
-      file: frontend/docker-compose.yml
-      service: whisper-frontend
+  whishper-mongo:
+    image: mongo:latest
+    container_name: whishper-mongo
+    restart: unless-stopped
     env_file:
-      - frontend/.env
+      - .backend.env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER:-whishper}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS:-whishper}
+    volumes:
+      - ./whishper_data/db_data/db:/data/db
+      - ./whishper_data/db_data/logs/:/var/log/mongodb/
+    expose:
+      - 27017
+    command: mongod --logpath /var/log/mongodb/mongod.log
 
-  whisper-backend:
-    extends:
-      file: backend/docker-compose.yml
-      service: whisper-backend
+  translate:
+    image: libretranslate/libretranslate:latest
+    container_name: whishper-libretranslate
+    restart: unless-stopped
     env_file:
-      - backend/.env
+      - .backend.env
+    tty: true
+    environment:
+      LT_DISABLE_WEB_UI: "true"
+      LT_UPDATE_MODELS: "true"
+      LT_LOAD_ONLY: ${LT_LOAD_ONLY:-en,es,fr}
+    volumes:
+      - ./whishper_data/libretranslate/data:/home/libretranslate/.local/share
+      - ./whishper_data/libretranslate/cache:/home/libretranslate/.local/cache
+    ports:
+      - 5000:5000
+    expose:
+      - 5000
+
+  whishper-api:
+    build:
+      context: ./transcription-api
+      dockerfile: Dockerfile.cpu
+    container_name: whishper-api
+    restart: unless-stopped
+    env_file:
+      - .backend.env
+    environment:
+      UPLOAD_DIR: /uploads
+      WHISPER_MODELS_DIR: /app/models
+      WHISPER_MODELS: ${WHISPER_MODELS:-tiny,small}
+      CPU_THREADS: ${CPU_THREADS:-4}
+    volumes:
+      - ./whishper_data/uploads:/uploads
+      - ./whishper_data/models:/app/models
+    expose:
+      - 8000
+
+  whishper-backend:
+    build:
+      context: ./backend
+    container_name: whishper-backend
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    env_file:
+      - .backend.env
+    environment:
+      UPLOAD_DIR: /uploads
+      ASR_ENDPOINT: whishper-api:8000
+      TRANSLATION_ENDPOINT: translate:5000
+      DB_ENDPOINT: whishper-mongo:27017
+    volumes:
+      - ./whishper_data/uploads:/uploads
+      - ./whishper_data/logs:/var/log/whishper
     depends_on:
       - whishper-mongo
-      - whisper-api
+      - translate
+      - whishper-api
 
-  whishper-mongo:
-    extends:
-      file: backend/docker-compose.yml
-      service: whishper-mongo
+  whishper-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: whishper-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    expose:
+      - 3000
     env_file:
-      - backend/.env
-
-  whisper-api:
-    extends:
-      file: transcription-api/docker-compose.yml
-      service: whisper-api
-    env_file:
-      - transcription-api/.env
+      - .frontend.env
+    volumes:
+      - ./whishper_data/frontend/logs:/var/log/whishper
+    depends_on:
+      - whishper-backend

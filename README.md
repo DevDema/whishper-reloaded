@@ -1,13 +1,29 @@
-[![whishper banner](misc/banner.png)]
+[![whishper banner](misc/banner.png)](#whishper-reloaded--self-hosted-audio-transcription--subtitle-editor-100-local-whisper)
 
-[![](https://img.shields.io/badge/website-066da5?style=for-the-badge&logo=icloud&logoColor=white)](https://whishper.net)
-[![](https://img.shields.io/badge/self%20host%20guide-066da5?style=for-the-badge&logo=googledocs&logoColor=white)](https://whishper.net/guides/install)
-[![](https://img.shields.io/badge/screenshots-5c1f87?style=for-the-badge&logo=slickpic&logoColor=white)](#screenshots)
-[![](https://img.shields.io/docker/pulls/thespartan94/whishper-frontend?style=for-the-badge&logo=docker&logoColor=white)](https://hub.docker.com/r/thespartan94/whishper-frontend)
+# Whishper Reloaded — Self-Hosted Audio Transcription & Subtitle Editor (100% Local, Whisper)
 
-**Whishper Reloaded** is an open-source, 100% local audio transcription and subtitling suite with a full-featured web UI. It is a fork of [Pluja's Whishper](https://github.com/pluja/whishper), further improved and now actively maintained.
+[![Docker Pulls](https://img.shields.io/docker/pulls/thespartan94/whishper-frontend?logo=docker)](https://hub.docker.com/r/thespartan94/whishper-frontend)
+[![GitHub stars](https://img.shields.io/github/stars/DevDema/whishper-reloaded)](https://github.com/DevDema/whishper-reloaded/stargazers)
+[![License](https://img.shields.io/github/license/DevDema/whishper-reloaded)](https://github.com/DevDema/whishper-reloaded/blob/main/LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/DevDema/whishper-reloaded)](https://github.com/DevDema/whishper-reloaded/commits/main)
+[![Awesome Selfhosted](https://img.shields.io/badge/Awesome-Self--Hosted-007EC6?style=flat-square&logo=github)](https://github.com/awesome-selfhosted/awesome-selfhosted)
+
+**Whishper Reloaded** is an open-source, **self-hosted audio transcription** suite with a full **web UI**.
+Powered by **OpenAI Whisper** (Faster-Whisper), it runs **100% locally** — no cloud, no data leakage.
+Transcribe, translate, and edit subtitles in SRT/VTT/TXT format from any audio or video file.
 
 > **Project status:** This project began as [Whishper](https://github.com/pluja/whishper) by [Pluja](https://github.com/pluja), who remains the original creator and main contributor of the core idea and codebase. Whishper Reloaded is now maintained solo by me, [devdema](https://github.com/devdema), going forward. If you find this useful, please consider supporting the original project too.
+
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Running with Docker](#running-with-docker)
+- [Screenshots](#screenshots)
+- [Comparison with Alternatives](#comparison-with-alternatives)
+- [FAQ](#faq)
+- [Contributing](#contributing)
+- [Credits](#credits)
 
 ## Features
 
@@ -45,6 +61,23 @@ Everything from the original Whishper, plus a set of improvements added in this 
   - [x] Playback shortcuts [F7, F8, F9].
   - [x] Navigate through segments using TAB.
   - [x] Go to current segment / navigate to a specific segment number.
+
+## Quick Start
+
+Get a full **self-hosted Whisper transcription** stack running with **Docker Compose** in a few steps:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/DevDema/whishper-reloaded.git
+cd whishper-reloaded
+
+# 2. Create your .backend.env and .frontend.env files (see "Environment files" below)
+
+# 3. Bring the whole stack up
+docker compose up -d
+```
+
+The web UI will then be available at `http://localhost:3000`.
 
 ## Project structure
 
@@ -149,22 +182,65 @@ The web UI will be available at `http://localhost:3000`.
 
 ## Screenshots
 
-These screenshots are available on [the official website](https://whishper.net/usage/transcriptions/), click any of the following links to see:
+| Dashboard | New transcription |
+|:---:|:---:|
+| ![Whishper Reloaded dashboard with transcription list, search, and status badges](docs/screenshots/home_page_light.png) | ![Upload or URL-based transcription with Whisper model, language, and VAD options](docs/screenshots/new_transcription_form.png) |
+| **Subtitle editor** | **Download & export** |
+| ![Video-synced subtitle editor with segment timing, CPS warnings, and translation controls](docs/screenshots/transcription_edit_page.png) | ![Export transcriptions as SRT, VTT, TXT, or JSON in multiple languages](docs/screenshots/download_form.png) |
 
-- [A transcription creation](https://whishper.net/usage/transcriptions/)
-- [A transcription translation](https://whishper.net/usage/translate/)
-- [A transcription download](https://whishper.net/usage/download/)
-- [The subtitle editor](https://whishper.net/usage/editor/)
+<p align="center">
+  <img src="docs/screenshots/home_page_translation_ongoing.png" alt="Transcription list showing in-progress translation status" width="720">
+  <br><em>Translation jobs run in the background — status is visible directly from the dashboard.</em>
+</p>
 
-## Development
+## Comparison with Alternatives
 
-### Contributing
+Looking for a **self-hosted Whisper alternative** or an **offline transcription** tool? Here is how Whishper Reloaded compares to popular options:
+
+| Tool | Self-hosted | Web UI | Subtitle Editor | Translation | 100% Local |
+|------|:-----------:|:------:|:---------------:|:-----------:|:----------:|
+| **Whishper Reloaded** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| whisper.cpp | ✅ | ❌ | ❌ | ❌ | ✅ |
+| MacWhisper | ❌ | ❌ | ✅ | ❌ | ✅ |
+| Buzz | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Otter.ai | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Sonix | ❌ | ✅ | ✅ | ❌ | ❌ |
+
+## FAQ
+
+### Can I use Whishper Reloaded offline?
+
+Yes. Whishper Reloaded runs **100% locally** — once you have the Docker images and Whisper model downloaded, no internet connection is required.
+
+### How do I transcribe Italian audio?
+
+Simply upload your Italian audio file and select "Italian" as the source language. Faster-Whisper supports 99+ languages including Italian, French, German, Spanish, Japanese, and more.
+
+### Is there a Docker Compose setup?
+
+Yes. See the [Quick Start](#quick-start) section for a one-line Docker Compose setup.
+
+### Does it support GPU acceleration?
+
+Yes. Whishper Reloaded supports NVIDIA GPU acceleration via CUDA for faster transcription. CPU-only mode is also supported.
+
+### Can I translate transcriptions?
+
+Yes. Using LibreTranslate, you can translate any transcription to any supported language.
+
+### Which audio and video formats are supported?
+
+Any format that FFmpeg can read, plus any URL supported by yt-dlp (YouTube, podcasts, and many more). Whishper extracts the audio and transcribes it automatically.
+
+### Is Whishper Reloaded free?
+
+Yes. It is fully open-source under the license shown in the badge above, and free to self-host on your own hardware.
+
+## Contributing
 
 Contributions are welcome! Feel free to open a PR with your changes, or take a look at the issues to see if there is something you can help with.
 
-### Development setup
-
-Check out the development documentation [here](https://whishper.net/guides/develop/).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local development setup and guidelines.
 
 ## Star History
 

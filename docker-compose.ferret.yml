@@ -1,28 +1,35 @@
-version: "3.9"
+# FerretDB override: use a PostgreSQL-backed FerretDB instead of MongoDB.
+#
+# Meant to be layered on top of the main stack. It replaces the `whishper-mongo`
+# service with FerretDB and enables FerretDB mode on the backend:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.ferret.yml up -d
 
 services:
   postgres:
     image: postgres
+    container_name: whishper-postgres
+    restart: unless-stopped
     env_file:
-      - .env
+      - .backend.env
     environment:
-      - POSTGRES_USER=${DB_USER:-whishper}
-      - POSTGRES_PASSWORD=${DB_PASS:-whishper}
-      - POSTGRES_DB=whishper
+      POSTGRES_USER: ${DB_USER:-whishper}
+      POSTGRES_PASSWORD: ${DB_PASS:-whishper}
+      POSTGRES_DB: whishper
     volumes:
       - ./whishper_data/db_data/ferret:/var/lib/postgresql/data
 
-  mongo:
+  whishper-mongo:
     image: ghcr.io/ferretdb/ferretdb
     restart: on-failure
-    expose:
-      - 27017
     env_file:
-      - .env
+      - .backend.env
     environment:
-      - FERRETDB_POSTGRESQL_URL=postgres://${DB_USER:-whishper}:${DB_PASS:-whishper}@postgres:5432/whishper
+      FERRETDB_POSTGRESQL_URL: postgres://${DB_USER:-whishper}:${DB_PASS:-whishper}@postgres:5432/whishper
     command: ["--telemetry=disable"]
+    depends_on:
+      - postgres
 
-  whishper:
+  whishper-backend:
     environment:
       FERRETDB_ENABLED: "true"
