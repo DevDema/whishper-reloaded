@@ -16,7 +16,7 @@
 
 	let errorMessage = '';
 	let disableSubmit = true;
-	let modelSize = 'small';
+	let modelSize = 'large-v3-turbo';
 	let language = 'auto';
 	let sourceUrl = '';
 	let fileInput;
@@ -30,8 +30,24 @@
 		'ja', 'nl', 'pl', 'pt', 'ru', 'sk', 'sl', 'sv', 'tk', 'tr', 'zh'
 	];
 	let models = [
-		'tiny', 'tiny.en', 'base', 'base.en', 'small', 'small.en', 'medium', 'medium.en', 'large-v2', 'large-v3'
+		'tiny', 'tiny.en', 'base', 'base.en', 'small', 'small.en', 'medium', 'medium.en', 'large-v2', 'large-v3',
+		'large-v3-turbo', 'distil-large-v3', 'distil-large-v2'
 	];
+	const modelHintKey = (m) => m.replace(/[.-](\w)/g, (_, c) => c.toUpperCase());
+	const englishOnlyModels = new Set([
+		'tiny.en', 'base.en', 'small.en', 'medium.en', 'distil-large-v3', 'distil-large-v2'
+	]);
+	let languageBeforeLock = 'auto';
+	let languageLocked = false;
+	$: englishOnly = englishOnlyModels.has(modelSize);
+	$: if (englishOnly && !languageLocked) {
+		languageBeforeLock = language;
+		language = 'en';
+		languageLocked = true;
+	} else if (!englishOnly && languageLocked) {
+		language = languageBeforeLock;
+		languageLocked = false;
+	}
 	languages.sort((a, b) => {
 		if (a == 'auto') return -1;
 		if (b == 'auto') return 1;
@@ -237,13 +253,20 @@
 		<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
 			<div class="space-y-1.5">
 				<label for="modelSize" class="text-muted-foreground text-[0.75rem]">{$_('modals.transcription.whisperModel')}</label>
-				<Select id="modelSize" bind:value={modelSize}>
-					{#each models as m}<option value={m}>{m}</option>{/each}
-				</Select>
+				<div class="relative">
+					<Select id="modelSize" bind:value={modelSize} class="text-transparent">
+						{#each models as m}
+							<option value={m} class="text-foreground bg-card">{m} — {$_(`modals.transcription.modelHints.${modelHintKey(m)}`)}</option>
+						{/each}
+					</Select>
+					<span class="absolute inset-y-0 left-3 right-9 flex items-center pointer-events-none text-foreground text-[0.82rem] truncate">
+						{modelSize}
+					</span>
+				</div>
 			</div>
 			<div class="space-y-1.5">
 				<label for="language" class="text-muted-foreground text-[0.75rem]">{$_('modals.transcription.language')}</label>
-				<Select id="language" bind:value={language}>
+				<Select id="language" bind:value={language} disabled={englishOnly}>
 					{#each languages as l}<option value={l}>{l}</option>{/each}
 				</Select>
 			</div>

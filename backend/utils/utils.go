@@ -52,7 +52,11 @@ func DownloadMedia(t *models.Transcription) (string, error) {
 		return "", err
 	}
 
-	downloadResult, err := result.Download(context.Background(), "best")
+	// "best" only matches a single file that already contains both video and
+	// audio. YouTube usually no longer offers that, so the request fails with
+	// "Requested format is not available". Transcription only needs the audio,
+	// and the download is streamed to stdout, which cannot merge two tracks.
+	downloadResult, err := result.Download(context.Background(), "bestaudio/best")
 	if err != nil {
 		log.Debug().Err(err).Msg("Error downloading media")
 		return "", err
