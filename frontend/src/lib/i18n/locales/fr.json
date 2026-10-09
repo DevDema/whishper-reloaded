@@ -206,7 +206,7 @@
 		},
 		"settings": {
 			"seekOnClick": "Aller au clic",
-			"seekOnClickTooltip": "En cliquant sur un champ d'horodatage, déplace la vidéo à cette position.",
+			"seekOnClickTooltip": "En cliquant sur un champ d'horodatage ou sur le texte d'un segment, déplace la vidéo à cette position.",
 			"autosave": "Enregistrement auto",
 			"autosaveTooltip": "Enregistrer automatiquement les modifications toutes les 30s."
 		},

@@ -206,7 +206,7 @@
 		},
 		"settings": {
 			"seekOnClick": "Seek on click",
-			"seekOnClickTooltip": "When clicking a timestamp input, seek the video to that position.",
+			"seekOnClickTooltip": "When clicking a timestamp input or a segment's text, seek the video to that position.",
 			"autosave": "Autosave",
 			"autosaveTooltip": "Automatically save changes every 30s."
 		},

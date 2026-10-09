@@ -206,7 +206,7 @@
 		},
 		"settings": {
 			"seekOnClick": "Saltar al hacer clic",
-			"seekOnClickTooltip": "Al hacer clic en un campo de tiempo, salta el vídeo a esa posición.",
+			"seekOnClickTooltip": "Al hacer clic en un campo de tiempo o en el texto de un segmento, salta el vídeo a esa posición.",
 			"autosave": "Autoguardado",
 			"autosaveTooltip": "Guardar los cambios automáticamente cada 30s."
 		},

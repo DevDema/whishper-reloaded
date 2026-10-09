@@ -206,7 +206,7 @@
 		},
 		"settings": {
 			"seekOnClick": "Vai al clic",
-			"seekOnClickTooltip": "Cliccando su un campo del tempo, sposta il video in quella posizione.",
+			"seekOnClickTooltip": "Cliccando su un campo del tempo o sul testo di un segmento, sposta il video in quella posizione.",
 			"autosave": "Salvataggio automatico",
 			"autosaveTooltip": "Salva automaticamente le modifiche ogni 30s."
 		},
