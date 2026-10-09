@@ -5,7 +5,7 @@
 	import Modal from './ui/Modal.svelte';
 	import Button from './ui/Button.svelte';
 	import Spinner from './ui/Spinner.svelte';
-	import { Upload, X, FileJson } from 'lucide-svelte';
+	import { Upload, X, FileBraces } from 'lucide-svelte';
 
 	export let open = false;
 	export let tr;
@@ -97,7 +97,7 @@
 					: ''}"
 			>
 				<div class="w-10 h-10 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
-					<FileJson size={18} class="text-muted-foreground" />
+					<FileBraces size={18} class="text-muted-foreground" />
 				</div>
 				<div class="min-w-0">
 					{#if selectedFile}

@@ -1,23 +1,23 @@
 import {
-	CheckCircle2,
-	Loader2,
+	CircleCheck,
+	LoaderCircle,
 	Clock,
 	Languages,
-	XCircle
+	CircleX
 } from 'lucide-svelte';
 
 // Maps a logical status kind to its visual configuration.
 // kind: 'done' | 'processing' | 'queued' | 'translating' | 'error'
 export const STATUS_CONFIG = {
 	done: {
-		icon: CheckCircle2,
+		icon: CircleCheck,
 		dot: 'bg-emerald-400',
 		iconColor: 'text-emerald-400',
 		badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
 		spin: false
 	},
 	processing: {
-		icon: Loader2,
+		icon: LoaderCircle,
 		dot: 'bg-blue-400',
 		iconColor: 'text-blue-400',
 		badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
@@ -38,7 +38,7 @@ export const STATUS_CONFIG = {
 		spin: false
 	},
 	error: {
-		icon: XCircle,
+		icon: CircleX,
 		dot: 'bg-red-400',
 		iconColor: 'text-red-400',
 		badge: 'bg-red-500/10 text-red-400 border-red-500/20',
