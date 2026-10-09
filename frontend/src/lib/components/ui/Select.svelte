@@ -1,15 +1,16 @@
 <script>
 	import { ChevronDown } from 'lucide-svelte';
 	export let value = undefined;
+	export let disabled = false;
 	let className = '';
 	export { className as class };
 
 	const base =
-		'w-full appearance-none px-3 py-2.5 pr-9 rounded-xl bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all text-[0.82rem]';
+		'w-full appearance-none px-3 py-2.5 pr-9 rounded-xl bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all text-[0.82rem] disabled:cursor-not-allowed disabled:opacity-60';
 </script>
 
 <div class="relative">
-	<select class="{base} {className}" bind:value on:change {...$$restProps}>
+	<select class="{base} {className}" bind:value {disabled} on:change {...$$restProps}>
 		<slot />
 	</select>
 	<ChevronDown

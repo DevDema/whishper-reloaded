@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   whisper-frontend:
     extends:
@@ -7,6 +5,10 @@ services:
       service: whisper-frontend
     env_file:
       - frontend/.env
+    depends_on:
+      - whisper-backend
+    networks:
+      - whishper-dev
 
   whisper-backend:
     extends:
@@ -17,6 +19,8 @@ services:
     depends_on:
       - whishper-mongo
       - whisper-api
+    networks:
+      - whishper-dev
 
   whishper-mongo:
     extends:
@@ -24,6 +28,8 @@ services:
       service: whishper-mongo
     env_file:
       - backend/.env
+    networks:
+      - whishper-dev
 
   whisper-api:
     extends:
@@ -31,3 +37,12 @@ services:
       service: whisper-api
     env_file:
       - transcription-api/.env
+    volumes:
+      - ./uploads:/uploads
+    networks:
+      - whishper-dev
+
+networks:
+  whishper-dev:
+    name: whishper-dev
+    driver: bridge
