@@ -10,7 +10,7 @@
 	import Textarea from './ui/Textarea.svelte';
 	import Select from './ui/Select.svelte';
 	import Switch from './ui/Switch.svelte';
-	import { Sparkles, X, Upload, FileAudio, Mic } from 'lucide-svelte';
+	import { Sparkles, X, Upload, FileHeadphone, Mic } from 'lucide-svelte';
 
 	export let open = false;
 
@@ -218,7 +218,7 @@
 			<input bind:this={fileInput} type="file" class="hidden" accept="audio/*,video/*" on:change={handleFileSelect} />
 			{#if selectedFile}
 				<div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-					<FileAudio size={22} class="text-emerald-400" />
+					<FileHeadphone size={22} class="text-emerald-400" />
 				</div>
 				<div class="text-center">
 					<p class="text-foreground text-[0.85rem] font-medium">{selectedFile.name}</p>

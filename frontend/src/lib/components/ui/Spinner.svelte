@@ -1,8 +1,8 @@
 <script>
-	import { Loader2 } from 'lucide-svelte';
+	import { LoaderCircle } from 'lucide-svelte';
 	export let size = 18;
 	let className = '';
 	export { className as class };
 </script>
 
-<Loader2 {size} class="animate-spin {className}" />
+<LoaderCircle {size} class="animate-spin {className}" />
