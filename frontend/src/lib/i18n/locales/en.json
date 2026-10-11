@@ -236,7 +236,8 @@
 			"autosaving": "Autosaving...",
 			"saved": "Saved!",
 			"autosaveDisabled": "Autosave is disabled.",
-			"autosaveEnabled": "Autosave enabled."
+			"autosaveEnabled": "Autosave enabled.",
+			"mediaFailed": "Failed to retrieve media file: {detail}. Media capabilities are disabled."
 		}
 	},
 	"layout": {

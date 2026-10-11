@@ -30,6 +30,9 @@ export const currentVideoPlayerTime = writable(0);
 // Audio mode setting
 export const audioMode = writable(false);
 
+// Set when the media file for the current transcription can't be loaded
+export const mediaFailed = writable(false);
+
 export const currentPage = writable(1)
 
 export const loadingTranscriptions = writable(true)

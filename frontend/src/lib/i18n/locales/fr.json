@@ -236,7 +236,8 @@
 			"autosaving": "Enregistrement automatique...",
 			"saved": "Enregistré !",
 			"autosaveDisabled": "L'enregistrement automatique est désactivé.",
-			"autosaveEnabled": "Enregistrement automatique activé."
+			"autosaveEnabled": "Enregistrement automatique activé.",
+			"mediaFailed": "Impossible de récupérer le fichier média : {detail}. Les fonctions média sont désactivées."
 		}
 	},
 	"layout": {

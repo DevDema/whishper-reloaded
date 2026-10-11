@@ -236,7 +236,8 @@
 			"autosaving": "Autoguardando...",
 			"saved": "¡Guardado!",
 			"autosaveDisabled": "El autoguardado está desactivado.",
-			"autosaveEnabled": "Autoguardado activado."
+			"autosaveEnabled": "Autoguardado activado.",
+			"mediaFailed": "No se pudo obtener el archivo multimedia: {detail}. Las funciones multimedia están desactivadas."
 		}
 	},
 	"layout": {

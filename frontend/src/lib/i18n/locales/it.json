@@ -236,7 +236,8 @@
 			"autosaving": "Salvataggio automatico...",
 			"saved": "Salvato!",
 			"autosaveDisabled": "Il salvataggio automatico è disattivato.",
-			"autosaveEnabled": "Salvataggio automatico attivato."
+			"autosaveEnabled": "Salvataggio automatico attivato.",
+			"mediaFailed": "Impossibile recuperare il file multimediale: {detail}. Le funzioni multimediali sono disattivate."
 		}
 	},
 	"layout": {
