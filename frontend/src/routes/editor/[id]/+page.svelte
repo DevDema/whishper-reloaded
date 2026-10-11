@@ -1,22 +1,63 @@
 <script>
 	/** @type {import('./$types').PageData} */
 	import { onMount } from 'svelte';
-	import { Toaster } from 'svelte-french-toast';
+	import toast, { Toaster } from 'svelte-french-toast';
 	import Editor from '$lib/components/Editor.svelte';
-	import { currentVideoPlayerTime, currentTranscription, audioMode } from '$lib/stores';
+	import { currentVideoPlayerTime, currentTranscription, audioMode, mediaFailed } from '$lib/stores';
 	import { CLIENT_API_HOST } from '$lib/utils';
 	import { _ } from 'svelte-i18n';
 	import { writable } from 'svelte/store';
 	import Spinner from '$lib/components/ui/Spinner.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
-	import { Play, Pause, LocateFixed } from 'lucide-svelte';
+	import { CircleAlert, Play, Pause, LocateFixed } from 'lucide-svelte';
 
 	let language = writable('original');
 	let segmentsToShow = writable(20);
 	let video;
 	let tolerance = 0.1; // Tolerance level in seconds
 	let canPlay = false;
+	let mediaErrorDetail = '';
+	let trackedMediaFile = '';
+
+	$: if ($currentTranscription?.fileName && $currentTranscription.fileName !== trackedMediaFile) {
+		trackedMediaFile = $currentTranscription.fileName;
+		$mediaFailed = false;
+		mediaErrorDetail = '';
+		canPlay = false;
+	}
+
+	function mediaUrl() {
+		return `${CLIENT_API_HOST}/api/video/${$currentTranscription.fileName}`;
+	}
+
+	function handleVideoError() {
+		canPlay = false;
+		if (!$audioMode) $audioMode = true;
+	}
+
+	async function handleAudioError() {
+		if ($mediaFailed) return;
+		$mediaFailed = true;
+		canPlay = false;
+		const detail = await describeMediaFailure();
+		mediaErrorDetail = detail;
+		toast.error($_('editor.toasts.mediaFailed', { values: { detail } }));
+	}
+
+	async function describeMediaFailure() {
+		const fileName = $currentTranscription?.fileName || 'unknown';
+		try {
+			const res = await fetch(mediaUrl(), { method: 'HEAD' });
+			if (!res.ok && res.status !== 405 && res.status !== 501) {
+				const status = [res.status, res.statusText].filter(Boolean).join(' ');
+				return `${fileName} (${status})`;
+			}
+		} catch (err) {
+			if (err?.message) return `${fileName} (${err.message})`;
+		}
+		return fileName;
+	}
 	$: if (canPlay && video && Math.abs(video.currentTime - $currentVideoPlayerTime) > tolerance) {
 		// When testing in Chrome, it works, just see https://stackoverflow.com/a/67584611
 		video.currentTime = $currentVideoPlayerTime;
@@ -76,6 +117,18 @@
 
 	onMount(() => {
 		const handleKeyDown = (e) => {
+			const mediaKey =
+				e.code === 'F7' ||
+				e.key === 'F7' ||
+				e.code === 'F8' ||
+				e.key === 'F8' ||
+				e.code === 'F9' ||
+				e.key === 'F9';
+			if ($mediaFailed && mediaKey) {
+				e.preventDefault();
+				return;
+			}
+
 			// F7: Backward 10s
 			if (e.code === 'F7' || e.key === 'F7') {
 				e.preventDefault();
@@ -139,16 +192,27 @@
 						on:timeupdate={(e) => ($currentVideoPlayerTime = e.target.currentTime)}
 						on:canplay={() => (canPlay = true)}
 						on:loadedmetadata={() => (canPlay = true)}
+						on:error={handleAudioError}
 						class="hidden"
 					>
-						<source src="{CLIENT_API_HOST}/api/video/{$currentTranscription.fileName}" type="audio/mp4" />
+						<source src={mediaUrl()} type="audio/mp4" on:error={handleAudioError} />
 					</audio>
 
 					<button
-						class="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all shrink-0"
+						class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all {$mediaFailed
+							? 'bg-destructive text-destructive-foreground cursor-default'
+							: 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90'}"
+						title={$mediaFailed
+							? $_('editor.toasts.mediaFailed', {
+									values: { detail: mediaErrorDetail || $currentTranscription.fileName }
+								})
+							: undefined}
+						disabled={$mediaFailed}
 						on:click={() => video && (video.paused ? video.play() : video.pause())}
 					>
-						{#if !canPlay}
+						{#if $mediaFailed}
+							<CircleAlert size={18} />
+						{:else if !canPlay}
 							<Spinner size={18} />
 						{:else if video && !video.paused}
 							<Pause size={18} />
@@ -158,20 +222,23 @@
 					</button>
 
 					<button
-						class="px-3 py-2 rounded-lg border border-border bg-muted text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-[0.78rem] font-mono shrink-0"
+						class="px-3 py-2 rounded-lg border border-border bg-muted text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-[0.78rem] font-mono shrink-0 disabled:opacity-40 disabled:pointer-events-none"
+						disabled={$mediaFailed}
 						on:click={() => ($currentVideoPlayerTime = Math.max(0, $currentVideoPlayerTime - 10))}>-10s</button
 					>
 					<button
-						class="px-3 py-2 rounded-lg border border-border bg-muted text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-[0.78rem] font-mono shrink-0"
+						class="px-3 py-2 rounded-lg border border-border bg-muted text-muted-foreground hover:text-foreground hover:bg-secondary transition-all text-[0.78rem] font-mono shrink-0 disabled:opacity-40 disabled:pointer-events-none"
+						disabled={$mediaFailed}
 						on:click={() => video && video.duration && ($currentVideoPlayerTime = Math.min(video.duration, $currentVideoPlayerTime + 10))}>+10s</button
 					>
 
 					<div class="flex-1 min-w-0">
 						<input
 							type="range"
-							class="w-full accent-[var(--primary)]"
+							class="w-full accent-[var(--primary)] disabled:opacity-40"
 							min="0"
 							max="100"
+							disabled={$mediaFailed}
 							value={video && video.duration ? ($currentVideoPlayerTime / video.duration) * 100 : 0}
 							on:input={(e) => video && video.duration && ($currentVideoPlayerTime = (e.target.value / 100) * video.duration)}
 						/>
@@ -181,12 +248,18 @@
 						</div>
 					</div>
 
-					<IconButton variant="primary" title={$_('editor.goToCurrentSegment')} on:click={goToCurrentTimeSegment}>
+					<IconButton
+						variant="primary"
+						title={$_('editor.goToCurrentSegment')}
+						disabled={$mediaFailed}
+						on:click={goToCurrentTimeSegment}
+					>
 						<LocateFixed size={16} />
 					</IconButton>
 
 					<Select
 						class="w-auto !py-2"
+						disabled={$mediaFailed}
 						on:change={(e) => video && (video.playbackRate = e.target.value)}
 					>
 						<option value={0.5}>0.5x</option>
@@ -211,9 +284,10 @@
 						on:timeupdate={(e) => ($currentVideoPlayerTime = e.target.currentTime)}
 						on:canplay={() => (canPlay = true)}
 						on:loadedmetadata={() => (canPlay = true)}
+						on:error={handleVideoError}
 						class="absolute top-0 left-0 w-full h-full"
 					>
-						<source src="{CLIENT_API_HOST}/api/video/{$currentTranscription.fileName}" type="video/mp4" />
+						<source src={mediaUrl()} type="video/mp4" on:error={handleVideoError} />
 						<track kind="captions" />
 					</video>
 				</div>

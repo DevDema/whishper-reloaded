@@ -236,7 +236,8 @@
 			"autosaving": "Salvando automaticamente...",
 			"saved": "Salvo!",
 			"autosaveDisabled": "O salvamento automático está desativado.",
-			"autosaveEnabled": "Salvamento automático ativado."
+			"autosaveEnabled": "Salvamento automático ativado.",
+			"mediaFailed": "Falha ao obter o arquivo de mídia: {detail}. Os recursos de mídia estão desativados."
 		}
 	},
 	"layout": {
