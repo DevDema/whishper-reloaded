@@ -27,6 +27,20 @@ COPY --from=ytdlp_cache /app/whishper ./whishper
 RUN chmod a+rx ./whishper
 RUN pip install yt-dlp && ln -s /usr/local/bin/yt-dlp /bin/yt-dlp
 RUN python -m pip install -U --pre "yt-dlp[default]"
+# ffmpeg muxes YouTube's separate video and audio streams (stream copy).
+# Deno is the JavaScript runtime yt-dlp needs to read current YouTube formats.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ffmpeg ca-certificates curl unzip \
+    && case "${TARGETARCH}" in \
+         amd64) DENO_TARGET=x86_64-unknown-linux-gnu ;; \
+         arm64) DENO_TARGET=aarch64-unknown-linux-gnu ;; \
+         *) echo "unsupported architecture: ${TARGETARCH}" && exit 1 ;; \
+       esac \
+    && curl -fsSL -o /tmp/deno.zip "https://github.com/denoland/deno/releases/download/v2.9.7/deno-${DENO_TARGET}.zip" \
+    && unzip /tmp/deno.zip -d /usr/local/bin \
+    && chmod +x /usr/local/bin/deno \
+    && rm /tmp/deno.zip \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /app/uploads
 

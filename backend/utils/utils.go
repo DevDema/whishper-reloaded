@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -52,29 +53,146 @@ func DownloadMedia(t *models.Transcription) (string, error) {
 		return "", err
 	}
 
-	// "best" only matches a single file that already contains both video and
-	// audio. YouTube usually no longer offers that, so the request fails with
-	// "Requested format is not available". Transcription only needs the audio,
-	// and the download is streamed to stdout, which cannot merge two tracks.
-	downloadResult, err := result.Download(context.Background(), "bestaudio/best")
+	baseName := SanitizeFilename(fmt.Sprintf("%v%v%v", t.ID.Hex(), models.FileNameSeparator, result.Info.Title))
+
+	// Download to a file so yt-dlp can mux the video and audio streams with
+	// ffmpeg. That mux is a stream copy, not a re-encode. Streaming to stdout
+	// cannot combine the two tracks.
+	tmpDir, err := os.MkdirTemp("", "whishper-media-")
 	if err != nil {
-		log.Debug().Err(err).Msg("Error downloading media")
 		return "", err
 	}
+	defer os.RemoveAll(tmpDir)
 
-	filename := fmt.Sprintf("%v%v%v", t.ID.Hex(), models.FileNameSeparator, result.Info.Title)
-	filename = SanitizeFilename(filename)
+	// YouTube randomly rejects some streams with HTTP 403 (missing PO token),
+	// and which ones varies per video and per request. Try progressively
+	// simpler requests until one succeeds; the last ones are audio-only.
+	output := filepath.Join(tmpDir, "media.%(ext)s")
+	attempts := []struct {
+		name string
+		args []string
+	}{
+		{"merged video", []string{
+			"-f", "bv*[vcodec^=avc1]+ba[ext=m4a]/bv*[ext=mp4]+ba/bv*+ba/b",
+			"--merge-output-format", "mp4",
+		}},
+		{"combined video (tv_simply client)", []string{
+			"--extractor-args", "youtube:player_client=tv_simply",
+			"-f", "b[ext=mp4]/b",
+		}},
+		{"audio only", []string{
+			"-f", "ba[protocol=https]/ba/b",
+			"-x", "--audio-format", "best",
+		}},
+		{"audio only (web_embedded client)", []string{
+			"--extractor-args", "youtube:player_client=web_embedded",
+			"-f", "ba/b",
+			"-x", "--audio-format", "best",
+		}},
+	}
 
-	defer downloadResult.Close()
-	f, err := os.Create(filepath.Join(os.Getenv("UPLOAD_DIR"), filename))
+	var downloadErr error
+	for _, attempt := range attempts {
+		if err := resetDir(tmpDir); err != nil {
+			return "", err
+		}
+		args := append([]string{"--no-playlist", "-o", output}, attempt.args...)
+		args = append(args, t.SourceUrl)
+		downloadErr = runYtDlp(args)
+		if downloadErr == nil {
+			log.Info().Msgf("Downloaded %v as %v", t.SourceUrl, attempt.name)
+			break
+		}
+		log.Warn().Err(downloadErr).Msgf("Download attempt %q failed", attempt.name)
+	}
+	if downloadErr != nil {
+		log.Debug().Err(downloadErr).Msg("Error downloading media")
+		return "", downloadErr
+	}
+
+	src, err := downloadedMediaPath(tmpDir)
 	if err != nil {
-		log.Debug().Err(err).Msg("Error creating file")
 		return "", err
 	}
-	defer f.Close()
-	io.Copy(f, downloadResult)
+	filename := baseName + filepath.Ext(src)
+	dest := filepath.Join(os.Getenv("UPLOAD_DIR"), filename)
+	if err := copyFile(src, dest); err != nil {
+		log.Debug().Err(err).Msg("Error saving downloaded media")
+		return "", err
+	}
 
 	return filename, nil
+}
+
+func resetDir(dir string) error {
+	if err := os.RemoveAll(dir); err != nil {
+		return err
+	}
+	return os.MkdirAll(dir, 0o700)
+}
+
+func runYtDlp(args []string) error {
+	cmd := exec.CommandContext(context.Background(), "yt-dlp", args...)
+	output, err := cmd.CombinedOutput()
+	if err == nil {
+		return nil
+	}
+	return ytDlpError(output, err)
+}
+
+func ytDlpError(output []byte, err error) error {
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	for i := len(lines) - 1; i >= 0; i-- {
+		line := strings.TrimSpace(lines[i])
+		if strings.HasPrefix(line, "ERROR:") {
+			return errors.New(strings.TrimSpace(strings.TrimPrefix(line, "ERROR:")))
+		}
+	}
+	if len(lines) > 0 && lines[len(lines)-1] != "" {
+		return errors.New(lines[len(lines)-1])
+	}
+	return err
+}
+
+func downloadedMediaPath(dir string) (string, error) {
+	matches, err := filepath.Glob(filepath.Join(dir, "media.*"))
+	if err != nil {
+		return "", err
+	}
+	var candidates []string
+	for _, match := range matches {
+		if strings.HasSuffix(match, ".part") || strings.HasSuffix(match, ".ytdl") {
+			continue
+		}
+		candidates = append(candidates, match)
+	}
+	if len(candidates) == 0 {
+		return "", fmt.Errorf("downloaded file not found")
+	}
+	for _, candidate := range candidates {
+		if strings.HasSuffix(candidate, ".mp4") {
+			return candidate, nil
+		}
+	}
+	return candidates[0], nil
+}
+
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		out.Close()
+		return err
+	}
+	return out.Close()
 }
 
 func SendTranscriptionRequest(t *models.Transcription, body *bytes.Buffer, writer *multipart.Writer) (*models.WhisperResult, error) {
