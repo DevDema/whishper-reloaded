@@ -141,7 +141,7 @@
 						on:loadedmetadata={() => (canPlay = true)}
 						class="hidden"
 					>
-						<source src="{CLIENT_API_HOST}/api/video/{$currentTranscription.fileName}" type="video/mp4" />
+						<source src="{CLIENT_API_HOST}/api/video/{$currentTranscription.fileName}" type="audio/mp4" />
 					</audio>
 
 					<button
