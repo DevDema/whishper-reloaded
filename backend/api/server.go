@@ -88,7 +88,10 @@ func (s *Server) SetupMiddleware() {
 
 func (s *Server) RegisterRoutes() {
 	// Static routes
-	s.Router.Static("/api/video", os.Getenv("UPLOAD_DIR"))
+	// Chrome needs HTTP Range support (206 responses) to seek in media; without it, it restarts from 0.
+	s.Router.Static("/api/video", os.Getenv("UPLOAD_DIR"), fiber.Static{
+		ByteRange: true,
+	})
 
 	// Register HTTP route for getting initial state.
 	s.Router.Get("/api/transcriptions", func(c *fiber.Ctx) error {

@@ -3,7 +3,21 @@ from typing import Any, Mapping, TypedDict
 import numpy as np
 from faster_whisper.audio import decode_audio  # type: ignore
 
-SUPPORTED_MODELS = ["tiny", "tiny.en", "small", "small.en", "base", "base.en", "medium", "medium.en", "large-v2", "large-v3"]
+SUPPORTED_MODELS = [
+    "tiny",
+    "tiny.en",
+    "small",
+    "small.en",
+    "base",
+    "base.en",
+    "medium",
+    "medium.en",
+    "large-v2",
+    "large-v3",
+    "large-v3-turbo",
+    "distil-large-v3",
+    "distil-large-v2",
+]
 
 WordData = TypedDict(
     "WordData", {"word": str, "start": float | str, "end": float | str, "score": float}

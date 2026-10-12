@@ -216,6 +216,9 @@
 				bind:textContent={segment.text}
 				on:input={handleKeystrokes}
 				on:keydown={handleTab}
+				on:focus={() => {
+					if ($editorSettings.seekOnClick) $currentVideoPlayerTime = segment.start;
+				}}
 				class="w-full min-h-[2.5rem] p-2.5 rounded-lg bg-muted border text-[0.85rem] font-mono leading-relaxed text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 {cpsHigh
 					? 'border-red-500/60'
 					: 'border-border'}"

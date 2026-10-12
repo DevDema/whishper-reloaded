@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import toast from 'svelte-french-toast';
-	import { editorSettings, currentTranscription, editorHistory, audioMode } from '$lib/stores';
+	import { editorSettings, currentTranscription, editorHistory, audioMode, mediaFailed } from '$lib/stores';
 	import EditorSettings from './EditorSettings.svelte';
 	import EditorSegment from './EditorSegment.svelte';
 	import GoToSegment from './GoToSegment.svelte';
@@ -223,7 +223,7 @@
 					<IconButton title={$_('editor.save')} on:click={saveChanges}>
 						<Save size={16} />
 					</IconButton>
-					{#if !isAudioOnly}
+					{#if !isAudioOnly && !$mediaFailed}
 						<IconButton
 							title={$audioMode ? $_('editor.exitAudioMode') : $_('editor.audioMode')}
 							on:click={() => ($audioMode = !$audioMode)}

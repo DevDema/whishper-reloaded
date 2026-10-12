@@ -98,6 +98,21 @@
 			"sourceUrl": "Oppure un URL di origine",
 			"sourceUrlPlaceholder": "https://youtube.com/watch?v=Hd33fCdW",
 			"whisperModel": "Modello Whisper",
+			"modelHints": {
+				"tiny": "velocissimo, precisione minima",
+				"tinyEn": "velocissimo, solo inglese",
+				"base": "molto veloce, base",
+				"baseEn": "molto veloce, solo inglese",
+				"small": "veloce, bilanciato",
+				"smallEn": "veloce, solo inglese",
+				"medium": "più lento, preciso",
+				"mediumEn": "più lento, solo inglese",
+				"largeV2": "lento, alta precisione",
+				"largeV3": "il più lento, massima precisione",
+				"largeV3Turbo": "veloce, quasi massima · consigliato",
+				"distilLargeV3": "molto veloce, solo inglese",
+				"distilLargeV2": "molto veloce, solo inglese"
+			},
 			"language": "Lingua",
 			"device": "Dispositivo",
 			"deviceGpu": "GPU",
@@ -206,7 +221,7 @@
 		},
 		"settings": {
 			"seekOnClick": "Vai al clic",
-			"seekOnClickTooltip": "Cliccando su un campo del tempo, sposta il video in quella posizione.",
+			"seekOnClickTooltip": "Cliccando su un campo del tempo o sul testo di un segmento, sposta il video in quella posizione.",
 			"autosave": "Salvataggio automatico",
 			"autosaveTooltip": "Salva automaticamente le modifiche ogni 30s."
 		},
@@ -221,7 +236,8 @@
 			"autosaving": "Salvataggio automatico...",
 			"saved": "Salvato!",
 			"autosaveDisabled": "Il salvataggio automatico è disattivato.",
-			"autosaveEnabled": "Salvataggio automatico attivato."
+			"autosaveEnabled": "Salvataggio automatico attivato.",
+			"mediaFailed": "Impossibile recuperare il file multimediale: {detail}. Le funzioni multimediali sono disattivate."
 		}
 	},
 	"layout": {

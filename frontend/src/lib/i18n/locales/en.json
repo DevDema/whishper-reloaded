@@ -98,6 +98,21 @@
 			"sourceUrl": "Or a source URL",
 			"sourceUrlPlaceholder": "https://youtube.com/watch?v=Hd33fCdW",
 			"whisperModel": "Whisper model",
+			"modelHints": {
+				"tiny": "fastest, lowest accuracy",
+				"tinyEn": "fastest, English only",
+				"base": "very fast, basic",
+				"baseEn": "very fast, English only",
+				"small": "fast, balanced",
+				"smallEn": "fast, English only",
+				"medium": "slower, accurate",
+				"mediumEn": "slower, English only",
+				"largeV2": "slow, high accuracy",
+				"largeV3": "slowest, best accuracy",
+				"largeV3Turbo": "fast, near-best · recommended",
+				"distilLargeV3": "very fast, English only",
+				"distilLargeV2": "very fast, English only"
+			},
 			"language": "Language",
 			"device": "Device",
 			"deviceGpu": "GPU",
@@ -206,7 +221,7 @@
 		},
 		"settings": {
 			"seekOnClick": "Seek on click",
-			"seekOnClickTooltip": "When clicking a timestamp input, seek the video to that position.",
+			"seekOnClickTooltip": "When clicking a timestamp input or a segment's text, seek the video to that position.",
 			"autosave": "Autosave",
 			"autosaveTooltip": "Automatically save changes every 30s."
 		},
@@ -221,7 +236,8 @@
 			"autosaving": "Autosaving...",
 			"saved": "Saved!",
 			"autosaveDisabled": "Autosave is disabled.",
-			"autosaveEnabled": "Autosave enabled."
+			"autosaveEnabled": "Autosave enabled.",
+			"mediaFailed": "Failed to retrieve media file: {detail}. Media capabilities are disabled."
 		}
 	},
 	"layout": {

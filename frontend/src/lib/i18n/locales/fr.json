@@ -98,6 +98,21 @@
 			"sourceUrl": "Ou une URL source",
 			"sourceUrlPlaceholder": "https://youtube.com/watch?v=Hd33fCdW",
 			"whisperModel": "Modèle Whisper",
+			"modelHints": {
+				"tiny": "le plus rapide, précision minimale",
+				"tinyEn": "le plus rapide, anglais uniquement",
+				"base": "très rapide, basique",
+				"baseEn": "très rapide, anglais uniquement",
+				"small": "rapide, équilibré",
+				"smallEn": "rapide, anglais uniquement",
+				"medium": "plus lent, précis",
+				"mediumEn": "plus lent, anglais uniquement",
+				"largeV2": "lent, haute précision",
+				"largeV3": "le plus lent, précision maximale",
+				"largeV3Turbo": "rapide, quasi maximale · recommandé",
+				"distilLargeV3": "très rapide, anglais uniquement",
+				"distilLargeV2": "très rapide, anglais uniquement"
+			},
 			"language": "Langue",
 			"device": "Appareil",
 			"deviceGpu": "GPU",
@@ -206,7 +221,7 @@
 		},
 		"settings": {
 			"seekOnClick": "Aller au clic",
-			"seekOnClickTooltip": "En cliquant sur un champ d'horodatage, déplace la vidéo à cette position.",
+			"seekOnClickTooltip": "En cliquant sur un champ d'horodatage ou sur le texte d'un segment, déplace la vidéo à cette position.",
 			"autosave": "Enregistrement auto",
 			"autosaveTooltip": "Enregistrer automatiquement les modifications toutes les 30s."
 		},
@@ -221,7 +236,8 @@
 			"autosaving": "Enregistrement automatique...",
 			"saved": "Enregistré !",
 			"autosaveDisabled": "L'enregistrement automatique est désactivé.",
-			"autosaveEnabled": "Enregistrement automatique activé."
+			"autosaveEnabled": "Enregistrement automatique activé.",
+			"mediaFailed": "Impossible de récupérer le fichier média : {detail}. Les fonctions média sont désactivées."
 		}
 	},
 	"layout": {

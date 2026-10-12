@@ -98,6 +98,21 @@
 			"sourceUrl": "O una URL de origen",
 			"sourceUrlPlaceholder": "https://youtube.com/watch?v=Hd33fCdW",
 			"whisperModel": "Modelo de Whisper",
+			"modelHints": {
+				"tiny": "el más rápido, mínima precisión",
+				"tinyEn": "el más rápido, solo inglés",
+				"base": "muy rápido, básico",
+				"baseEn": "muy rápido, solo inglés",
+				"small": "rápido, equilibrado",
+				"smallEn": "rápido, solo inglés",
+				"medium": "más lento, preciso",
+				"mediumEn": "más lento, solo inglés",
+				"largeV2": "lento, alta precisión",
+				"largeV3": "el más lento, máxima precisión",
+				"largeV3Turbo": "rápido, casi máxima · recomendado",
+				"distilLargeV3": "muy rápido, solo inglés",
+				"distilLargeV2": "muy rápido, solo inglés"
+			},
 			"language": "Idioma",
 			"device": "Dispositivo",
 			"deviceGpu": "GPU",
@@ -206,7 +221,7 @@
 		},
 		"settings": {
 			"seekOnClick": "Saltar al hacer clic",
-			"seekOnClickTooltip": "Al hacer clic en un campo de tiempo, salta el vídeo a esa posición.",
+			"seekOnClickTooltip": "Al hacer clic en un campo de tiempo o en el texto de un segmento, salta el vídeo a esa posición.",
 			"autosave": "Autoguardado",
 			"autosaveTooltip": "Guardar los cambios automáticamente cada 30s."
 		},
@@ -221,7 +236,8 @@
 			"autosaving": "Autoguardando...",
 			"saved": "¡Guardado!",
 			"autosaveDisabled": "El autoguardado está desactivado.",
-			"autosaveEnabled": "Autoguardado activado."
+			"autosaveEnabled": "Autoguardado activado.",
+			"mediaFailed": "No se pudo obtener el archivo multimedia: {detail}. Las funciones multimedia están desactivadas."
 		}
 	},
 	"layout": {

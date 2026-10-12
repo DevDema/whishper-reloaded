@@ -1,12 +1,3 @@
-# Whishper Reloaded - development stack.
-#
-# Builds every component from source instead of pulling the published images,
-# so you can iterate on the code locally.
-# Requires two env files next to this file: .backend.env and .frontend.env
-# (see README.md -> "Environment files").
-#
-#   docker compose -f docker-compose.dev.yml up -d --build
-
 services:
   whishper-mongo:
     image: mongo:latest
@@ -50,25 +41,16 @@ services:
     container_name: whishper-api
     restart: unless-stopped
     env_file:
-      - .backend.env
-    environment:
-      UPLOAD_DIR: /uploads
-      WHISPER_MODELS_DIR: /app/models
-      WHISPER_MODELS: ${WHISPER_MODELS:-tiny,small}
-      CPU_THREADS: ${CPU_THREADS:-4}
-    volumes:
-      - ./whishper_data/uploads:/uploads
-      - ./whishper_data/models:/app/models
-    expose:
-      - 8000
+      - frontend/.env
+    depends_on:
+      - whisper-backend
+    networks:
+      - whishper-dev
 
-  whishper-backend:
-    build:
-      context: ./backend
-    container_name: whishper-backend
-    restart: unless-stopped
-    ports:
-      - 8080:8080
+  whisper-backend:
+    extends:
+      file: backend/docker-compose.yml
+      service: whisper-backend
     env_file:
       - .backend.env
     environment:
@@ -81,8 +63,9 @@ services:
       - ./whishper_data/logs:/var/log/whishper
     depends_on:
       - whishper-mongo
-      - translate
-      - whishper-api
+      - whisper-api
+    networks:
+      - whishper-dev
 
   whishper-frontend:
     build:
@@ -95,8 +78,22 @@ services:
     expose:
       - 3000
     env_file:
-      - .frontend.env
+      - backend/.env
+    networks:
+      - whishper-dev
+
+  whisper-api:
+    extends:
+      file: transcription-api/docker-compose.yml
+      service: whisper-api
+    env_file:
+      - transcription-api/.env
     volumes:
-      - ./whishper_data/frontend/logs:/var/log/whishper
-    depends_on:
-      - whishper-backend
+      - ./uploads:/uploads
+    networks:
+      - whishper-dev
+
+networks:
+  whishper-dev:
+    name: whishper-dev
+    driver: bridge

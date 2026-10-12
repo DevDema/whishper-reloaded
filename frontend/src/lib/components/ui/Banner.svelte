@@ -1,5 +1,5 @@
 <script>
-	import { XCircle, AlertTriangle, RefreshCw } from 'lucide-svelte';
+	import { CircleX, TriangleAlert, RefreshCw } from 'lucide-svelte';
 	import { slide } from 'svelte/transition';
 
 	export let variant = 'error'; // error | warning
@@ -9,12 +9,12 @@
 		error: {
 			wrap: 'border-red-500/20 bg-red-500/5 text-red-400',
 			btn: 'border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400',
-			icon: XCircle
+			icon: CircleX
 		},
 		warning: {
 			wrap: 'border-amber-500/20 bg-amber-500/5 text-amber-400',
 			btn: 'border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400',
-			icon: AlertTriangle
+			icon: TriangleAlert
 		}
 	};
 
