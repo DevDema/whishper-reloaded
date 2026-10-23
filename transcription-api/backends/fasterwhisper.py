@@ -7,12 +7,13 @@ from faster_whisper import WhisperModel, download_model, decode_audio
 
 class FasterWhisperBackend(Backend):
     device: str = "cpu"  # cpu, cuda
-    quantization: str = "int8"  # int8, float16
+    quantization: str = "int8"  # int8 on cpu, float16 on cuda
     model: WhisperModel | None = None
 
     def __init__(self, model_size, device: str = "cpu"):
         self.model_size = model_size
         self.device = device
+        self.quantization = "float16" if str(device) == "cuda" else "int8"
         self.__post_init__()
 
     def model_path(self) -> str:
@@ -35,6 +36,7 @@ class FasterWhisperBackend(Backend):
     def load(self) -> None:
         # Get CPU threads env variable or default to 4
         cpu_threads = int(os.environ.get("CPU_THREADS", 4))
+        print(f"Loading model on {self.device} with compute type {self.quantization}")
         self.model = WhisperModel(
             self.model_path(), device=self.device, compute_type=self.quantization, cpu_threads=cpu_threads
         )
